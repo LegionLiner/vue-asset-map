@@ -72,8 +72,9 @@ export default defineConfigWithVueTs(
   },
   {
     name: 'network-map/configs',
-    files: ['*.config.ts', '*.config.js', 'playground/**/*.ts'],
+    files: ['*.config.ts', '*.config.js', 'playground/**/*.ts', 'scripts/**/*.mjs'],
     rules: {
+      // Скрипты и конфиги — CLI-инструменты: их вывод в консоль и есть результат.
       'no-console': 'off',
     },
   },

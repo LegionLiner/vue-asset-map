@@ -30,4 +30,8 @@ jobs:
 
       - run: pnpm run build
 
+      # Загружает собранный dist настоящим Node: только так видно ошибки
+      # интероперабельности с CommonJS-зависимостями и импорты CSS из JS.
+      - run: pnpm run verify:dist
+
       - run: pnpm run build:playground

@@ -43,7 +43,8 @@
     "format:check": "prettier --check \"**/*.{ts,vue,css,json,md}\"",
     "dev": "vite --config playground/vite.config.ts",
     "build:playground": "vite build --config playground/vite.config.ts",
-    "verify": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build",
+    "verify:dist": "node scripts/verify-dist.mjs",
+    "verify": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build && pnpm run verify:dist",
     "changeset": "changeset",
     "release": "pnpm run build && changeset publish"
   },

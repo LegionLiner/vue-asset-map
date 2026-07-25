@@ -1,4 +1,13 @@
-import * as dagre from '@dagrejs/dagre'
+/*
+ * Default-импорт, а не `import * as dagre`.
+ *
+ * `@dagrejs/dagre` — CommonJS, и в Node ESM пространство имён собирается
+ * статическим анализатором: из `module.exports` он распознаёт `graphlib`, но не
+ * `layout`, поэтому `dagre.layout` оказывается `undefined` — но только в чистом
+ * Node, потому что бандлеры и Vitest дают свою интероперабельность. Ошибка
+ * ловится лишь на собранном пакете, за этим следит `scripts/verify-dist.mjs`.
+ */
+import dagre from '@dagrejs/dagre'
 import type { EntityId, XY } from '../types/entity'
 import type { LayoutEngine, LayoutGraph } from './types'
 import { applyPinned, yieldAndCheck } from './shared'
