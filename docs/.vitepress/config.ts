@@ -42,9 +42,26 @@ export default defineConfig({
       // Examples are compiled against the sources, so the docs break as soon as
       // the API does — a published tarball would hide that until release.
       alias: [
-        { find: /^vue-asset-map\/core$/, replacement: fileURLToPath(new URL('../../src/core/index.ts', import.meta.url)) },
-        { find: /^vue-asset-map\/layout-dagre$/, replacement: fileURLToPath(new URL('../../src/layout/dagre.ts', import.meta.url)) },
-        { find: /^vue-asset-map$/, replacement: fileURLToPath(new URL('../../src/index.ts', import.meta.url)) },
+        {
+          // Node's own package self-reference would otherwise resolve this to
+          // dist/style.css, which does not exist until `build` has run — the
+          // docs workflow only runs `docs:build`, so this must point at the
+          // source CSS directly, same as playground/vite.config.ts does.
+          find: /^vue-asset-map\/style\.css$/,
+          replacement: fileURLToPath(new URL('../../src/theme/index.css', import.meta.url)),
+        },
+        {
+          find: /^vue-asset-map\/core$/,
+          replacement: fileURLToPath(new URL('../../src/core/index.ts', import.meta.url)),
+        },
+        {
+          find: /^vue-asset-map\/layout-dagre$/,
+          replacement: fileURLToPath(new URL('../../src/layout/dagre.ts', import.meta.url)),
+        },
+        {
+          find: /^vue-asset-map$/,
+          replacement: fileURLToPath(new URL('../../src/index.ts', import.meta.url)),
+        },
       ],
     },
   },
