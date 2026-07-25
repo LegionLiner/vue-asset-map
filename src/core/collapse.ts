@@ -10,22 +10,23 @@ import type {
 } from '../types/collapse'
 import { descendantsOf } from './graph'
 
+/** Options of {@link collapseGraph}. */
 export interface CollapseOptions {
-  /** `false` полностью выключает свёртку. */
+  /** `false` turns collapsing off entirely. */
   rule?: CollapseRule | false
-  /** Группы, раскрытые вручную. Перекрывают автоматическое правило. */
+  /** Groups expanded by hand; overrides the automatic rule. */
   expandedIds?: ReadonlySet<string>
-  /** Ограничение по сущностям (результат проекции и фильтра). */
+  /** Entities allowed through, normally the projection and filter result. */
   visibleEntityIds?: ReadonlySet<EntityId>
-  /** Ограничение по связям (результат проекции). */
+  /** Links allowed through, normally the projection result. */
   visibleLinkIds?: ReadonlySet<string>
   /**
-   * Родители, чьё поддерево скрыто кнопкой на самом узле.
+   * Parents whose subtree is hidden by the button on the node itself.
    *
-   * Отличается от `expandedIds`: там речь о синтетических групповых узлах, здесь —
-   * о настоящей сущности, которая остаётся на карте, а её потомки прячутся
-   * внутрь. Рёбра потомков переносятся на родителя по тем же правилам, что и на
-   * групповой узел.
+   * Different from `expandedIds`: that one talks about synthetic group nodes,
+   * this one about a real entity that stays on the map while its descendants
+   * fold into it. Their links are re-homed onto the parent by the same rules
+   * that apply to a group node.
    */
   collapsedParentIds?: ReadonlySet<EntityId>
 }
@@ -33,19 +34,22 @@ export interface CollapseOptions {
 const DEFAULT_THRESHOLD = 10
 
 /**
- * Разделитель составных ключей группировки рёбер.
+ * Separator for the composite edge-bundle keys.
  *
- * U+0000, а не `:` или пробел: id сущностей — произвольные строки потребителя
- * и могут содержать любой печатный символ, из-за чего склейка через печатный
- * разделитель давала бы коллизии ключей.
+ * U+0000 rather than `:` or a space: entity ids are arbitrary consumer strings
+ * and may contain any printable character, so joining on a printable separator
+ * would let distinct pairs collide on one key.
  */
 const KEY_SEPARATOR = '\u0000'
 
+/** Whether an edge of the collapsed graph stands for several original links. */
 export function isAggregatedLink<L>(link: NetworkLink<L>): link is AggregatedLink<L> {
+  // Cast: `aggregated` is absent from the `NetworkLink` half of the union, and
+  // probing for it is exactly what this guard exists to do.
   return (link as { aggregated?: unknown }).aggregated === true
 }
 
-/** id группы. Формат: `group:<parentId>:<bucket>`; для корня parentId пуст. */
+/** Group id in the form `group:<parentId>:<bucket>`; `parentId` is empty at root. */
 export function groupIdFor(parentId: EntityId | null, bucket: string): string {
   return `group:${parentId ?? ''}:${bucket}`
 }
@@ -53,24 +57,25 @@ export function groupIdFor(parentId: EntityId | null, bucket: string): string {
 const defaultGroupBy = (entity: NetworkEntity): string | null => entity.kind
 
 /**
- * Свёртка крупных групп однотипных детей в один узел.
+ * Folds oversized sets of same-kind siblings into single group nodes and
+ * re-routes their edges. Runs before layout: positions are computed on the
+ * collapsed graph, never on the original one.
  *
- * Функция чистая и детерминированная: порядок групп, узлов и рёбер выводится из
- * порядка входных массивов, поэтому одинаковый вход даёт побайтово одинаковый
- * выход. Выполняется до раскладки — позиции считаются уже по схлопнутому графу.
+ * Pure and deterministic — group, node and edge order all follow the order of
+ * the input arrays, so identical input yields identical output.
  *
- * Решения, которые стоит знать:
- *  - Родитель для группировки — ближайший *видимый* предок. Если проекция скрыла
- *    родителя, его дети группируются на уровне выше, а не под скрытым id.
- *  - Обход идёт сверху вниз по уровням. Как только уровень схлопнут, его
- *    поддеревья не рассматриваются — вложенных групп внутри групп не возникает.
- *  - `expandedIds` проверяется раньше правила, поэтому раскрытие руками всегда
- *    сильнее `shouldCollapse` и порога.
- *  - Рёбра участников переносятся на групповой узел. Параллельные рёбра
- *    схлопываются в `AggregatedLink` только если хотя бы один конец — группа:
- *    настоящая кратность связей между обычными узлами остаётся видимой.
- *  - Ребро, у которого оба конца внутри одной группы, не рисуется, а попадает в
- *    `internalLinkCount`.
+ * Invariants worth knowing:
+ *  - Grouping happens under the nearest *visible* ancestor. When a projection
+ *    hides a parent, its children group one level up, not under a hidden id.
+ *  - Levels are walked top-down, and a collapsed level is not descended into, so
+ *    groups never nest inside other groups.
+ *  - `expandedIds` is checked before the rule, so expanding by hand always beats
+ *    both `shouldCollapse` and the threshold.
+ *  - Member edges move onto the group node. Parallel edges collapse into an
+ *    `AggregatedLink` only when at least one end is a group, so genuine link
+ *    multiplicity between ordinary nodes stays visible.
+ *  - An edge with both ends inside one group is not drawn; it is counted in
+ *    `CollapsedGroup.internalLinkCount` instead.
  */
 export function collapseGraph<E, L>(
   graph: NetworkGraph<E, L>,
@@ -80,8 +85,8 @@ export function collapseGraph<E, L>(
 
   const inProjection = (id: EntityId): boolean => visibleEntityIds === undefined || visibleEntityIds.has(id)
 
-  // Потомки свёрнутых родителей выпадают из карты до всех остальных решений:
-  // они не должны ни группироваться, ни попадать в узлы.
+  // Resolved before any other decision: descendants of a collapsed parent must
+  // neither be grouped nor reach the node list.
   const subtreeHidden = hiddenBySubtree(graph, collapsedParentIds, inProjection)
 
   const isEntityVisible = (id: EntityId): boolean => inProjection(id) && !subtreeHidden.has(id)
@@ -91,8 +96,8 @@ export function collapseGraph<E, L>(
     if (isEntityVisible(entity.id)) visibleEntities.push(entity)
   }
 
-  // Концы проверяются по проекции, а не по итоговой видимости: ребро скрытого
-  // потомка не выбрасывается, а переносится на свёрнутого родителя.
+  // Ends are checked against the projection, not against final visibility: an
+  // edge of a hidden descendant is re-homed onto its collapsed parent, not lost.
   const visibleLinks: NetworkLink<L>[] = []
   for (const link of graph.links.values()) {
     if (visibleLinkIds !== undefined && !visibleLinkIds.has(link.id)) continue
@@ -100,8 +105,8 @@ export function collapseGraph<E, L>(
     visibleLinks.push(link)
   }
 
-  // Потомки свёрнутых родителей адресуются на самого родителя — так же, как
-  // участники группы адресуются на групповой узел.
+  // Descendants of a collapsed parent address the parent itself, the same way
+  // group members address their group node.
   const groupOf = new Map<EntityId, string>(subtreeHidden)
   const hiddenIds = new Set<EntityId>(subtreeHidden.keys())
 
@@ -115,8 +120,8 @@ export function collapseGraph<E, L>(
     }
   }
 
-  // `undefined` — это «правило по умолчанию», выключает свёртку только `false`:
-  // так же читается prop `collapse` у <NetworkMap>.
+  // `undefined` means "default rule"; only `false` disables collapsing. Same
+  // reading as the `collapse` prop of <NetworkMap>.
   const groups = decideGroups(graph, visibleEntities, rule ?? {}, expandedIds, isEntityVisible)
   const groupIds = new Set(groups.map((group) => group.id))
   indexMembers(graph, groups, groupOf, hiddenIds)
@@ -127,7 +132,7 @@ export function collapseGraph<E, L>(
   return { groups, groupOf, hiddenIds, nodeIds, links }
 }
 
-/** Ближайший предок, оставшийся видимым. `null`, если такого нет. */
+/** Nearest ancestor that is still visible, or `null` when there is none. */
 function visibleParentOf<E, L>(
   graph: NetworkGraph<E, L>,
   id: EntityId,
@@ -143,10 +148,7 @@ function visibleParentOf<E, L>(
   return null
 }
 
-/**
- * Обход уровней сверху вниз с решением по каждому «ведру» детей.
- * Возвращает группы в порядке обнаружения.
- */
+/** Returns the groups in discovery order, walking the hierarchy top-down. */
 function decideGroups<E, L>(
   graph: NetworkGraph<E, L>,
   visibleEntities: readonly NetworkEntity<E>[],
@@ -157,7 +159,7 @@ function decideGroups<E, L>(
   const threshold = rule.threshold ?? DEFAULT_THRESHOLD
   const groupBy = rule.groupBy ?? defaultGroupBy
 
-  // Дети по эффективному видимому родителю; ключ `null` — верхний уровень.
+  // Keyed by effective visible parent; the `null` key holds the top level.
   const childrenByParent = new Map<EntityId | null, NetworkEntity<E>[]>()
   for (const entity of visibleEntities) {
     const parentId = visibleParentOf(graph, entity.id, isEntityVisible)
@@ -167,8 +169,8 @@ function decideGroups<E, L>(
   }
 
   const groups: CollapsedGroup[] = []
-  // Обход в ширину по уровням иерархии. Индекс вместо shift(): `null` —
-  // легальный элемент очереди (верхний уровень), и его нельзя путать с концом.
+  // Indexed instead of `shift()`: `null` is a legal queue item (the top level)
+  // and must not be confused with an exhausted queue.
   const queue: (EntityId | null)[] = [null]
   const processed = new Set<EntityId | null>()
 
@@ -183,7 +185,7 @@ function decideGroups<E, L>(
 
     for (const child of children) {
       const bucket = groupBy(child)
-      // `null` из groupBy — «этот узел не группировать никогда».
+      // `null` from groupBy means "never group this node".
       if (bucket === null) {
         ungrouped.push(child)
         continue
@@ -196,8 +198,8 @@ function decideGroups<E, L>(
     for (const [bucket, members] of buckets) {
       const groupId = groupIdFor(parentId, bucket)
       const collapsed =
-        // Группа из одного узла бессмысленна: она прячет узел за узлом и ничего
-        // не экономит. Это ограничение сильнее `shouldCollapse`.
+        // A group of one hides a node behind a node and saves nothing. This
+        // floor outranks `shouldCollapse`.
         members.length >= 2 &&
         !expandedIds?.has(groupId) &&
         (rule.shouldCollapse ? rule.shouldCollapse(parentId, members) : members.length > threshold)
@@ -210,7 +212,7 @@ function decideGroups<E, L>(
           memberIds: members.map((member) => member.id),
           internalLinkCount: 0,
         })
-        // Поддеревья участников целиком уходят внутрь группы — вглубь не идём.
+        // Member subtrees go inside the group wholesale, so stop descending.
         continue
       }
       for (const member of members) queue.push(member.id)
@@ -223,10 +225,10 @@ function decideGroups<E, L>(
 }
 
 /**
- * Потомки свёрнутых родителей: потомок → id родителя, который его прячет.
+ * Descendant → id of the collapsed parent hiding it.
  *
- * Порядок обхода — порядок сущностей во входных данных, поэтому при вложенных
- * свёрнутых родителях побеждает тот, кто ближе к корню, и результат однозначен.
+ * Iterates in input order, so with nested collapsed parents the one closest to
+ * the root wins and the result is unambiguous.
  */
 function hiddenBySubtree<E, L>(
   graph: NetworkGraph<E, L>,
@@ -239,8 +241,8 @@ function hiddenBySubtree<E, L>(
   for (const parentId of graph.entities.keys()) {
     if (!collapsedParentIds.has(parentId)) continue
     if (!inProjection(parentId)) continue
-    // Уже спрятанный родитель не прячет никого: его поддерево уже внутри
-    // предка, который свёрнут выше.
+    // An already hidden parent hides nobody: its subtree is inside an ancestor
+    // that is collapsed further up.
     if (hidden.has(parentId)) continue
 
     for (const descendant of descendantsOf(graph, parentId)) {
@@ -252,7 +254,7 @@ function hiddenBySubtree<E, L>(
   return hidden
 }
 
-/** Дописывает в индексы участников групп и их поддеревья. */
+/** Mutates `groupOf` and `hiddenIds`, adding group members and their subtrees. */
 function indexMembers<E, L>(
   graph: NetworkGraph<E, L>,
   groups: readonly CollapsedGroup[],
@@ -275,8 +277,8 @@ function indexMembers<E, L>(
 }
 
 /**
- * Порядок узлов схлопнутого графа. Групповой узел встаёт на место первого
- * своего участника — так порядок остаётся привязанным к входным данным.
+ * A group node takes the slot of its first member, which keeps node order tied
+ * to the input arrays rather than to group discovery.
  */
 function orderNodes<E>(
   visibleEntities: readonly NetworkEntity<E>[],
@@ -306,6 +308,7 @@ interface LinkBundle<L> {
   links: NetworkLink<L>[]
 }
 
+/** Mutates `internalLinkCount` on the groups passed in. */
 function remapLinks<L>(
   visibleLinks: readonly NetworkLink<L>[],
   groupOf: ReadonlyMap<EntityId, string>,
@@ -323,13 +326,13 @@ function remapLinks<L>(
 
     if (source === target) {
       if (remapped) {
-        // Оба конца оказались внутри одной группы или одного свёрнутого
-        // поддерева: петлю не рисуем. Для группы её ещё и считаем.
+        // Both ends landed inside one group or one collapsed subtree: the loop
+        // is not drawn, and for a group it is counted instead.
         const group = groupById.get(source)
         if (group) group.internalLinkCount += 1
         continue
       }
-      // Настоящая петля на обычном узле — остаётся ребром.
+      // A genuine self-loop on an ordinary node stays an edge.
     }
 
     const key = bundleKey(source, target, link)
@@ -352,8 +355,8 @@ function remapLinks<L>(
       continue
     }
 
-    // Агрегируем только пучки, появившиеся из-за свёртки: и группа, и свёрнутый
-    // родитель собирают на себя рёбра спрятанных узлов.
+    // Only bundles created by collapsing are aggregated: both a group and a
+    // collapsed parent gather the edges of the nodes they hide.
     const touchesCollapsed =
       groupIds.has(bundle.source) ||
       groupIds.has(bundle.target) ||
@@ -361,7 +364,6 @@ function remapLinks<L>(
       collapsedParentIds?.has(bundle.target) === true
 
     if (!touchesCollapsed) {
-      // Настоящая кратность между обычными узлами — оставляем как есть.
       out.push(...bundle.links)
       continue
     }
@@ -373,9 +375,8 @@ function remapLinks<L>(
 }
 
 /**
- * Ключ пучка рёбер. Для неориентированных рёбер концы нормализуются, чтобы
- * `a→b` и `b→a` попали в один пучок; `kind` и направленность не смешиваются,
- * иначе агрегат потерял бы стиль отрисовки.
+ * Bundle key. Undirected ends are normalised so `a→b` and `b→a` share a bundle;
+ * `kind` and direction stay separate, or an aggregate would lose its edge style.
  */
 function bundleKey<L>(source: string, target: string, link: NetworkLink<L>): string {
   const kind = link.kind ?? ''
@@ -396,8 +397,8 @@ function aggregate<L>(bundle: LinkBundle<L>, first: NetworkLink<L>): AggregatedL
     id: `agg:${bundle.source}->${bundle.target}#${first.kind ?? ''}`,
     source: bundle.source,
     target: bundle.target,
-    // Сортировка ради детерминизма: порядок слоёв не должен зависеть от того,
-    // в каком порядке пришли исходные рёбра.
+    // Sorted for determinism: layer order must not depend on the order the
+    // original links arrived in.
     layers: [...layers].sort(),
     aggregated: true,
     count: bundle.links.length,

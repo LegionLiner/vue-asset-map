@@ -1,4 +1,4 @@
-# network-map
+# vue-asset-map
 
 Интерактивная карта сетевой инфраструктуры для Vue 3 на базе [VueFlow](https://vueflow.dev).
 
@@ -32,7 +32,7 @@
 ## Установка
 
 ```bash
-pnpm add network-map vue @vue-flow/core
+pnpm add vue-asset-map vue @vue-flow/core
 ```
 
 `vue` и `@vue-flow/core` — **peer**-зависимости. VueFlow должен быть в дереве зависимостей ровно один раз: он работает
@@ -42,7 +42,7 @@ pnpm add network-map vue @vue-flow/core
 
 ```ts
 import '@vue-flow/core/dist/style.css'
-import 'network-map/style.css'
+import 'vue-asset-map/style.css'
 ```
 
 > Стили VueFlow подключаете вы, а не пакет: из опубликованного CSS нельзя надёжно разрешить путь к CSS peer-зависимости.
@@ -53,9 +53,9 @@ import 'network-map/style.css'
 ```vue
 <script setup lang="ts">
 import { ref } from 'vue'
-import { NetworkMap, type NetworkEntity, type NetworkLink, type NetworkView } from 'network-map'
+import { NetworkMap, type NetworkEntity, type NetworkLink, type NetworkView } from 'vue-asset-map'
 import '@vue-flow/core/dist/style.css'
-import 'network-map/style.css'
+import 'vue-asset-map/style.css'
 
 const entities: NetworkEntity[] = [
   { id: 'internet', kind: 'cloud', label: 'Интернет', status: 'online' },
@@ -192,7 +192,7 @@ const selection = ref<string[]>([])
 ```vue
 <script setup lang="ts">
 import { useTemplateRef } from 'vue'
-import { NetworkMap, type NetworkMapExposed } from 'network-map'
+import { NetworkMap, type NetworkMapExposed } from 'vue-asset-map'
 
 const map = useTemplateRef<NetworkMapExposed>('map')
 
@@ -250,7 +250,7 @@ const nodeTypes = { router: RouterNode }
 ```vue
 <script setup lang="ts">
 import { Handle, Position } from '@vue-flow/core'
-import { useMapContext, type NetworkNodeData } from 'network-map'
+import { useMapContext, type NetworkNodeData } from 'vue-asset-map'
 
 const props = defineProps<{ id: string; data?: NetworkNodeData }>()
 const map = useMapContext()
@@ -377,7 +377,7 @@ const map = useMapContext()
 Она выводится из связей графа, поэтому `connectionMarkers` считает её за вас:
 
 ```ts
-import { connectionMarkers } from 'network-map/core'
+import { connectionMarkers } from 'vue-asset-map/core'
 
 const markers = connectionMarkers([
   { id: 'keenetic-1', label: 'Keenetic 1' },
@@ -395,7 +395,7 @@ const markers = connectionMarkers([
 Опорные узлы можно не перечислять руками, а взять самые связанные:
 
 ```ts
-import { buildGraph, connectionMarkers, topAnchors } from 'network-map/core'
+import { buildGraph, connectionMarkers, topAnchors } from 'vue-asset-map/core'
 
 const graph = buildGraph(entities, links)
 const markers = connectionMarkers(topAnchors(graph, 3))
@@ -411,7 +411,7 @@ const markers = connectionMarkers(topAnchors(graph, 3))
 задаётся предикат:
 
 ```ts
-import type { NodeMarkerDef } from 'network-map'
+import type { NodeMarkerDef } from 'vue-asset-map'
 
 const markers: NodeMarkerDef[] = [
   { id: 'critical', label: 'Критичные', match: (entity) => entity.meta?.severity === 'critical' },
@@ -564,14 +564,14 @@ pnpm add @dagrejs/dagre
 ```
 
 ```ts
-import { dagreLayout } from 'network-map/layout-dagre'
+import { dagreLayout } from 'vue-asset-map/layout-dagre'
 // :layout="{ engine: dagreLayout, options: { rankdir: 'LR' } }"
 ```
 
 Свой движок — это объект с `name` и `run`:
 
 ```ts
-import type { LayoutEngine } from 'network-map'
+import type { LayoutEngine } from 'vue-asset-map'
 
 export const circleLayout: LayoutEngine<{ radius?: number }> = {
   name: 'circle',
@@ -658,7 +658,7 @@ export const circleLayout: LayoutEngine<{ radius?: number }> = {
 «Критичность» — это ваши группы, пакет о них ничего не знает:
 
 ```ts
-import type { FilterGroupDef } from 'network-map'
+import type { FilterGroupDef } from 'vue-asset-map'
 
 const filterGroups: FilterGroupDef[] = [
   {
@@ -721,7 +721,7 @@ watch(openFilterGroups, (value) => localStorage.setItem('vnm:filters', JSON.stri
 например на сервере:
 
 ```ts
-import { blastRadius, buildGraph, findPaths, projectGraph } from 'network-map/core'
+import { blastRadius, buildGraph, findPaths, projectGraph } from 'vue-asset-map/core'
 
 const graph = buildGraph(entities, links)
 

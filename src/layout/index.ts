@@ -14,7 +14,7 @@ export { applyPinned, throwIfAborted } from './shared'
  * Движки, доступные по имени из коробки.
  *
  * `dagre` здесь отсутствует намеренно: он тянет опциональную зависимость и
- * подключается отдельным подпутём `network-map/layout-dagre`, после чего
+ * подключается отдельным подпутём `vue-asset-map/layout-dagre`, после чего
  * передаётся объектом — `:layout="{ engine: dagreLayout }"`.
  */
 export const builtinLayoutEngines: Readonly<Record<string, LayoutEngine>> = Object.freeze({

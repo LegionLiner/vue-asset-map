@@ -38,7 +38,7 @@ const DEFAULTS = {
 /**
  * Ярусная раскладка на dagre.
  *
- * Живёт в отдельном подпути `network-map/layout-dagre`, а `@dagrejs/dagre` —
+ * Живёт в отдельном подпути `vue-asset-map/layout-dagre`, а `@dagrejs/dagre` —
  * в `optionalDependencies`: движок нужен не всем, а весит он больше, чем всё
  * остальное ядро. Кто импортировал этот модуль — тот и поставил зависимость.
  *

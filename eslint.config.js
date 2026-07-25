@@ -13,7 +13,7 @@ export default defineConfigWithVueTs(
   pluginVue.configs['flat/recommended'],
   vueTsConfigs.recommended,
   {
-    name: 'network-map/rules',
+    name: 'vue-asset-map/rules',
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/ban-ts-comment': [
@@ -43,7 +43,7 @@ export default defineConfigWithVueTs(
     },
   },
   {
-    name: 'network-map/pure-core',
+    name: 'vue-asset-map/pure-core',
     files: ['src/core/**/*.ts', 'src/layout/**/*.ts'],
     rules: {
       'no-restricted-imports': [
@@ -64,14 +64,14 @@ export default defineConfigWithVueTs(
     },
   },
   {
-    name: 'network-map/tests',
+    name: 'vue-asset-map/tests',
     files: ['tests/**/*.ts'],
     rules: {
       'no-restricted-syntax': 'off',
     },
   },
   {
-    name: 'network-map/configs',
+    name: 'vue-asset-map/configs',
     files: ['*.config.ts', '*.config.js', 'playground/**/*.ts', 'scripts/**/*.mjs'],
     rules: {
       // Скрипты и конфиги — CLI-инструменты: их вывод в консоль и есть результат.

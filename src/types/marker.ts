@@ -2,57 +2,68 @@ import type { EntityId, NetworkEntity } from './entity'
 import type { NetworkGraph } from './graph'
 
 /**
- * Маркер принадлежности — кружок под подписью узла.
+ * A membership marker — the dot drawn under a node's label.
  *
- * Показывает те же группировки, что и связи, но читается взглядом: не нужно
- * ничего нажимать, чтобы понять, что к чему относится. Наведение на кружок
- * подсвечивает всех, у кого он есть.
+ * Markers show the same groupings the links do, but readable at a glance:
+ * nothing has to be clicked to see what belongs where. Hovering a dot
+ * highlights every node carrying it.
  *
- * Принадлежность задаётся одним из двух способов:
- *  - `members` — сразу весь состав, посчитанный по графу. Дешевле и подходит,
- *    когда принадлежность выводится из связей: обход считается один раз;
- *  - `match` — предикат на сущность. Проще, когда принадлежность видна из самой
- *    сущности (поле в `meta`, `kind`, `status`).
+ * Membership is declared one of two ways:
+ *  - `members` — the whole set at once, computed from the graph. Cheaper, and
+ *    the right choice when membership follows from links: one traversal total;
+ *  - `match` — a per-entity predicate. Simpler when membership is visible on the
+ *    entity itself (a field in `meta`, its `kind`, its `status`).
  *
- * Если заданы оба, побеждает `members`.
+ * `members` wins when both are given.
  */
 export interface NodeMarkerDef {
   id: string
-  /** Цвет заполнения. Без него берётся из палитры токенов по порядку. */
+  /** Fill color. Taken from the token palette by declaration order when omitted. */
   color?: string
-  /** Подпись для screen reader и подсказки. Без неё используется `id`. */
+  /** Screen-reader label and tooltip. Falls back to `id`. */
   label?: string
-  /** Весь состав маркера сразу. Вызывается один раз на смену графа. */
+  /** The full member set. Called once per graph change. */
   members?: (graph: NetworkGraph) => Iterable<EntityId>
-  /** Есть ли этот маркер у сущности. Вызывается на каждую сущность. */
+  /** Whether an entity carries this marker. Called once per entity. */
   match?: (entity: NetworkEntity, graph: NetworkGraph) => boolean
 }
 
-/** Маркер с уже выбранным цветом — то, что получает узел. */
+/** A marker with its color already picked — what a node actually renders. */
 export interface ResolvedNodeMarker {
   id: string
   color: string
   label: string
 }
 
-/** Опорный узел, вокруг которого строится маркер по связям. */
+/** The node a connection-derived marker is built around. */
 export interface MarkerAnchor {
   id: EntityId
   label?: string
   color?: string
 }
 
+/** Options for `connectionMarkers`. */
 export interface ConnectionMarkerOptions {
-  /** На сколько шагов от опорного узла считать принадлежность. Дефолт 1. */
+  /**
+   * How many steps out from the anchor still count as membership.
+   *
+   * @default 1
+   */
   depth?: number
   /**
-   * Ограничить слоями связей. Дефолт — все слои.
+   * Restrict membership to links on these layers.
    *
-   * Именно все: узел может быть привязан к роутеру физически и к координатору
-   * VPN логически одновременно, и оба кружка должны быть видны независимо от
-   * того, какой вид открыт.
+   * Defaults to every layer on purpose: a node can be wired to a router
+   * physically and to a VPN coordinator logically at the same time, and both
+   * dots must stay visible regardless of which view is open.
+   *
+   * @default all layers
    */
   layers?: readonly string[]
-  /** Включать сам опорный узел в свой маркер. Дефолт `true`. */
+  /**
+   * Whether the anchor is a member of its own marker.
+   *
+   * @default true
+   */
   includeAnchor?: boolean
 }

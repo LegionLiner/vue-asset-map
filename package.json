@@ -1,5 +1,5 @@
 {
-  "name": "network-map",
+  "name": "vue-asset-map",
   "version": "0.1.0",
   "description": "Interactive network infrastructure map for Vue 3, built on VueFlow: projections, search, collapse, details panel, theming.",
   "license": "MIT",

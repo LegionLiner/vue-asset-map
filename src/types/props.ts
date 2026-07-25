@@ -10,35 +10,59 @@ import type { PartialLocaleMessages } from './locale'
 import type { ThemeConfig, ThemeMode } from './theme'
 import type { LayoutEngine } from '../layout/types'
 
+/** Which layout engine to run, by registered name or as an instance. */
 export interface NetworkMapLayoutSpec {
   engine: string | LayoutEngine
   options?: unknown
 }
 
-/** Как считать распространение «заражения» от помеченных сущностей. */
+/** How far an "infection" spreads from the entities marked as sources. */
 export interface InfectionOptions {
-  /** Дефолт `downstream`: по направлению связей. */
+  /**
+   * Which way to follow links.
+   *
+   * @default 'downstream'
+   */
   direction?: 'downstream' | 'upstream' | 'both'
-  /** Ограничить распространение числом шагов. Дефолт — без ограничения. */
+  /**
+   * Cap the spread at this many steps.
+   *
+   * @default unlimited
+   */
   maxDepth?: number
-  /** Считать только по этим слоям связей. Дефолт — по слоям текущего вида. */
+  /**
+   * Spread only across links on these layers.
+   *
+   * @default the layers of the current view
+   */
   layers?: string[]
 }
 
+/** Canvas viewport: pan offset in px plus the zoom factor. */
 export interface Viewport extends XY {
   zoom: number
 }
 
+/**
+ * Every input of `<NetworkMap>`.
+ *
+ * @typeParam E - payload type of `entity.meta`.
+ * @typeParam L - payload type of `link.meta`.
+ */
 export interface NetworkMapProps<E = unknown, L = unknown> {
+  /** Read-only: the map never mutates the array or the entities in it. */
   entities: NetworkEntity<E>[]
+  /** Read-only, same as `entities`. */
   links: NetworkLink<L>[]
+  /** Available projections. With none, every entity and link is drawn. */
   views?: NetworkView[]
 
-  /** Реестр компонентов узлов: kind → component. Мержится с дефолтным. */
+  /** Node component registry: `kind` → component. Merged over the built-in one. */
   nodeTypes?: Record<string, Component>
   edgeTypes?: Record<string, Component>
 
   layout?: NetworkMapLayoutSpec
+  /** `false` turns collapsing off; omitted means the default rule applies. */
   collapse?: CollapseRule | false
   filterOptions?: FilterOptions
 
@@ -46,56 +70,80 @@ export interface NetworkMapProps<E = unknown, L = unknown> {
   themeConfig?: ThemeConfig
   locale?: string | PartialLocaleMessages
 
-  /** Показывать встроенные контролы. Дефолт true — иначе всё через слоты. */
+  /**
+   * Render the built-in controls. Turn off to drive everything through slots.
+   *
+   * @default true
+   */
   showToolbar?: boolean
   showDetailsPanel?: boolean
   showMinimap?: boolean
 
   /**
-   * Сколько окон подробностей можно держать открытыми одновременно. Дефолт 1.
+   * How many details windows may stay open at once.
    *
-   * При достижении лимита самое старое окно закрывается. `0` полностью
-   * отключает окна, не убирая остальной интерфейс.
+   * The oldest window closes once the limit is reached. `0` disables windows
+   * entirely without removing the rest of the UI.
+   *
+   * @default 2
    */
   maxDetailsWindows?: number
 
   /**
-   * На сколько шагов подсвечивать связи выделенного узла. Дефолт 1.
+   * How many steps of a selected node's links stay highlighted.
    *
-   * Всё, что дальше, затемняется. `0` выключает подсветку по выделению.
+   * Anything farther is dimmed. `0` disables selection highlighting.
+   *
+   * @default 1
    */
   neighborHighlightDepth?: number
 
   /**
-   * Помеченные «заражёнными» сущности.
+   * Entities marked as infection sources.
    *
-   * Карта показывает не только их, но и всё, что они захватывают: набор считается
-   * через `blastRadius`, поэтому распространение видно целиком.
+   * The map shows more than these: the affected set is computed with
+   * `blastRadius`, so the whole spread is visible at once.
    */
   infected?: EntityId[]
   infectionOptions?: InfectionOptions
 
   /**
-   * Маркеры принадлежности под подписью узла.
+   * Membership markers drawn under node labels.
    *
-   * Порядок кружков повторяет порядок этого массива, поэтому одинаковые маркеры
-   * у разных узлов всегда стоят на одном месте.
+   * Dot order follows this array, so the same marker sits in the same slot on
+   * every node.
    */
   markers?: NodeMarkerDef[]
-  /** Задержка перед подсветкой при наведении на кружок, мс. Дефолт 500. */
+  /**
+   * Delay before hovering a dot highlights its members, in ms.
+   *
+   * @default 500
+   */
   markerHoverDelay?: number
 
-  /** Рендерить только видимые элементы полотна. Дефолт true. */
+  /**
+   * Mount only the nodes and edges inside the viewport.
+   *
+   * @default true
+   */
   onlyRenderVisibleElements?: boolean
-  /** Порог масштаба, ниже которого узлы рисуются упрощённо. Дефолт 0.5. */
+  /**
+   * Zoom below which nodes render in their simplified form.
+   *
+   * @default 0.5
+   */
   lodThreshold?: number
-  /** Задержка перед применением поискового запроса, мс. Дефолт 200. */
+  /**
+   * Delay before a typed query is applied, in ms.
+   *
+   * @default 200
+   */
   searchDebounce?: number
-  /** Показывать индикатор загрузки поверх полотна. */
+  /** Show a loading overlay above the canvas. */
   loading?: boolean
 }
 
-/** Двусторонние привязки. Без `v-model` компонент управляет состоянием сам. */
+/** Two-way bindings. Without a `v-model` the component owns the state itself. */
 export interface NetworkMapModels {
   view?: string
   selection?: EntityId[]
@@ -104,7 +152,7 @@ export interface NetworkMapModels {
   viewport?: Viewport
 }
 
-/** Полезная нагрузка событий по узлу: и сущность, и группа — что там оказалось. */
+/** Payload of the node events. Exactly one of `entity` / `group` is set. */
 export interface NodeEventPayload {
   id: string
   entity: NetworkEntity<unknown> | undefined
@@ -112,46 +160,62 @@ export interface NodeEventPayload {
   event: MouseEvent
 }
 
+/** Options of the imperative `focus`. */
 export interface FocusOptions {
-  /** Масштаб после перехода к узлу. Дефолт — текущий. */
+  /**
+   * Zoom to settle on.
+   *
+   * @default the current zoom
+   */
   zoom?: number
-  /** Длительность анимации, мс. Дефолт 400. */
+  /**
+   * Animation duration in ms.
+   *
+   * @default 400
+   */
   duration?: number
-  /** Выделить узел заодно. Дефолт true. */
+  /**
+   * Select the node as well as centering on it.
+   *
+   * @default true
+   */
   select?: boolean
 }
 
-/** Слот без параметров. */
+/** Slot that receives no parameters. */
 export type EmptySlotProps = Record<string, never>
 
 /**
- * Параметры слотов `node-*`.
+ * Parameters of the `node-*` slots.
  *
- * Один тип на все слоты этого семейства — и на `#node-{kind}`, и на
- * `#node-badge`. Иначе их нельзя описать общей сигнатурой `node-${string}`, а без
- * неё TypeScript не пропустит слот с произвольным именем типа `#node-router`.
+ * One type covers the whole family — both `#node-{kind}` and `#node-badge`.
+ * Otherwise they cannot share the `node-${string}` signature, and without that
+ * signature TypeScript rejects an arbitrary slot name such as `#node-router`.
  */
 export interface NodeSlotProps<E = unknown> {
   entity: NetworkEntity<E> | undefined
   nodeId: string
-  /** `true` — масштаб ниже порога LOD, узел рисуется упрощённо. */
+  /** `true` when zoom is below the LOD threshold and the node renders simplified. */
   simplified: boolean
-  /** Заполнен только для слота `node-badge`. */
+  /** Set for the `node-badge` slot only. */
   badge?: Badge
 }
 
+/** Parameters of the `details` slot: the body of a details window. */
 export interface DetailsSlotProps<E = unknown> {
   entity: NetworkEntity<E>
   close: () => void
-  /** Активный таб панели. */
+  /** Id of the active tab. */
   tab: string
 }
 
+/** Parameters of the `details-header` slot: the window's title bar. */
 export interface DetailsHeaderSlotProps<E = unknown> {
   entity: NetworkEntity<E>
   close: () => void
 }
 
+/** Parameters of the `edge-label` slot; `count` is `1` unless `aggregated`. */
 export interface EdgeLabelSlotProps<L = unknown> {
   link: NetworkLink<L> | undefined
   aggregated: boolean
@@ -159,11 +223,11 @@ export interface EdgeLabelSlotProps<L = unknown> {
 }
 
 /**
- * Публичный контракт слотов.
+ * The public slot contract.
  *
- * Объявляется через `defineSlots`, а не выводится из шаблона: узлы и рёбра
- * рендерятся внутри VueFlow и берут слоты из контекста карты, поэтому вывести их
- * из разметки `NetworkMap` невозможно.
+ * Declared through `defineSlots` rather than inferred from the template: nodes
+ * and edges render inside VueFlow and pull slots out of the map context, so
+ * `NetworkMap`'s own markup does not mention them.
  */
 export type NetworkMapSlots<E = unknown, L = unknown> = {
   'toolbar-left'?(props: EmptySlotProps): unknown
@@ -171,10 +235,10 @@ export type NetworkMapSlots<E = unknown, L = unknown> = {
   empty?(props: EmptySlotProps): unknown
   loading?(props: EmptySlotProps): unknown
   /**
-   * Свои плавающие окна поверх полотна.
+   * Custom floating windows above the canvas.
    *
-   * Рендерится выше окон подробностей. Собирайте окна из экспортируемого
-   * `<MapWindow>` — тогда они получат ту же шапку, перетаскивание и токены темы.
+   * Renders above the details windows. Build them out of the exported
+   * `<MapWindow>` to inherit its title bar, dragging and theme tokens.
    */
   windows?(props: EmptySlotProps): unknown
   details?(props: DetailsSlotProps<E>): unknown
@@ -185,16 +249,16 @@ export type NetworkMapSlots<E = unknown, L = unknown> = {
 }
 
 /**
- * Императивный API компонента — то, что отдаёт `defineExpose`.
+ * The component's imperative API — what `defineExpose` returns.
  *
- * Вынесен в отдельный тип, чтобы потребитель мог типизировать `ref` на карту:
- * `InstanceType<typeof NetworkMap>` у дженерик-компонента не даёт удобного типа.
+ * Kept as a standalone type so consumers can annotate a template ref:
+ * `InstanceType<typeof NetworkMap>` is not usable on a generic component.
  */
 export interface NetworkMapExposed<E = unknown, L = unknown> {
   fitView: () => Promise<void>
   focus: (id: EntityId, options?: FocusOptions) => Promise<void>
   relayout: () => Promise<void>
-  /** Возвращает найденный путь в исходных id или пустой массив. */
+  /** Returns the path in original entity ids, or an empty array if there is none. */
   highlightPath: (from: EntityId, to: EntityId) => EntityId[]
   clearHighlight: () => void
   getGraph: () => NetworkGraph<E, L>

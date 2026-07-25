@@ -4,7 +4,7 @@ import { createApp } from 'vue'
 // пути к CSS зависимости из опубликованного CSS не разрешить.
 import '@vue-flow/core/dist/style.css'
 // Токены и темы библиотеки.
-import 'network-map/style.css'
+import 'vue-asset-map/style.css'
 import './playground.css'
 
 import App from './App.vue'

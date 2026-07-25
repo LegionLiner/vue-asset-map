@@ -28,7 +28,7 @@ function check(name, condition, detail = '') {
   console.log(`  FAIL ${name}${detail ? ` — ${detail}` : ''}`)
 }
 
-console.log('main entry (network-map)')
+console.log('main entry (vue-asset-map)')
 const main = await import(new URL('index.js', dist).href)
 check('экспортирует <NetworkMap>', typeof main.NetworkMap === 'object')
 check('экспортирует buildGraph', typeof main.buildGraph === 'function')
@@ -44,7 +44,7 @@ const graph = main.buildGraph(
 )
 check('индексы графа считаются', graph.entities.size === 2 && graph.adjacency.get('a')?.length === 1)
 
-console.log('core subpath (network-map/core)')
+console.log('core subpath (vue-asset-map/core)')
 const core = await import(new URL('core/index.js', dist).href)
 check('projectGraph работает', core.projectGraph(graph, { id: 'physical', label: 'P' }).linkIds.size === 1)
 check('blastRadius работает', core.blastRadius(graph, 'a').size === 2)
@@ -65,7 +65,7 @@ for (const engine of [main.manualLayout, main.radialLayout]) {
   check(`движок ${engine.name} раскладывает узлы`, positions.size === 2)
 }
 
-console.log('layout-dagre subpath (network-map/layout-dagre)')
+console.log('layout-dagre subpath (vue-asset-map/layout-dagre)')
 const dagreModule = await import(new URL('layout/dagre.js', dist).href)
 check('экспортирует dagreLayout', typeof dagreModule.dagreLayout?.run === 'function')
 // Главное здесь — именно вызов: импорт CommonJS-зависимости проходит и при

@@ -11,24 +11,24 @@ export default defineConfig({
   root: fileURLToPath(new URL('.', import.meta.url)),
   plugins: [vue()],
   resolve: {
-    // Массив с регулярками, а не объект: строковый ключ `network-map` перехватил
-    // бы и подпуть `network-map/style.css`, который должен вести в CSS, а не в
+    // Массив с регулярками, а не объект: строковый ключ `vue-asset-map` перехватил
+    // бы и подпуть `vue-asset-map/style.css`, который должен вести в CSS, а не в
     // точку входа. Алиасы повторяют карту `exports` из package.json.
     alias: [
       {
-        find: /^network-map\/style\.css$/,
+        find: /^vue-asset-map\/style\.css$/,
         replacement: fileURLToPath(new URL('../src/theme/index.css', import.meta.url)),
       },
       {
-        find: /^network-map\/core$/,
+        find: /^vue-asset-map\/core$/,
         replacement: fileURLToPath(new URL('../src/core/index.ts', import.meta.url)),
       },
       {
-        find: /^network-map\/layout-dagre$/,
+        find: /^vue-asset-map\/layout-dagre$/,
         replacement: fileURLToPath(new URL('../src/layout/dagre.ts', import.meta.url)),
       },
       {
-        find: /^network-map$/,
+        find: /^vue-asset-map$/,
         replacement: fileURLToPath(new URL('../src/index.ts', import.meta.url)),
       },
       {

@@ -31,7 +31,7 @@
     // это будет делать потребитель — по имени пакета, а не по относительному пути.
     "baseUrl": ".",
     "paths": {
-      "network-map": ["./src/index.ts"],
+      "vue-asset-map": ["./src/index.ts"],
       "@fixtures/*": ["./fixtures/*"]
     },
 

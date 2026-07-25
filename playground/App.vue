@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, useTemplateRef } from 'vue'
-import { MapWindow, NetworkMap, type FilterState, type NetworkMapExposed, type ThemeMode } from 'network-map'
+import { MapWindow, NetworkMap, type FilterState, type NetworkMapExposed, type ThemeMode } from 'vue-asset-map'
 import {
   entities as fixtureEntities,
   filterGroups,
@@ -13,7 +13,7 @@ import {
   type DemoLink,
 } from '@fixtures/infra'
 // Ядро без Vue доступно отдельным подпутём — здесь оно считает подпись к кнопке.
-import { blastRadius, buildGraph } from 'network-map/core'
+import { blastRadius, buildGraph } from 'vue-asset-map/core'
 import {
   CloudIcon,
   ContainerIcon,
@@ -54,7 +54,7 @@ const infectionDepth = ref(1)
 const infected = computed(() => (infectionOn.value ? [infectedSource] : []))
 
 /**
- * Тот же захват, посчитанный самим приложением через `network-map/core`.
+ * Тот же захват, посчитанный самим приложением через `vue-asset-map/core`.
  *
  * Нужен только для подписи «захвачено N узлов»: карта считает его внутри теми же
  * функциями, поэтому число рядом с кнопкой всегда совпадает с тем, что покрашено.
@@ -214,7 +214,7 @@ const historyControls = [
 <template>
   <div class="pg-shell">
     <div class="pg-bar">
-      <span class="pg-bar__title">network-map · плейграунд</span>
+      <span class="pg-bar__title">vue-asset-map · плейграунд</span>
 
       <button type="button" @click="theme = theme === 'dark' ? 'light' : 'dark'">
         Тема: {{ theme === 'dark' ? 'тёмная' : 'светлая' }}

@@ -1,81 +1,104 @@
 import type { EntityId, NetworkEntity } from './entity'
 
+/** Current filter selection. Owned by the consumer through `v-model:filters`. */
 export interface FilterState {
   query: string
-  /** Пустой массив = все типы */
+  /** Empty array means every kind. */
   kinds: string[]
   statuses: string[]
   predicate?: (entity: NetworkEntity) => boolean
   /**
-   * Выбранные значения произвольных групп фильтра: id группы → значения.
+   * Selection in consumer-defined groups: group id → chosen values.
    *
-   * Пакет не знает, какими бывают «подсеть» или «критичность»: группы задаёт
-   * потребитель через `FilterOptions.groups`, а здесь лежит только выбор.
+   * The package does not know what a "subnet" or a "severity" is: groups are
+   * declared in `FilterOptions.groups`, and only the selection lives here.
    */
   groups?: Record<string, string[]>
 }
 
-/** Значение в группе фильтра. */
+/** One selectable value inside a filter group. */
 export interface FilterGroupOption {
   value: string
-  /** Подпись. Без неё показывается само значение. */
+  /** Falls back to the raw `value` when omitted. */
   label?: string
 }
 
 /**
- * Описание группы фильтра.
+ * Declaration of a filter group.
  *
- * Группы — данные, а не код: «Подсеть», «Тип актива», «Критичность» задаёт
- * потребитель. Пакет умеет только собрать значения из сущностей и сопоставить
- * выбор с ними.
+ * Groups are data, not code: "Subnet", "Asset type" and "Severity" all come
+ * from the consumer. The package only collects values out of the entities and
+ * matches the selection against them.
  */
 export interface FilterGroupDef {
   id: string
   label: string
-  /**
-   * Значения группы. Если не заданы, собираются из данных через `valuesOf`.
-   */
+  /** Fixed value list. Collected from the data via `valuesOf` when omitted. */
   options?: readonly FilterGroupOption[]
   /**
-   * Какие значения группы несёт сущность. Дефолт — её `kind`.
+   * Which values of this group an entity carries.
    *
-   * Через него же собираются значения и считаются счётчики, поэтому одной
-   * функции достаточно и для отбора, и для фасетов.
+   * Drives value collection, facet counts and matching alike, so one function
+   * is enough to describe a group.
+   *
+   * @default entity kind
    */
   valuesOf?: (entity: NetworkEntity) => readonly string[]
-  /** Раскрыта ли группа по умолчанию. Дефолт `true`. */
+  /**
+   * Whether the group starts expanded.
+   *
+   * @default true
+   */
   defaultOpen?: boolean
 }
 
+/** Output of `filterGraph`. */
 export interface FilterResult {
-  /** Прямые совпадения — их подсвечиваем */
+  /** Direct hits — these get highlighted. */
   matchedIds: Set<EntityId>
-  /** Что вообще остаётся на карте */
+  /** Everything that stays on the map, hits and kept context alike. */
   visibleIds: Set<EntityId>
 }
 
 export interface FilterOptions {
-  /** Показывать соседей совпавших узлов на N шагов. Дефолт 1. */
+  /**
+   * Keep neighbours of matched nodes up to this many steps away.
+   *
+   * @default 1
+   */
   neighborDepth?: number
-  /** Сохранять цепочку до корня, чтобы граф не рассыпался. Дефолт true. */
+  /**
+   * Keep the chain up to the root so the graph does not fall apart.
+   *
+   * @default true
+   */
   keepPathToRoot?: boolean
-  /** Поля для текстового поиска. Дефолт: label + sublabels. */
+  /**
+   * Fields the text query is matched against.
+   *
+   * @default label plus sublabels
+   */
   searchFields?: (entity: NetworkEntity) => string[]
   /**
-   * Ограничить фильтр подграфом (обычно — результатом проекции вида).
-   * Дефолт: весь граф.
+   * Restrict filtering to a subgraph, normally the current view projection.
+   *
+   * @default the whole graph
    */
   restrictTo?: ReadonlySet<EntityId>
-  /** Расширять до соседей только по этим слоям связей. Дефолт: по всем. */
+  /**
+   * Expand to neighbours only across links on these layers.
+   *
+   * @default all layers
+   */
   layers?: readonly string[]
-  /** Группы фильтра, по которым сужается выборка. */
+  /** Consumer-defined groups the selection narrows by. */
   groups?: readonly FilterGroupDef[]
 }
 
-/** Сколько сущностей приходится на каждое значение фасета. */
+/** How many entities fall under each facet value; used for the counters in the UI. */
 export interface FacetCounts {
   kinds: ReadonlyMap<string, number>
   statuses: ReadonlyMap<string, number>
-  /** id группы → значение → число сущностей. */
+  /** Group id → value → entity count. */
   groups: ReadonlyMap<string, ReadonlyMap<string, number>>
 }

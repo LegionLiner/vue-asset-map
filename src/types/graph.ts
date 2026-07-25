@@ -1,40 +1,49 @@
 import type { EntityId, NetworkEntity } from './entity'
 import type { NetworkLink } from './link'
 
+/**
+ * Indexed, repaired view of the input data. Built once per change of the
+ * `entities` / `links` references and treated as immutable afterwards —
+ * everything downstream (projection, filtering, collapsing, layout) reads it.
+ *
+ * @typeParam E - payload type of `entity.meta`.
+ * @typeParam L - payload type of `link.meta`.
+ */
 export interface NetworkGraph<E = unknown, L = unknown> {
   entities: ReadonlyMap<EntityId, NetworkEntity<E>>
   links: ReadonlyMap<string, NetworkLink<L>>
   /**
-   * id сущности → id инцидентных рёбер.
+   * Entity id → ids of incident links.
    *
-   * Каждое инцидентное ребро встречается ровно один раз, включая петлю
-   * (`source === target` даёт одну запись, не две). Параллельные рёбра — разные
-   * id, поэтому кратность связи сохраняется.
+   * Every incident link appears exactly once, self-loops included
+   * (`source === target` yields one entry, not two). Parallel links keep
+   * distinct ids, so link multiplicity survives indexing.
    */
   adjacency: ReadonlyMap<EntityId, readonly string[]>
   childrenOf: ReadonlyMap<EntityId, readonly EntityId[]>
   roots: readonly EntityId[]
   /**
-   * id сущности → эффективный родитель (`null` для корня).
+   * Entity id → effective parent (`null` for a root).
    *
-   * «Эффективный» — уже после починки входных данных: ссылка в несуществующего
-   * родителя и циклы в иерархии сведены к `null`.
+   * "Effective" means post-repair: references to a missing parent and cycles in
+   * the hierarchy are both flattened to `null`.
    */
   parentOf: ReadonlyMap<EntityId, EntityId | null>
 
-  /** id сущности → id рёбер, где она источник. Нужно для направленного обхода. */
+  /** Entity id → ids of links where it is the source. Used for directed traversal. */
   outgoing: ReadonlyMap<EntityId, readonly string[]>
-  /** id сущности → id рёбер, где она цель. */
+  /** Entity id → ids of links where it is the target. */
   incoming: ReadonlyMap<EntityId, readonly string[]>
 }
 
-/** Что построитель графа выбросил или починил во входных данных. */
+/** What the graph builder dropped or repaired in the input data. */
 export type GraphIssueCode =
   'duplicate-entity' | 'duplicate-link' | 'dangling-link' | 'missing-parent' | 'parent-cycle' | 'self-parent'
 
+/** One repair report, delivered through `buildGraph`'s `onIssue` callback. */
 export interface GraphIssue {
   code: GraphIssueCode
-  /** id проблемной сущности или связи */
+  /** Id of the offending entity or link. */
   id: string
   detail?: string
 }

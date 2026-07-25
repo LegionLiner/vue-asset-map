@@ -6,11 +6,12 @@ import { isIPv4Wildcard, matchesCidr, matchesWildcard, parseCidr } from './ip'
 
 const DEFAULT_NEIGHBOR_DEPTH = 1
 
+/** Filter state with nothing selected — the initial value for `v-model:filters`. */
 export function emptyFilterState(): FilterState {
   return { query: '', kinds: [], statuses: [] }
 }
 
-/** Есть ли в состоянии хоть один активный критерий. */
+/** Whether any criterion is set. While `false`, the whole graph stays visible. */
 export function isFilterActive(state: FilterState): boolean {
   return (
     state.query.trim().length > 0 ||
@@ -21,7 +22,7 @@ export function isFilterActive(state: FilterState): boolean {
   )
 }
 
-/** Сколько значений выбрано во всех группах фильтра. */
+/** Total number of values selected across all filter groups. */
 export function selectedGroupCount(state: FilterState): number {
   if (!state.groups) return 0
   let total = 0
@@ -29,16 +30,14 @@ export function selectedGroupCount(state: FilterState): number {
   return total
 }
 
-/** Значения группы у сущности. Дефолт — её `kind`. */
+/** Values an entity carries in a group; falls back to its `kind`. */
 export function groupValuesOf(group: FilterGroupDef, entity: NetworkEntity): readonly string[] {
   return group.valuesOf ? group.valuesOf(entity) : [entity.kind]
 }
 
 /**
- * Проходит ли сущность отбор по группам.
- *
- * Внутри группы значения соединяются по ИЛИ (выбрать «критический» и «высокий» —
- * значит показать оба), а группы между собой — по И, как и остальные фасеты.
+ * Values inside one group combine with OR (picking "critical" and "high" shows
+ * both), while groups combine with AND, like the rest of the facets.
  */
 function matchesGroups(
   entity: NetworkEntity,
@@ -58,18 +57,18 @@ function matchesGroups(
   return true
 }
 
-/** Дефолтный набор полей для текстового поиска: имя плюс подписи. */
+/** Default searchable fields: the label plus every sublabel. */
 export function defaultSearchFields(entity: NetworkEntity): string[] {
   return entity.sublabels ? [entity.label, ...entity.sublabels] : [entity.label]
 }
 
 /**
- * Совпадение запроса с набором полей.
+ * Matches a query against a set of fields. The query's own shape picks the mode:
+ *  - CIDR (`10.38.24.0/24`) — addresses in the fields tested against the range;
+ *  - wildcard (`10.38.24.*`) — addresses tested against the pattern;
+ *  - anything else — case-insensitive substring.
  *
- * Три режима, выбираются по форме запроса:
- *  - CIDR (`10.38.24.0/24`) — сравнение адресов из полей с диапазоном;
- *  - маска (`10.38.24.*`) — сравнение адресов из полей с шаблоном;
- *  - иначе — регистронезависимая подстрока.
+ * An empty query matches everything.
  */
 export function matchesQuery(fields: readonly string[], query: string): boolean {
   const trimmed = query.trim()
@@ -85,14 +84,15 @@ export function matchesQuery(fields: readonly string[], query: string): boolean 
 }
 
 /**
- * Считает прямые совпадения и итоговый видимый набор.
+ * Computes the direct hits and the resulting visible set.
  *
- * Критерии соединяются по И: узел совпал, если прошёл текстовый запрос, фасет
- * типов, фасет статусов и пользовательский предикат. Пока не активен ни один
- * критерий, подсвечивать нечего — `matchedIds` пуст, а видно весь граф.
+ * Criteria combine with AND: an entity matches when it passes the text query,
+ * the kind facet, the status facet, the groups and the custom predicate. While
+ * no criterion is active there is nothing to highlight — `matchedIds` is empty
+ * and the whole graph is visible.
  *
- * Видимый набор = совпадения + соседи на `neighborDepth` шагов + (по умолчанию)
- * цепочки предков, чтобы дерево не рассыпалось на изоляты.
+ * Visible set = hits + neighbours within `neighborDepth` steps + ancestor chains
+ * (unless `keepPathToRoot` is off), so the tree does not fall apart into islands.
  */
 export function applyFilters<E, L>(
   graph: NetworkGraph<E, L>,
@@ -133,7 +133,7 @@ export function applyFilters<E, L>(
   expandByNeighbors(graph, visibleIds, matchedIds, neighborDepth, inScope, layers)
 
   if (keepPathToRoot) {
-    // Снимок: дописывать предков в тот же набор, по которому идёт обход, нельзя.
+    // Snapshot: ancestors must not be appended to the set being iterated.
     for (const id of [...visibleIds]) {
       for (const ancestor of ancestorsOf(graph, id)) {
         if (inScope(ancestor)) visibleIds.add(ancestor)
@@ -165,8 +165,8 @@ function expandByNeighbors<E, L>(
         if (!link) continue
         if (layers && !matchesLayers(link, layers)) continue
         const neighbor = otherEnd(link, current)
-        // Узел вне области видимости не только не показывается, но и не служит
-        // мостиком на следующий шаг.
+        // An out-of-scope node is not just hidden, it also cannot bridge to the
+        // next step.
         if (reached.has(neighbor) || !inScope(neighbor)) continue
         reached.add(neighbor)
         visibleIds.add(neighbor)
@@ -178,10 +178,10 @@ function expandByNeighbors<E, L>(
 }
 
 /**
- * Сколько сущностей приходится на каждое значение фасета.
+ * Counts how many entities fall under each facet value.
  *
- * Значения, объявленные в группе явно, попадают в результат даже с нулевым
- * счётчиком: список значений фильтра не должен прыгать при смене выборки.
+ * Values declared explicitly on a group are reported even at zero, so the
+ * filter list does not jump around as the selection changes.
  */
 export function facetCounts<E, L>(
   graph: NetworkGraph<E, L>,

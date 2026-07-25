@@ -1,31 +1,44 @@
+/** Identifier of an entity, unique across the whole dataset. */
 export type EntityId = string
 
+/** Point in canvas coordinates, in px — not screen coordinates. */
 export interface XY {
   x: number
   y: number
 }
 
+/** Small marker drawn on top of a node, e.g. a vulnerability count or an alert. */
 export interface Badge {
   id: string
-  /** CSS-цвет или имя токена темы */
+  /** CSS color or a theme token name. */
   color?: string
   tooltip?: string
 }
 
+/**
+ * One node of the map. The library treats every field except `id` as
+ * presentation data and never writes to it — entities passed in as props are
+ * read-only.
+ *
+ * @typeParam M - shape of the consumer's own payload in `meta`.
+ */
 export interface NetworkEntity<M = unknown> {
   id: EntityId
-  /** Тип узла: определяет иконку и компонент рендера. Открытый строковый союз. */
+  /**
+   * Selects the icon and the render component. An open string union: any value
+   * is valid, unknown kinds fall back to the default node.
+   */
   kind: string
   label: string
-  /** Дополнительные строки под именем: IP, домен, FQDN */
+  /** Extra lines under the label: IP, domain, FQDN. */
   sublabels?: string[]
-  /** Индикатор состояния; маппится в цвет через themeConfig.statusColors */
+  /** State indicator, mapped to a color through `themeConfig.statusColors`. */
   status?: string
   badges?: Badge[]
-  /** Иерархия для группировки и свёртки */
+  /** Hierarchy used for grouping and collapsing. */
   parentId?: EntityId | null
-  /** Закреплённая позиция с бэкенда — имеет приоритет над раскладкой */
+  /** Pinned position; takes priority over whatever the layout engine computes. */
   position?: XY
-  /** Произвольные данные потребителя. Внутри — markRaw, реактивность не нужна. */
+  /** Consumer payload. Wrapped in `markRaw` internally — it is never made reactive. */
   meta?: M
 }

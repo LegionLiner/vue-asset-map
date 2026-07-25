@@ -1,6 +1,6 @@
 /**
- * Плоский словарь строк интерфейса. Ключи фиксированы, значения — строки или
- * шаблоны с `{name}`-подстановками.
+ * Flat dictionary of every UI string. Keys are fixed; values are plain strings
+ * or templates with `{name}` placeholders.
  */
 export interface LocaleMessages {
   'search.placeholder': string
@@ -71,7 +71,8 @@ export interface LocaleMessages {
 
 export type LocaleKey = keyof LocaleMessages
 
-/** Частичный словарь: недостающие ключи берутся из встроенной локали. */
+/** Override dictionary: missing keys fall back to the built-in locale. */
 export type PartialLocaleMessages = Partial<LocaleMessages>
 
+/** Looks up a key and substitutes `{name}` placeholders from `params`. */
 export type Translate = (key: LocaleKey, params?: Record<string, string | number>) => string

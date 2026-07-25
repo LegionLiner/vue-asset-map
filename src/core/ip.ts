@@ -1,15 +1,15 @@
 /**
- * Разбор IPv4 и сопоставление по подсети — ровно столько, сколько нужно поиску.
+ * IPv4 parsing and subnet matching — exactly as much as search needs.
  *
- * Поддерживаются две формы запроса:
- *  - маска с `*`: `10.38.24.*`, `10.38.*.*`, `10.38.24.7*`
- *  - CIDR: `10.38.24.0/24`, причём база может быть любым адресом внутри сети
- *    (`10.38.24.5/24` эквивалентно `10.38.24.0/24`).
+ * Two query forms are supported:
+ *  - wildcard: `10.38.24.*`, `10.38.*.*`, `10.38.24.7*`
+ *  - CIDR: `10.38.24.0/24`, where the base may be any address inside the network
+ *    (`10.38.24.5/24` is equivalent to `10.38.24.0/24`).
  */
 
 const IPV4_RE = /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g
 
-/** Адрес → 32-битное число. `null`, если это не корректный IPv4. */
+/** Address → 32-bit unsigned number, or `null` when it is not valid IPv4. */
 export function parseIPv4(value: string): number | null {
   const parts = value.trim().split('.')
   if (parts.length !== 4) return null
@@ -23,7 +23,7 @@ export function parseIPv4(value: string): number | null {
   return result
 }
 
-/** Все IPv4-подстроки из текста, в порядке появления. */
+/** Every IPv4 substring found in the text, as numbers, in order of appearance. */
 export function extractIPv4(value: string): number[] {
   const out: number[] = []
   for (const match of value.matchAll(IPV4_RE)) {
@@ -33,15 +33,17 @@ export function extractIPv4(value: string): number[] {
   return out
 }
 
+/** Inclusive address range of a subnet, as 32-bit unsigned numbers. */
 export interface CidrRange {
-  /** Первый адрес сети */
+  /** Network address — the first address of the range. */
   start: number
-  /** Последний адрес сети */
+  /** Broadcast address — the last address of the range. */
   end: number
+  /** Prefix length in bits, 0…32. */
   prefix: number
 }
 
-/** `10.38.24.0/24` → диапазон. `null`, если строка не CIDR. */
+/** `10.38.24.0/24` → range, or `null` when the string is not CIDR. */
 export function parseCidr(query: string): CidrRange | null {
   const slash = query.indexOf('/')
   if (slash === -1) return null
@@ -50,35 +52,38 @@ export function parseCidr(query: string): CidrRange | null {
   if (base === null || !/^\d{1,2}$/.test(prefixText)) return null
   const prefix = Number(prefixText)
   if (prefix > 32) return null
-  // >>> 0 держит результат беззнаковым: побитовые операции в JS 32-битные и знаковые.
+  // `>>> 0` keeps the result unsigned: JS bitwise operators are 32-bit signed,
+  // so a /1 mask would otherwise come out negative.
   const mask = prefix === 0 ? 0 : (0xffffffff << (32 - prefix)) >>> 0
   const start = (base & mask) >>> 0
   const end = (start + (prefix === 32 ? 0 : ~mask >>> 0)) >>> 0
   return { start, end, prefix }
 }
 
-/** Похоже ли на маску адреса: есть `*` и хотя бы одна точка. */
+/** Whether a query looks like an address wildcard: contains `*` and a dot. */
 export function isIPv4Wildcard(query: string): boolean {
   return query.includes('*') && query.includes('.')
 }
 
+/** Whether an address falls inside the range, both bounds inclusive. */
 export function cidrContains(range: CidrRange, address: number): boolean {
   return address >= range.start && address <= range.end
 }
 
 /**
- * Маска → регулярка по строковому виду адреса. `*` внутри октета разрешён
- * (`10.38.24.7*` найдёт и `.7`, и `.70`), поэтому сравниваем текст, а не числа.
+ * Wildcard → regexp over the textual form of an address. `*` is allowed inside an
+ * octet (`10.38.24.7*` finds both `.7` and `.70`), which is why matching happens
+ * on text rather than on numbers.
  *
- * На месте `*` ставится U+0000 как временный маркер: он не может встретиться во
- * вводе пользователя, поэтому его нельзя спутать с экранированным символом.
+ * Each `*` becomes U+0000 as a temporary marker: it cannot occur in user input,
+ * so it can never be confused with an escaped character.
  */
 export function wildcardToRegExp(query: string): RegExp {
   const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, (char) => (char === '*' ? '\u0000' : `\\${char}`))
   return new RegExp(`^${escaped.split('\u0000').join('\\d*')}$`)
 }
 
-/** Совпадает ли хоть один адрес из текста с маской. */
+/** Whether any address in the text matches the wildcard. */
 export function matchesWildcard(text: string, query: string): boolean {
   const pattern = wildcardToRegExp(query.trim())
   for (const match of text.matchAll(IPV4_RE)) {
@@ -87,7 +92,7 @@ export function matchesWildcard(text: string, query: string): boolean {
   return false
 }
 
-/** Совпадает ли хоть один адрес из текста с CIDR-подсетью. */
+/** Whether any address in the text falls inside the subnet. */
 export function matchesCidr(text: string, range: CidrRange): boolean {
   return extractIPv4(text).some((address) => cidrContains(range, address))
 }

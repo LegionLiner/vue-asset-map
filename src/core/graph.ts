@@ -2,22 +2,23 @@ import type { EntityId, NetworkEntity } from '../types/entity'
 import type { NetworkLink } from '../types/link'
 import type { GraphIssue, NetworkGraph } from '../types/graph'
 
+/** Options of {@link buildGraph}. */
 export interface BuildGraphOptions {
-  /** Вызывается на каждую отброшенную/починенную запись входных данных. */
+  /** Called once per input record that was dropped or repaired. */
   onIssue?: (issue: GraphIssue) => void
 }
 
 /**
- * Строит индексы графа из плоских массивов.
+ * Builds the graph indexes out of the flat input arrays.
  *
- * Чистая функция: входные массивы только читаются, ни одна сущность не
- * копируется и не мутируется (в карту складываются те же ссылки).
+ * Pure: the input arrays are only read, and entities are neither copied nor
+ * mutated — the maps hold the very same references.
  *
- * Битые данные не роняют построение, а сообщаются через `onIssue`:
- *  - дубль id — побеждает первая запись;
- *  - ребро в несуществующую сущность — отбрасывается;
- *  - `parentId` в несуществующую сущность — узел становится корневым;
- *  - цикл в иерархии — связь с родителем разрывается у узла, замкнувшего цикл.
+ * Broken data never throws; it is reported through `onIssue` instead:
+ *  - duplicate id — the first occurrence wins;
+ *  - link to a missing entity — dropped;
+ *  - `parentId` pointing at a missing entity — the node becomes a root;
+ *  - cycle in the hierarchy — the parent link is cut at the node that closed it.
  */
 export function buildGraph<E = unknown, L = unknown>(
   entities: readonly NetworkEntity<E>[],
@@ -57,8 +58,8 @@ export function buildGraph<E = unknown, L = unknown>(
     }
     linkMap.set(link.id, link)
 
-    // Петля попадает в adjacency один раз: иначе кратность связи между двумя
-    // разными узлами и «двойная» петля стали бы неразличимы.
+    // A self-loop is recorded once: otherwise a doubled loop would be
+    // indistinguishable from two parallel links between distinct nodes.
     pushTo(adjacency, link.source, link.id)
     if (link.target !== link.source) pushTo(adjacency, link.target, link.id)
     pushTo(outgoing, link.source, link.id)
@@ -95,7 +96,6 @@ function buildHierarchy<E>(
   entityMap: ReadonlyMap<EntityId, NetworkEntity<E>>,
   onIssue: BuildGraphOptions['onIssue'],
 ): Hierarchy {
-  // Сначала — эффективный родитель каждого узла, с отсечением битых ссылок.
   const parentOf = new Map<EntityId, EntityId | null>()
   for (const entity of entityMap.values()) {
     const parentId = entity.parentId ?? null
@@ -116,8 +116,8 @@ function buildHierarchy<E>(
     parentOf.set(entity.id, parentId)
   }
 
-  // Затем — разрыв циклов. Идём в порядке входных данных, поэтому какая именно
-  // связь в цикле разрывается, определено однозначно.
+  // Cycles are broken in input order, so which link of a cycle gets cut is
+  // deterministic instead of depending on map iteration.
   for (const id of entityMap.keys()) {
     const seen = new Set<EntityId>([id])
     let cursor = parentOf.get(id) ?? null
@@ -148,12 +148,12 @@ function buildHierarchy<E>(
   return { childrenOf, roots, parentOf }
 }
 
-/** Эффективный родитель узла — уже с учётом починки битых ссылок и циклов. */
+/** Effective parent of a node: `null` for a root and for any repaired hierarchy. */
 export function parentIdOf<E, L>(graph: NetworkGraph<E, L>, id: EntityId): EntityId | null {
   return graph.parentOf.get(id) ?? null
 }
 
-/** Цепочка предков от прямого родителя до корня. Циклобезопасно. */
+/** Ancestors from the direct parent up to the root. Cycle-safe. */
 export function ancestorsOf<E, L>(graph: NetworkGraph<E, L>, id: EntityId): EntityId[] {
   const chain: EntityId[] = []
   const seen = new Set<EntityId>([id])
@@ -166,7 +166,7 @@ export function ancestorsOf<E, L>(graph: NetworkGraph<E, L>, id: EntityId): Enti
   return chain
 }
 
-/** Все потомки узла в порядке обхода в глубину. Циклобезопасно. */
+/** Descendants in depth-first order, excluding the node itself. Cycle-safe. */
 export function descendantsOf<E, L>(graph: NetworkGraph<E, L>, id: EntityId): EntityId[] {
   const out: EntityId[] = []
   const seen = new Set<EntityId>([id])
@@ -174,11 +174,10 @@ export function descendantsOf<E, L>(graph: NetworkGraph<E, L>, id: EntityId): En
   while (stack.length > 0) {
     const current = stack.pop()
     if (current === undefined) break
-    // Результат пишется при снятии со стека — иначе порядок был бы обратным
-    // порядку обхода. Сам узел в список потомков не входит.
+    // Recorded on pop, not on push: pushing would reverse the traversal order.
     if (current !== id) out.push(current)
     const children = graph.childrenOf.get(current) ?? []
-    // Дети кладутся в обратном порядке, чтобы сниматься в прямом.
+    // Children go on in reverse so they come off in declaration order.
     for (let i = children.length - 1; i >= 0; i -= 1) {
       const child = children[i]
       if (child === undefined || seen.has(child)) continue
@@ -189,7 +188,7 @@ export function descendantsOf<E, L>(graph: NetworkGraph<E, L>, id: EntityId): En
   return out
 }
 
-/** Инцидентные рёбра узла, опционально ограниченные слоями. */
+/** Links incident to a node, optionally restricted to the given layers. */
 export function incidentLinks<E, L>(
   graph: NetworkGraph<E, L>,
   id: EntityId,
@@ -206,17 +205,18 @@ export function incidentLinks<E, L>(
   return out
 }
 
+/** Whether a link sits on any of `layers`. Empty `layers` matches every link. */
 export function matchesLayers(link: NetworkLink, layers: readonly string[]): boolean {
   if (layers.length === 0) return true
   return link.layers.some((layer) => layers.includes(layer))
 }
 
-/** Другой конец ребра относительно `id`. Для петли — сам `id`. */
+/** The far end of a link relative to `id`; a self-loop returns `id` itself. */
 export function otherEnd(link: NetworkLink, id: EntityId): EntityId {
   return link.source === id ? link.target : link.source
 }
 
-/** Пустой граф: удобно как начальное значение и в тестах. */
+/** Graph with no entities and no links; useful as an initial value. */
 export function emptyGraph<E = unknown, L = unknown>(): NetworkGraph<E, L> {
   return buildGraph<E, L>([], [])
 }

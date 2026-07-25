@@ -1,15 +1,15 @@
 /**
- * Публичный API пакета `network-map`.
+ * Публичный API пакета `vue-asset-map`.
  *
- * Ядро доступно и отдельным подпутём `network-map/core` — там нет ни Vue, ни
+ * Ядро доступно и отдельным подпутём `vue-asset-map/core` — там нет ни Vue, ни
  * VueFlow, поэтому его можно использовать на сервере. Стили подключаются
- * отдельно: `import 'network-map/style.css'`.
+ * отдельно: `import 'vue-asset-map/style.css'`.
  */
 
 export * from './core/index'
 
 // Раскладки: `manual` и `radial` встроены, `dagre` — отдельным подпутём
-// `network-map/layout-dagre`, чтобы опциональная зависимость не попадала в
+// `vue-asset-map/layout-dagre`, чтобы опциональная зависимость не попадала в
 // основной бандл.
 export {
   applyPinned,

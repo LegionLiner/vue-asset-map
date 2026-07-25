@@ -91,7 +91,7 @@ export function provideMapContext(context: MapContext): void {
 export function useMapContext(): MapContext {
   const context = inject(MAP_CONTEXT_KEY, undefined)
   if (!context) {
-    throw new Error('[network-map] Node and edge components must be rendered inside <NetworkMap>')
+    throw new Error('[vue-asset-map] Node and edge components must be rendered inside <NetworkMap>')
   }
   return context
 }
