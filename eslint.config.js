@@ -8,7 +8,15 @@ import { defineConfigWithVueTs, vueTsConfigs } from '@vue/eslint-config-typescri
  */
 export default defineConfigWithVueTs(
   {
-    ignores: ['dist/**', 'coverage/**', 'node_modules/**', 'playground/dist/**', '**/*.tsbuildinfo'],
+    ignores: [
+      'dist/**',
+      'coverage/**',
+      'node_modules/**',
+      'playground/dist/**',
+      'docs/.vitepress/dist/**',
+      'docs/.vitepress/cache/**',
+      '**/*.tsbuildinfo',
+    ],
   },
   pluginVue.configs['flat/recommended'],
   vueTsConfigs.recommended,
@@ -32,8 +40,8 @@ export default defineConfigWithVueTs(
       'vue/multi-word-component-names': 'off',
       'vue/require-default-prop': 'off',
       'vue/block-order': ['error', { order: ['script', 'template', 'style'] }],
-      // Форматированием владеет Prettier. Эти два правила спорят с ним об одном
-      // и том же и дают шум, который «исправляется» обратно на каждом формате.
+      // Prettier owns formatting. These rules argue with it over the same code
+      // and produce noise that gets "fixed" straight back on every format run.
       'vue/max-attributes-per-line': 'off',
       'vue/singleline-html-element-content-newline': 'off',
       'vue/html-self-closing': 'off',
@@ -71,10 +79,21 @@ export default defineConfigWithVueTs(
     },
   },
   {
+    // Docs sources live outside the library tsconfig projects: VitePress compiles
+    // them, `vue-tsc --build` does not, so type-aware linting has no program to
+    // attach them to.
+    name: 'vue-asset-map/docs',
+    files: ['docs/**/*.ts', 'docs/**/*.vue'],
+    languageOptions: { parserOptions: { projectService: false, project: false } },
+    rules: {
+      'no-console': 'off',
+    },
+  },
+  {
     name: 'vue-asset-map/configs',
     files: ['*.config.ts', '*.config.js', 'playground/**/*.ts', 'scripts/**/*.mjs'],
     rules: {
-      // Скрипты и конфиги — CLI-инструменты: их вывод в консоль и есть результат.
+      // Scripts and configs are CLI tools: their console output is the result.
       'no-console': 'off',
     },
   },

@@ -1,0 +1,101 @@
+# Collapse
+
+Fourteen containers on one hypervisor are fourteen circles that say nothing individually. Collapsing folds siblings of
+one kind into a single group node and re-routes their edges onto it.
+
+```ts
+interface CollapseRule {
+  threshold?: number
+  groupBy?: (entity: AssetEntity) => string | null
+  shouldCollapse?: (parentId: EntityId | null, children: readonly AssetEntity[]) => boolean
+}
+```
+
+By default children are bucketed by `kind` and a bucket collapses once it holds more than ten of them.
+
+```vue
+<AssetMap :entities="entities" :links="links" :collapse="{ threshold: 4 }" />
+```
+
+`:collapse="false"` turns it off entirely.
+
+<LiveDemo :source="collapsedSource">
+  <CollapsedGroupMap />
+</LiveDemo>
+
+## What the rules guarantee
+
+Collapsing runs **before** layout: positions are computed on the collapsed graph, so a single group node does not land
+in space laid out for fourteen separate ones. The function is pure and deterministic — group, node and edge order all
+follow the order of the input arrays, so the same input gives the same map.
+
+The rest of the invariants:
+
+- **Grouping happens under the nearest *visible* ancestor.** When a projection hides a parent, its children group one
+  level up rather than under a hidden id.
+- **Groups never nest.** Levels are walked top-down and a collapsed level is not descended into.
+- **Expanding by hand always wins.** `expandedIds` is checked before the rule, so it beats both `shouldCollapse` and
+  the threshold.
+- **A group of one is never created.** It would hide a node behind a node and save nothing; this floor outranks
+  `shouldCollapse`.
+- **Genuine multiplicity stays visible.** Parallel edges aggregate only when at least one end is a group.
+- **Edges inside a group are not drawn.** They are counted in `CollapsedGroup.internalLinkCount` instead, so a group
+  can show how much traffic is internal.
+
+## Custom bucketing
+
+`groupBy` returns the bucket key, or `null` to keep an entity out of any group:
+
+```ts
+const collapse = {
+  threshold: 6,
+  // Group by subnet instead of kind, and never fold critical assets away.
+  groupBy: (entity) => (entity.meta?.severity === 'critical' ? null : (entity.meta?.subnet ?? entity.kind)),
+}
+```
+
+`shouldCollapse` replaces the threshold decision entirely:
+
+```ts
+const collapse = {
+  shouldCollapse: (parentId, children) => parentId !== null && children.length > 3,
+}
+```
+
+## Controlling the state
+
+```vue
+<AssetMap v-model:expanded="expanded" :entities="entities" :links="links" />
+```
+
+`expanded` is a `Set<string>` of group ids. The component never mutates it in place — a new `Set` goes out on every
+change, because the one you passed may come from a store that does not track mutations.
+
+Group ids have the form `group:<parentId>:<bucket>`, and `groupIdFor` builds them:
+
+```ts
+import { groupIdFor } from 'vue-asset-map/core'
+
+expanded.value = new Set([groupIdFor('pve-beelink', 'container')])
+```
+
+## Events
+
+```vue
+<AssetMap
+  :entities="entities"
+  :links="links"
+  @expand="({ groupId, group }) => console.log('opened', groupId, group?.memberIds.length)"
+  @collapse="({ groupId }) => console.log('closed', groupId)"
+/>
+```
+
+## Subtree collapse is a different thing
+
+The button on a node hides its **descendants** while the node itself stays on the map. Group collapse hides
+**siblings** behind a synthetic node. They compose: a subtree hidden by the button is resolved before any grouping
+decision, so its descendants neither group nor reach the node list.
+
+<script setup>
+import collapsedSource from '../.vitepress/demos/CollapsedGroupMap.vue?raw'
+</script>

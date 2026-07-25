@@ -18,8 +18,10 @@ export {
   defaultSearchFields,
   emptyFilterState,
   facetCounts,
+  groupValuesOf,
   isFilterActive,
   matchesQuery,
+  selectedGroupCount,
 } from './filter'
 
 export { collapseGraph, groupIdFor, isAggregatedLink } from './collapse'
@@ -56,7 +58,14 @@ export type {
   CollapseResult,
   CollapseRule,
 } from '../types/collapse'
-export type { FacetCounts, FilterOptions, FilterResult, FilterState } from '../types/filter'
+export type {
+  FacetCounts,
+  FilterGroupDef,
+  FilterGroupOption,
+  FilterOptions,
+  FilterResult,
+  FilterState,
+} from '../types/filter'
 export type {
   ConnectionMarkerOptions,
   MarkerAnchor,

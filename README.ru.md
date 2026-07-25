@@ -1,0 +1,155 @@
+# vue-asset-map
+
+[English](./README.md)
+
+Интерактивная карта инфраструктурных активов для Vue 3 на базе Vue Flow.
+
+[![npm version](https://img.shields.io/npm/v/vue-asset-map.svg)](https://www.npmjs.com/package/vue-asset-map)
+[![license](https://img.shields.io/npm/l/vue-asset-map.svg)](./LICENSE)
+
+[Документация](https://LegionLiner.github.io/vue-asset-map/ru/) ·
+[Живое демо](https://LegionLiner.github.io/vue-asset-map/ru/examples/) ·
+[Changelog](./CHANGELOG.md)
+
+## Возможности
+
+- **Проекции одного графа.** Сущности и связи объявляются один раз; вид оставляет связи, у которых в `layers` есть его
+  id, поэтому одни и те же данные рисуются и как физическая топология, и как VPN-оверлей.
+- **Свёртка групп.** Однотипные соседи по родителю схлопываются в один узел при превышении порога: их рёбра
+  переносятся на групповой узел, параллельные агрегируются со счётчиком. Клик раскрывает группу обратно.
+- **Свёртка поддерева.** Кнопка на самом узле прячет его потомков и переносит их рёбра на него.
+- **Поиск по имени, IPv4-маске и CIDR.** `10.38.24.*` и `10.38.24.0/24` сравниваются с адресами внутри подписей;
+  всё остальное — регистронезависимая подстрока.
+- **Фасетные фильтры.** Группы вроде «Подсеть» или «Критичность» задаёт потребитель через `valuesOf`. Счётчики
+  считаются по текущей проекции, поэтому выбор одного значения не обнуляет остальные.
+- **Маркеры принадлежности.** Кружки под подписью показывают, к каким узлам-центрам подключён актив; состав считается
+  по самому графу. Наведение подсвечивает всех с тем же кружком, остальных гасит.
+- **Подробности в перетаскиваемых окнах.** Несколько окон одновременно, лимит задаётся пропсом, содержимое — через слот
+  `#details`. `<MapWindow>` экспортируется: из него собираются свои окна.
+- **Подключаемые раскладки.** `manual` и `radial` встроены, `dagre` — отдельным подпутём. Можно передать любой объект с
+  методом `run(graph, options, signal)`.
+- **Ядро без фреймворка.** `vue-asset-map/core` не импортирует ни Vue, ни Vue Flow, поэтому проекцию, фильтрацию и
+  радиус связей можно посчитать на сервере.
+
+## Установка
+
+```bash
+npm install vue-asset-map vue @vue-flow/core
+```
+
+`vue` и `@vue-flow/core` — peer-зависимости. Vue Flow должен быть в дереве ровно один раз: он работает через
+`provide`/`inject`, и вторая копия ломает контекст провайдера.
+
+Раскладка на dagre опциональна и нужна только если вы ей пользуетесь:
+
+```bash
+npm install @dagrejs/dagre
+```
+
+Оба стиля подключает приложение — структурный CSS Vue Flow и токены пакета:
+
+```ts
+import '@vue-flow/core/dist/style.css'
+import 'vue-asset-map/style.css'
+```
+
+## Минимальный пример
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import { AssetMap } from 'vue-asset-map'
+import type { AssetEntity, AssetLink, AssetView } from 'vue-asset-map'
+
+const entities: AssetEntity[] = [
+  { id: 'internet', kind: 'cloud', label: 'Интернет' },
+  { id: 'router', kind: 'router', label: 'Роутер офиса', parentId: 'internet', sublabels: ['10.0.0.1'] },
+  { id: 'vpn', kind: 'vps', label: 'Координатор VPN', parentId: 'internet', status: 'online' },
+  { id: 'laptop', kind: 'host', label: 'Ноутбук', parentId: 'router', sublabels: ['10.0.0.14'] },
+]
+
+const links: AssetLink[] = [
+  { id: 'l1', source: 'internet', target: 'router', layers: ['physical'] },
+  { id: 'l2', source: 'internet', target: 'vpn', layers: ['physical'] },
+  { id: 'l3', source: 'router', target: 'laptop', layers: ['physical'] },
+  { id: 'l4', source: 'vpn', target: 'laptop', layers: ['logical'] },
+]
+
+const views: AssetView[] = [
+  { id: 'physical', label: 'Физическая', hideIsolated: true },
+  { id: 'logical', label: 'VPN-оверлей', hideIsolated: true },
+]
+
+const view = ref('physical')
+const selection = ref<string[]>([])
+</script>
+
+<template>
+  <AssetMap
+    v-model:view="view"
+    v-model:selection="selection"
+    :entities="entities"
+    :links="links"
+    :views="views"
+    style="height: 100vh"
+  />
+</template>
+```
+
+Связь попадает в вид, если её `layers` содержат id вида, поэтому `l4` виден только в оверлее. С `hideIsolated` узлы,
+оставшиеся в виде без связей, из него убираются.
+
+## Props
+
+Самое частое; полный список — в [справочнике API](https://LegionLiner.github.io/vue-asset-map/ru/api/).
+
+| Prop | Тип | По умолчанию | Что делает |
+| --- | --- | --- | --- |
+| `entities` | `AssetEntity<E>[]` | — | Узлы. Карта их не мутирует. |
+| `links` | `AssetLink<L>[]` | — | Связи. Карта их не мутирует. |
+| `views` | `AssetView[]` | — | Проекции. Без них рисуется всё. |
+| `layout` | `AssetMapLayoutSpec` | `manual` | Движок по имени или объектом, плюс его опции. |
+| `collapse` | `CollapseRule \| false` | порог `10` | `false` выключает свёртку групп. |
+| `themeConfig` | `ThemeConfig` | — | `statusColors` и `kindIcons` по вашим значениям. |
+| `theme` | `'light' \| 'dark' \| 'auto'` | `'light'` | `'auto'` читает системную настройку один раз. |
+| `markers` | `NodeMarkerDef[]` | — | Кружки принадлежности под подписями. |
+| `maxDetailsWindows` | `number` | `2` | `0` полностью выключает окна подробностей. |
+| `locale` | `string \| PartialLocaleMessages` | `ru` | Код локали или словарь переопределений. |
+
+Двусторонние привязки: `view`, `selection`, `expanded`, `filters`, `viewport`, `openDetails`, `collapsedNodes`,
+`openFilterGroups`. Каждая работает и без `v-model` — тогда состоянием управляет сам компонент.
+
+## События
+
+| Событие | Полезная нагрузка | Когда |
+| --- | --- | --- |
+| `node-click` | `{ id, entity, group, event }` | Клик по узлу или групповому узлу. |
+| `selection-change` | `EntityId[]` | Изменилось выделение, в порядке выбора. |
+| `expand` / `collapse` | `{ groupId, group }` | Группа раскрыта или свёрнута. |
+| `layout-done` | `{ engine, positions }` | Раскладка досчитана и применена. |
+| `error` | `unknown` | Движок раскладки упал или запрошено неизвестное имя движка. |
+
+## Слоты
+
+| Слот | Параметры | Зачем |
+| --- | --- | --- |
+| `details` | `{ entity, close, tab }` | Тело окна подробностей. |
+| `node-{kind}` | `{ entity, nodeId, simplified }` | Подменяет содержимое круга узла. |
+| `toolbar-left` / `toolbar-right` | — | Свои контролы в шапке карты. |
+| `windows` | — | Свои плавающие окна поверх полотна. |
+| `edge-label` | `{ link, aggregated, count }` | Подменяет подпись связи. |
+
+## Требования
+
+| | Версия |
+| --- | --- |
+| Vue | `^3.4.0` |
+| Vue Flow (`@vue-flow/core`) | `^1.42.0` |
+| Node, для сборки из исходников | `>=20` |
+
+Пакет только ESM, а его декларации рассчитаны на `moduleResolution: "bundler"` — значение по умолчанию в проекте на
+Vite или webpack.
+
+## Лицензия
+
+[MIT](./LICENSE) © Dmitriy Korolev
