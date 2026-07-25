@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { AssetMap } from 'vue-asset-map'
 import type { AssetLink } from 'vue-asset-map'
+import { dagreLayout } from 'vue-asset-map/layout-dagre'
 import { entities, links, views, statusColors, kindIcons } from './fixture'
 
 // `kind` selects the edge style through a CSS class; `directed` adds an arrow.
-// Nothing here is hardcoded in the package — both come from the data.
+// Nothing here is hardcoded in the package — both come from the data. A
+// left-to-right layered layout reads a directed arrow more clearly than a
+// radial one, where every arrow points along a different curve.
 const styled: AssetLink[] = links.map((link) =>
   link.layers.includes('logical') ? { ...link, kind: 'dashed', directed: true } : link,
 )
@@ -18,7 +21,8 @@ const styled: AssetLink[] = links.map((link) =>
     :links="styled"
     :views="views"
     :theme-config="{ statusColors, kindIcons }"
-    :layout="{ engine: 'radial' }"
+    :layout="{ engine: dagreLayout, options: { rankdir: 'LR', ranksep: 110 } }"
+    auto-fit-view
   >
     <template #edge-label="{ link, aggregated, count }">
       <span class="edge-label">

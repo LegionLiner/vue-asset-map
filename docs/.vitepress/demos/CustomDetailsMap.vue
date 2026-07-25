@@ -1,7 +1,14 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { AssetMap, DetailsSection } from 'vue-asset-map'
 import type { AssetMeta } from './fixture'
 import { entities, links, views, statusColors, kindIcons } from './fixture'
+
+// Opened by default so the custom panel is visible without a click — a real
+// app would not do this, but a demo should not make "click a node first" a
+// precondition for seeing what it demonstrates.
+const openDetails = ref(['ws-artjom'])
+const selection = ref(['ws-artjom'])
 
 // Field labels are the consumer's business: the package never guesses what
 // lives in `meta`.
@@ -34,13 +41,16 @@ function rows(meta: AssetMeta | undefined) {
 
 <template>
   <AssetMap
+    v-model:open-details="openDetails"
+    v-model:selection="selection"
     class="demo-map"
     view="physical"
     :entities="entities"
     :links="links"
     :views="views"
     :theme-config="{ statusColors, kindIcons }"
-    :layout="{ engine: 'radial' }"
+    :layout="{ engine: 'radial', options: { rootId: 'internet' } }"
+    auto-fit-view
   >
     <template #details="{ entity }">
       <DetailsSection title="Inventory">

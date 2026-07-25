@@ -17,7 +17,8 @@ const theme = ref<'light' | 'dark'>('dark')
     :views="views"
     :theme="theme"
     :theme-config="{ statusColors, kindIcons }"
-    :layout="{ engine: 'radial' }"
+    :layout="{ engine: 'radial', options: { rootId: 'internet' } }"
+    auto-fit-view
   >
     <template #toolbar-right>
       <button type="button" class="demo-toolbar-button" @click="theme = theme === 'dark' ? 'light' : 'dark'">

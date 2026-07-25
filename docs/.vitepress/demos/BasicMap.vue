@@ -16,6 +16,7 @@ const selection = ref<string[]>([])
     :links="links"
     :views="views"
     :theme-config="{ statusColors, kindIcons }"
-    :layout="{ engine: 'radial' }"
+    :layout="{ engine: 'radial', options: { rootId: 'internet' } }"
+    auto-fit-view
   />
 </template>

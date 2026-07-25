@@ -103,18 +103,19 @@ const selection = ref<string[]>([])
 
 Самое частое; полный список — в [справочнике API](https://LegionLiner.github.io/vue-asset-map/ru/api/).
 
-| Prop                | Тип                               | По умолчанию | Что делает                                       |
-| ------------------- | --------------------------------- | ------------ | ------------------------------------------------ |
-| `entities`          | `AssetEntity<E>[]`                | —            | Узлы. Карта их не мутирует.                      |
-| `links`             | `AssetLink<L>[]`                  | —            | Связи. Карта их не мутирует.                     |
-| `views`             | `AssetView[]`                     | —            | Проекции. Без них рисуется всё.                  |
-| `layout`            | `AssetMapLayoutSpec`              | `manual`     | Движок по имени или объектом, плюс его опции.    |
-| `collapse`          | `CollapseRule \| false`           | порог `10`   | `false` выключает свёртку групп.                 |
-| `themeConfig`       | `ThemeConfig`                     | —            | `statusColors` и `kindIcons` по вашим значениям. |
-| `theme`             | `'light' \| 'dark' \| 'auto'`     | `'light'`    | `'auto'` читает системную настройку один раз.    |
-| `markers`           | `NodeMarkerDef[]`                 | —            | Кружки принадлежности под подписями.             |
-| `maxDetailsWindows` | `number`                          | `2`          | `0` полностью выключает окна подробностей.       |
-| `locale`            | `string \| PartialLocaleMessages` | `ru`         | Код локали или словарь переопределений.          |
+| Prop                | Тип                               | По умолчанию | Что делает                                               |
+| ------------------- | --------------------------------- | ------------ | -------------------------------------------------------- |
+| `entities`          | `AssetEntity<E>[]`                | —            | Узлы. Карта их не мутирует.                              |
+| `links`             | `AssetLink<L>[]`                  | —            | Связи. Карта их не мутирует.                             |
+| `views`             | `AssetView[]`                     | —            | Проекции. Без них рисуется всё.                          |
+| `layout`            | `AssetMapLayoutSpec`              | `manual`     | Движок по имени или объектом, плюс его опции.            |
+| `collapse`          | `CollapseRule \| false`           | порог `10`   | `false` выключает свёртку групп.                         |
+| `themeConfig`       | `ThemeConfig`                     | —            | `statusColors` и `kindIcons` по вашим значениям.         |
+| `theme`             | `'light' \| 'dark' \| 'auto'`     | `'light'`    | `'auto'` читает системную настройку один раз.            |
+| `markers`           | `NodeMarkerDef[]`                 | —            | Кружки принадлежности под подписями.                     |
+| `maxDetailsWindows` | `number`                          | `2`          | `0` полностью выключает окна подробностей.               |
+| `locale`            | `string \| PartialLocaleMessages` | `ru`         | Код локали или словарь переопределений.                  |
+| `autoFitView`       | `boolean`                         | `false`      | Подгонять полотно под содержимое после каждой раскладки. |
 
 Двусторонние привязки: `view`, `selection`, `expanded`, `filters`, `viewport`, `openDetails`, `collapsedNodes`,
 `openFilterGroups`. Каждая работает и без `v-model` — тогда состоянием управляет сам компонент.

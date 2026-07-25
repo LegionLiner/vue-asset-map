@@ -51,6 +51,12 @@ blastRadius(graph, 'vps-tailscale', { direction: 'downstream', maxDepth: 2, laye
 
 ## Подсветка пути на карте
 
+`highlightPath` принимает id двух сущностей — в демо ниже они берутся из `v-model:selection`, набранного зажатым Shift
+и кликами по узлам. Shift — это модификатор, на который стоит полагаться: он добавляет к выделению на любой платформе,
+тогда как Ctrl+клик на macOS вообще не доходит до обработчика клика узла — там это системный жест правого клика, и
+браузер шлёт вместо `click` событие `contextmenu`. Ctrl и Cmd по-прежнему работают для тех, чья привычка настроена на
+них.
+
 ```ts
 const map = useTemplateRef<AssetMapExposed>('map')
 

@@ -120,6 +120,7 @@ export default defineConfig({
   },
 
   themeConfig: {
+    logo: '/logo.png',
     socialLinks: [{ icon: 'github', link: 'https://github.com/LegionLiner/vue-asset-map' }],
     search: { provider: 'local' },
     footer: {

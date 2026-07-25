@@ -56,8 +56,9 @@ The `#details` slot with the application's own field labels. The package never g
 
 ## Tracing a path between two nodes
 
-Select two nodes, then press the button. The path is searched on the original graph and highlighted on the collapsed
-one.
+Two nodes are pre-selected, so a path is already highlighted below. Shift-click two nodes of your own to trace a
+different pair — Shift is the additive modifier that works everywhere, unlike Ctrl+click, which macOS treats as a
+right click. The path is searched on the original graph and highlighted on the collapsed one.
 
 <LiveDemo :source="pathSource">
   <PathTraceMap />

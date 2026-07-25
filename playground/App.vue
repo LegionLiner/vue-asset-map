@@ -251,6 +251,7 @@ const historyControls = [
       :infected="infected"
       :infection-options="{ maxDepth: infectionDepth }"
       show-minimap
+      auto-fit-view
     >
       <template #toolbar-right>
         <button type="button" class="pg-add" @click="openAdd">Добавить</button>

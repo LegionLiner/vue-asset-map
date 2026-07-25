@@ -52,6 +52,11 @@ undirected edge would produce confident nonsense.
 
 ## Highlighting a path on the map
 
+`highlightPath` takes two entity ids — the demo below gets them from `v-model:selection`, built up by Shift-clicking
+two nodes. Shift is the modifier to reach for: it adds to the selection on every platform, whereas Ctrl+click does not
+reach a node's click handler at all on macOS, where it is the system's own right-click gesture and is dispatched as a
+`contextmenu` event instead of a `click`. Ctrl and Cmd are still honoured for anyone whose muscle memory expects them.
+
 ```ts
 const map = useTemplateRef<AssetMapExposed>('map')
 

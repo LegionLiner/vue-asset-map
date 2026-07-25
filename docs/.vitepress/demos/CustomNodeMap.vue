@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { AssetMap } from 'vue-asset-map'
+import { dagreLayout } from 'vue-asset-map/layout-dagre'
 import { entities, links, views, statusColors, kindIcons } from './fixture'
 </script>
 
@@ -11,7 +12,8 @@ import { entities, links, views, statusColors, kindIcons } from './fixture'
     :links="links"
     :views="views"
     :theme-config="{ statusColors, kindIcons }"
-    :layout="{ engine: 'radial' }"
+    :layout="{ engine: dagreLayout, options: { rankdir: 'TB', ranksep: 70, nodesep: 32 } }"
+    auto-fit-view
   >
     <!-- Replaces the contents of the circle for one kind only; every other
          node keeps the default rendering. -->

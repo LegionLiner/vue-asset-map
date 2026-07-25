@@ -18,6 +18,7 @@ const expanded = ref(new Set<string>())
     :views="views"
     :collapse="{ threshold: 4 }"
     :theme-config="{ statusColors, kindIcons }"
-    :layout="{ engine: 'radial' }"
+    :layout="{ engine: 'manual', options: { columns: 5 } }"
+    auto-fit-view
   />
 </template>

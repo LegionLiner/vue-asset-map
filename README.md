@@ -116,6 +116,7 @@ The ones reached for most often; the full list is in the
 | `markers`           | `NodeMarkerDef[]`                 | —              | Membership dots under the labels.                         |
 | `maxDetailsWindows` | `number`                          | `2`            | `0` disables the details windows.                         |
 | `locale`            | `string \| PartialLocaleMessages` | `ru`           | Locale code, or a dictionary of overrides.                |
+| `autoFitView`       | `boolean`                         | `false`        | Fit the canvas to its content after every layout.         |
 
 Two-way bindings: `view`, `selection`, `expanded`, `filters`, `viewport`, `openDetails`, `collapsedNodes`,
 `openFilterGroups`. Each works without a `v-model` too — the component then owns that state itself.

@@ -43,6 +43,7 @@ The map. Generic over the payload types of `entity.meta` and `link.meta`: `Asset
 | `lodThreshold`              | `number`                          | `0.5`                  | Zoom below which nodes render simplified.                     |
 | `searchDebounce`            | `number`                          | `200`                  | Delay in ms before a typed query applies.                     |
 | `loading`                   | `boolean`                         | `false`                | Show a loading overlay.                                       |
+| `autoFitView`               | `boolean`                         | `false`                | Fit the canvas to its content after every layout settles.     |
 
 #### Two-way bindings
 

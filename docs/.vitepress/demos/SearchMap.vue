@@ -24,7 +24,8 @@ function preset(query: string): void {
     :views="views"
     :filter-options="{ groups: filterGroups, neighborDepth: 1 }"
     :theme-config="{ statusColors, kindIcons }"
-    :layout="{ engine: 'radial' }"
+    :layout="{ engine: 'radial', options: { rootId: 'internet' } }"
+    auto-fit-view
   >
     <template #toolbar-right>
       <button type="button" class="demo-toolbar-button" @click="preset('10.38.24.0/24')">

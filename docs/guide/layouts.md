@@ -127,6 +127,29 @@ await map.value?.relayout()
 
 `layout-start`, `layout-done` and `error` report the progress of a run.
 
+## Fitting the view
+
+Without a starting position, an unbound `v-model:viewport` defaults to `{ x: 0, y: 0, zoom: 1 }`, so whatever the
+layout placed at the origin ends up in the top-left corner rather than centred.
+
+```vue
+<AssetMap :entities="entities" :links="links" auto-fit-view />
+```
+
+`autoFitView` fits the canvas to its content once the first layout settles, and again after anything reshapes it — a
+view switch, a group collapse or expand, a layout engine change. It waits on Vue Flow's own node-measurement signal
+rather than a fixed delay, so it fires exactly once dimensions are known and never centres on a graph that has not
+finished laying out yet.
+
+It defaults to `false`: an application that manages its own viewport — restoring a saved position, calling `focus` on
+a specific node after load — should not have that overridden on every relayout. For a one-off fit instead of a
+standing behaviour, call the exposed method directly:
+
+```ts
+const map = useTemplateRef<AssetMapExposed>('map')
+await map.value?.fitView()
+```
+
 <script setup>
 import layoutSource from '../.vitepress/demos/LayoutMap.vue?raw'
 </script>
