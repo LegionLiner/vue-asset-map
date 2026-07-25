@@ -26,6 +26,8 @@
     "baseUrl": ".",
     "paths": {
       "vue-asset-map": ["./src/index.ts"],
+      "vue-asset-map/core": ["./src/core/index.ts"],
+      "vue-asset-map/layout-dagre": ["./src/layout/dagre.ts"],
       "@fixtures/*": ["./fixtures/*"]
     },
 
