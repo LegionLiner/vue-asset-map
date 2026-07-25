@@ -33,12 +33,12 @@ export const KIND_HYPERVISOR = 'hypervisor'
 export const KIND_WORKSTATION = 'workstation'
 export const KIND_CONTAINER = 'container'
 
-const entity = (
-  id: string,
-  kind: string,
-  label: string,
-  extra: Partial<DemoEntity> = {},
-): DemoEntity => ({ id, kind, label, ...extra })
+const entity = (id: string, kind: string, label: string, extra: Partial<DemoEntity> = {}): DemoEntity => ({
+  id,
+  kind,
+  label,
+  ...extra,
+})
 
 export const entities: DemoEntity[] = [
   // --- Облака -------------------------------------------------------------

@@ -139,7 +139,10 @@ function expandByNeighbors<E, L>(
 }
 
 /** Сколько сущностей приходится на каждый тип и каждый статус. */
-export function facetCounts<E, L>(graph: NetworkGraph<E, L>, restrictTo?: ReadonlySet<EntityId>): FacetCounts {
+export function facetCounts<E, L>(
+  graph: NetworkGraph<E, L>,
+  restrictTo?: ReadonlySet<EntityId>,
+): FacetCounts {
   const kinds = new Map<string, number>()
   const statuses = new Map<string, number>()
 

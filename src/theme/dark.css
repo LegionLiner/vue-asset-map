@@ -1,0 +1,44 @@
+/*
+ * Тёмная тема.
+ *
+ * Включается классом `.vnm-theme-dark`, а не `@media (prefers-color-scheme)`:
+ * в продукте есть явный переключатель, и он должен побеждать системную
+ * настройку. `theme: 'auto'` читает систему один раз при инициализации и
+ * ставит соответствующий класс — дальше решает пользователь.
+ */
+.vnm-root.vnm-theme-dark {
+  --vnm-bg: #0f172a;
+  --vnm-surface: #1b2438;
+  --vnm-surface-raised: #232e46;
+  --vnm-surface-sunken: #151d2f;
+  --vnm-fg: #e5e9f0;
+  --vnm-fg-muted: #94a3b8;
+  --vnm-fg-inverted: #0f172a;
+  --vnm-border: #2e3a52;
+  --vnm-border-strong: #435170;
+
+  --vnm-accent: #60a5fa;
+  --vnm-accent-fg: #0f172a;
+  --vnm-accent-soft: rgba(96, 165, 250, 0.18);
+  --vnm-focus-ring: #93c5fd;
+  --vnm-selection: rgba(96, 165, 250, 0.24);
+  --vnm-highlight: #fbbf24;
+  --vnm-highlight-soft: rgba(251, 191, 36, 0.22);
+
+  --vnm-edge: #64748b;
+  --vnm-edge-active: #a5b4fc;
+  --vnm-edge-dimmed: #334155;
+  --vnm-edge-label-bg: #1b2438;
+
+  /* Состояния в тёмной теме светлее: на тёмном фоне насыщенный цвет глухой. */
+  --vnm-status-online: #4ade80;
+  --vnm-status-offline: #f87171;
+  --vnm-status-warning: #fbbf24;
+  --vnm-status-unknown: #94a3b8;
+
+  --vnm-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --vnm-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45);
+  --vnm-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.55);
+
+  --vnm-canvas-dot: #2b3852;
+}

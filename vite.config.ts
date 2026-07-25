@@ -40,7 +40,17 @@ export default defineConfig({
       external: ['vue', '@vue-flow/core', '@dagrejs/dagre'],
       output: {
         chunkFileNames: 'chunks/[name]-[hash].js',
-        assetFileNames: (asset) => (asset.names.some((n) => n.endsWith('.css')) ? 'style.css' : '[name][extname]'),
+        // Все стили компонентов сводятся в один предсказуемый `dist/style.css` —
+        // именно его подключает потребитель через подпуть `./style.css`.
+        //
+        // Имя ассета читается защитно: Rollup 4 отдаёт `names`, но Vite вызывает
+        // этот же коллбэк из своего css-post плагина с объектом, где есть только
+        // устаревшее `name`. Обращение сразу к `names` роняет сборку, как только
+        // в проекте появляется первый SFC со стилями.
+        assetFileNames: (asset) => {
+          const names = asset.names ?? (asset.name ? [asset.name] : [])
+          return names.some((name) => name.endsWith('.css')) ? 'style.css' : '[name][extname]'
+        },
       },
     },
   },

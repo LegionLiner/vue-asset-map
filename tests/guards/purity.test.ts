@@ -1,29 +1,19 @@
 import { describe, expect, it } from 'vitest'
+import { readSources, stripComments } from './sources'
 
 /**
  * Критерии приёмки, проверяемые машиной, а не глазами.
  *
- * ESLint уже запрещает эти импорты правилом `no-restricted-imports`, но правило
- * можно отключить комментарием, а тест — нет. Плюс тест видит транзитивную
- * картину: не только `import`, но и любое упоминание.
+ * ESLint уже запрещает часть этих импортов правилом `no-restricted-imports`, но
+ * правило можно отключить комментарием, а тест — нет.
  */
 
-const coreSources = import.meta.glob<string>('../../src/core/**/*.ts', {
-  query: '?raw',
-  import: 'default',
-  eager: true,
-})
+const coreSources = readSources('src/core', ['.ts'])
+const layoutSources = readSources('src/layout', ['.ts'])
+const pureSources = [...coreSources, ...layoutSources]
+const allSources = readSources('src', ['.ts', '.vue'])
 
-const layoutSources = import.meta.glob<string>('../../src/layout/**/*.ts', {
-  query: '?raw',
-  import: 'default',
-  eager: true,
-})
-
-/**
- * Импорт из модуля или любого его подпути. Ловит все формы: `import`,
- * `import type`, динамический `import()` и `require()`.
- */
+/** Импорт из модуля или любого его подпути: `import`, `import type`, `import()`, `require()`. */
 function importsFrom(source: string, moduleName: string): boolean {
   return matchesSpecifier(source, `${escapeRegExp(moduleName)}(/[^'"]*)?`)
 }
@@ -47,49 +37,103 @@ function escapeRegExp(value: string): string {
 
 describe('src/core и src/layout свободны от фреймворка', () => {
   it('файлы вообще нашлись — иначе тест бессмысленно зелёный', () => {
-    expect(Object.keys(coreSources).length).toBeGreaterThan(5)
-    expect(Object.keys(layoutSources).length).toBeGreaterThan(0)
+    expect(coreSources.length).toBeGreaterThan(5)
+    expect(layoutSources.length).toBeGreaterThan(3)
   })
 
   it.each(['vue', '@vue-flow/core', '@vue/reactivity', '@vue/runtime-core'])(
     'ни один файл ядра не импортирует %s',
     (moduleName) => {
-      for (const [path, source] of Object.entries({ ...coreSources, ...layoutSources })) {
-        expect(importsFrom(source, moduleName), `${path} импортирует ${moduleName}`).toBe(false)
+      for (const { path, content } of pureSources) {
+        expect(importsFrom(content, moduleName), `${path} импортирует ${moduleName}`).toBe(false)
       }
     },
   )
 
   it('ядро не импортирует баррель types/index, который тянет типы Vue', () => {
-    for (const [path, source] of Object.entries(coreSources)) {
+    for (const { path, content } of coreSources) {
       // Конкретные модули типов (`../types/entity`) разрешены — запрещён именно
       // баррель: он реэкспортирует `types/theme` со ссылкой на Vue.
-      expect(importsExactly(source, '../types/index'), `${path} импортирует баррель типов`).toBe(false)
-      expect(importsExactly(source, '../types'), `${path} импортирует баррель типов`).toBe(false)
+      expect(importsExactly(content, '../types/index'), `${path} импортирует баррель`).toBe(false)
+      expect(importsExactly(content, '../types'), `${path} импортирует баррель`).toBe(false)
     }
   })
 
   it('ядро не тянет слой Vue из самого пакета', () => {
-    for (const [path, source] of Object.entries({ ...coreSources, ...layoutSources })) {
+    for (const { path, content } of pureSources) {
       for (const forbidden of ['composables', 'components', 'registry']) {
-        expect(source.includes(`/${forbidden}/`), `${path} ссылается на ${forbidden}`).toBe(false)
+        expect(content.includes(`/${forbidden}/`), `${path} ссылается на ${forbidden}`).toBe(false)
       }
     }
   })
 })
 
 describe('SSR-безопасность', () => {
-  it('ядро и раскладки не обращаются к window, document и localStorage', () => {
-    for (const [path, source] of Object.entries({ ...coreSources, ...layoutSources })) {
-      // Комментарии выкидываем: в них эти слова упоминать можно.
-      const code = stripComments(source)
+  it('ядро и раскладки не обращаются к браузерным API', () => {
+    for (const { path, content } of pureSources) {
+      const code = stripComments(content)
       for (const global of ['window', 'document', 'localStorage', 'sessionStorage', 'navigator']) {
         expect(new RegExp(`\\b${global}\\b`).test(code), `${path} обращается к ${global}`).toBe(false)
       }
     }
   })
+
+  it('во всём src нет node-специфичных глобалей', () => {
+    // Раньше это гарантировал `types: []` в tsconfig; теперь node-типы нужны
+    // guard-тестам, поэтому запрет проверяется текстом (D-301).
+    for (const { path, content } of allSources) {
+      const code = stripComments(content)
+      for (const global of ['process', '__dirname', '__filename', 'Buffer', 'require(']) {
+        const pattern = global.endsWith('(')
+          ? new RegExp(`\\b${escapeRegExp(global)}`)
+          : new RegExp(`\\b${global}\\b`)
+        expect(pattern.test(code), `${path} использует node-глобаль ${global}`).toBe(false)
+      }
+    }
+  })
+
+  it('обращения к window и document в слое Vue — только внутри функций', () => {
+    // Модуль обязан импортироваться в SSR: обращение к браузерному API на
+    // верхнем уровне падает ещё до рендера.
+    for (const { path, content } of allSources) {
+      const code = stripComments(content)
+      for (const line of topLevelStatements(code)) {
+        expect(
+          /\b(?:window|document|localStorage|sessionStorage)\b/.test(line),
+          `${path}: обращение к браузерному API на верхнем уровне модуля → ${line.trim()}`,
+        ).toBe(false)
+      }
+    }
+  })
+
+  it('пакет не использует localStorage и sessionStorage вообще', () => {
+    // Состояние уходит наружу через v-model, а не в хранилище браузера.
+    for (const { path, content } of allSources) {
+      const code = stripComments(content)
+      expect(code.includes('localStorage'), `${path} использует localStorage`).toBe(false)
+      expect(code.includes('sessionStorage'), `${path} использует sessionStorage`).toBe(false)
+    }
+  })
 })
 
-function stripComments(source: string): string {
-  return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '')
+/**
+ * Строки нулевого уровня вложенности.
+ *
+ * Грубая, но достаточная эвристика: считаем баланс фигурных скобок и берём
+ * строки, встреченные при нулевой глубине. Внутри функций и блоков обращения к
+ * браузерным API разрешены, на верхнем уровне — нет.
+ */
+function topLevelStatements(code: string): string[] {
+  const lines: string[] = []
+  let depth = 0
+
+  for (const line of code.split('\n')) {
+    if (depth === 0) lines.push(line)
+    for (const char of line) {
+      if (char === '{' || char === '(') depth += 1
+      else if (char === '}' || char === ')') depth = Math.max(0, depth - 1)
+    }
+  }
+
+  return lines
 }

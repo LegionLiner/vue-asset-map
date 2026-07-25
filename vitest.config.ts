@@ -8,6 +8,7 @@ export default defineConfig({
     // Component tests opt in with a `@vitest-environment jsdom` docblock.
     environment: 'node',
     include: ['tests/**/*.test.ts'],
+    setupFiles: ['tests/setup/dom.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'json-summary'],

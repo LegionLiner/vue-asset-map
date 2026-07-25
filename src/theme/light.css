@@ -1,0 +1,43 @@
+/*
+ * Светлая тема.
+ *
+ * Значения совпадают с базовыми из `tokens.css`, но объявлены явно: если
+ * страница ставит `.vnm-theme-light` на карту, вложенную в тёмный контейнер,
+ * тема обязана победить наследование — а для этого нужен свой блок с более
+ * высокой специфичностью, а не расчёт на базовые токены.
+ */
+.vnm-root.vnm-theme-light {
+  --vnm-bg: #f1f3f8;
+  --vnm-surface: #ffffff;
+  --vnm-surface-raised: #ffffff;
+  --vnm-surface-sunken: #e9edf5;
+  --vnm-fg: #1f2937;
+  --vnm-fg-muted: #6b7280;
+  --vnm-fg-inverted: #ffffff;
+  --vnm-border: #e5e7eb;
+  --vnm-border-strong: #cbd5e1;
+
+  --vnm-accent: #3b82f6;
+  --vnm-accent-fg: #ffffff;
+  --vnm-accent-soft: rgba(59, 130, 246, 0.12);
+  --vnm-focus-ring: #2563eb;
+  --vnm-selection: rgba(59, 130, 246, 0.18);
+  --vnm-highlight: #f59e0b;
+  --vnm-highlight-soft: rgba(245, 158, 11, 0.18);
+
+  --vnm-edge: #94a3b8;
+  --vnm-edge-active: #6366f1;
+  --vnm-edge-dimmed: #cbd5e1;
+  --vnm-edge-label-bg: #ffffff;
+
+  --vnm-status-online: #22c55e;
+  --vnm-status-offline: #ef4444;
+  --vnm-status-warning: #f59e0b;
+  --vnm-status-unknown: #9ca3af;
+
+  --vnm-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.08);
+  --vnm-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.1);
+  --vnm-shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.16);
+
+  --vnm-canvas-dot: #d3dae6;
+}

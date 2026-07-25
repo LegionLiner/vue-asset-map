@@ -248,10 +248,7 @@ describe('applyFilters: расширение видимости', () => {
   })
 
   it('узел вне restrictTo не служит мостиком к следующему шагу', () => {
-    const chain = buildGraph(
-      [e('a'), e('b'), e('c')],
-      [l('ab', 'a', 'b'), l('bc', 'b', 'c')],
-    )
+    const chain = buildGraph([e('a'), e('b'), e('c')], [l('ab', 'a', 'b'), l('bc', 'b', 'c')])
 
     const result = applyFilters(chain, state({ query: 'a' }), {
       neighborDepth: 5,

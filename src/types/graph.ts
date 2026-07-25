@@ -30,12 +30,7 @@ export interface NetworkGraph<E = unknown, L = unknown> {
 
 /** Что построитель графа выбросил или починил во входных данных. */
 export type GraphIssueCode =
-  | 'duplicate-entity'
-  | 'duplicate-link'
-  | 'dangling-link'
-  | 'missing-parent'
-  | 'parent-cycle'
-  | 'self-parent'
+  'duplicate-entity' | 'duplicate-link' | 'dangling-link' | 'missing-parent' | 'parent-cycle' | 'self-parent'
 
 export interface GraphIssue {
   code: GraphIssueCode

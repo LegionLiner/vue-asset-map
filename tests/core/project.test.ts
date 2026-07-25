@@ -49,10 +49,7 @@ describe('projectGraph', () => {
   })
 
   it('узел без связей в текущем виде: скрыт при hideIsolated, остаётся без него', () => {
-    const graph = buildGraph(
-      [e('a'), e('b'), e('lonely')],
-      [l('ab', 'a', 'b', ['physical'])],
-    )
+    const graph = buildGraph([e('a'), e('b'), e('lonely')], [l('ab', 'a', 'b', ['physical'])])
 
     const withoutFlag = projectGraph(graph, logical)
     expect(withoutFlag.entityIds.has('lonely')).toBe(true)
@@ -76,10 +73,7 @@ describe('projectGraph', () => {
   })
 
   it('entityFilter применяется до отбора рёбер: ребро в отфильтрованный узел исчезает', () => {
-    const graph = buildGraph(
-      [e('a'), e('b', { kind: 'skipme' })],
-      [l('ab', 'a', 'b', ['physical'])],
-    )
+    const graph = buildGraph([e('a'), e('b', { kind: 'skipme' })], [l('ab', 'a', 'b', ['physical'])])
 
     const result = projectGraph(graph, {
       ...physical,

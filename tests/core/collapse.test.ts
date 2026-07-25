@@ -94,7 +94,10 @@ describe('collapseGraph: базовое решение о свёртке', () =>
     const result = collapseGraph(graph, { rule: { shouldCollapse } })
 
     expect(result.groups.length).toBe(1)
-    expect(shouldCollapse).toHaveBeenCalledWith('parent', expect.arrayContaining([expect.objectContaining({ id: 'c1' })]))
+    expect(shouldCollapse).toHaveBeenCalledWith(
+      'parent',
+      expect.arrayContaining([expect.objectContaining({ id: 'c1' })]),
+    )
   })
 })
 
@@ -309,7 +312,10 @@ describe('collapseGraph: взаимодействие с иерархией и �
   })
 
   it('скрытый проекцией родитель не становится ключом группировки', () => {
-    const farmEntities: NetworkEntity[] = [e('root', { kind: 'cloud' }), e('mid', { kind: 'router', parentId: 'root' })]
+    const farmEntities: NetworkEntity[] = [
+      e('root', { kind: 'cloud' }),
+      e('mid', { kind: 'router', parentId: 'root' }),
+    ]
     for (let index = 1; index <= 11; index += 1) {
       farmEntities.push(e(`c${index}`, { kind: 'container', parentId: 'mid' }))
     }

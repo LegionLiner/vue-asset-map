@@ -1,0 +1,157 @@
+/* Стили самого плейграунда. К пакету не относятся: своих классов `vnm-` здесь
+   нет, чтобы демо не подменяло внешний вид библиотеки. */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+}
+
+.pg-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.pg-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: #111827;
+  color: #f9fafb;
+  font-size: 13px;
+}
+
+.pg-bar__title {
+  margin-right: auto;
+  font-weight: 600;
+}
+
+.pg-bar label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pg-bar button,
+.pg-bar select,
+.pg-bar input {
+  padding: 5px 9px;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  background: #1f2937;
+  color: inherit;
+  font: inherit;
+}
+
+.pg-bar button {
+  cursor: pointer;
+}
+
+.pg-bar button:hover:not(:disabled) {
+  border-color: #6b7280;
+  background: #374151;
+}
+
+.pg-bar button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pg-bar__hint {
+  color: #9ca3af;
+}
+
+.pg-map {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Кастомное содержимое панели подробностей — тоже часть демо, не библиотеки. */
+.pg-details {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px;
+}
+
+.pg-details__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pg-details__name {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.pg-details__kind {
+  color: var(--vnm-fg-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.pg-details__close {
+  padding: 2px 8px;
+  border: 1px solid var(--vnm-border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--vnm-fg-muted);
+  cursor: pointer;
+}
+
+.pg-details__section-title {
+  margin-bottom: 6px;
+  color: var(--vnm-fg-muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.pg-details__rows {
+  display: grid;
+  grid-template-columns: minmax(0, 96px) minmax(0, 1fr);
+  gap: 4px 10px;
+  font-size: 12px;
+}
+
+.pg-details__key {
+  color: var(--vnm-fg-muted);
+}
+
+.pg-details__value {
+  overflow-wrap: anywhere;
+  font-family: var(--vnm-font-mono);
+}
+
+.pg-details__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.pg-details__tag {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--vnm-accent-soft);
+  color: var(--vnm-accent);
+  font-size: 11px;
+}

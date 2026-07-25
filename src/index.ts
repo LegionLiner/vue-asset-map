@@ -2,7 +2,8 @@
  * Публичный API пакета `network-map`.
  *
  * Ядро доступно и отдельным подпутём `network-map/core` — там нет ни Vue, ни
- * VueFlow, поэтому его можно использовать на сервере.
+ * VueFlow, поэтому его можно использовать на сервере. Стили подключаются
+ * отдельно: `import 'network-map/style.css'`.
  */
 
 export * from './core/index'
@@ -27,6 +28,55 @@ export type {
   ManualLayoutOptions,
   RadialLayoutOptions,
 } from './layout/index'
+
+// Компоненты
+export { default as NetworkMap } from './components/NetworkMap.vue'
+export { default as BaseNode } from './components/nodes/BaseNode.vue'
+export { default as GroupNode } from './components/nodes/GroupNode.vue'
+export { default as NetworkEdge } from './components/edges/NetworkEdge.vue'
+
+// Реестр типов узлов — для тех, кто собирает свой набор компонентов.
+export {
+  buildEdgeTypes,
+  buildNodeTypes,
+  EDGE_TYPE_BASE,
+  edgeTypeFor,
+  NODE_TYPE_BASE,
+  NODE_TYPE_GROUP,
+  nodeTypeFor,
+} from './registry/nodeRegistry'
+
+// Composables: карту можно собрать и вручную, из тех же кусков.
+export { useNetworkGraph } from './composables/useNetworkGraph'
+export { useViewProjection } from './composables/useViewProjection'
+export { useFilters } from './composables/useFilters'
+export { useCollapse } from './composables/useCollapse'
+export { useLayout } from './composables/useLayout'
+export { useFlowElements } from './composables/useFlowElements'
+export { useSelection } from './composables/useSelection'
+export { resolveTheme } from './composables/useTheme'
+export { useMapContext } from './composables/useMapContext'
+export type { MapContext } from './composables/useMapContext'
+export type {
+  EntityNodeData,
+  GroupNodeData,
+  NetworkEdgeData,
+  NetworkNodeData,
+} from './composables/useFlowElements'
+export type { NodeSize } from './composables/useLayout'
+
+// Локализация
+export { builtinLocales, createTranslator, defaultLocale, en, resolveLocale, ru } from './locale/index'
+
+export type {
+  FocusOptions,
+  NetworkMapExposed,
+  NetworkMapLayoutSpec,
+  NetworkMapModels,
+  NetworkMapProps,
+  NodeEventPayload,
+  Viewport,
+} from './types/props'
 
 export type {
   LocaleKey,

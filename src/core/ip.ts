@@ -53,7 +53,7 @@ export function parseCidr(query: string): CidrRange | null {
   // >>> 0 держит результат беззнаковым: побитовые операции в JS 32-битные и знаковые.
   const mask = prefix === 0 ? 0 : (0xffffffff << (32 - prefix)) >>> 0
   const start = (base & mask) >>> 0
-  const end = (start + (prefix === 32 ? 0 : (~mask >>> 0))) >>> 0
+  const end = (start + (prefix === 32 ? 0 : ~mask >>> 0)) >>> 0
   return { start, end, prefix }
 }
 

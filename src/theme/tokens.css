@@ -1,0 +1,91 @@
+/*
+ * Дизайн-токены карты.
+ *
+ * Все значения объявлены на `.vnm-root` — корневом элементе компонента, а не на
+ * `:root`: пакет не имеет права влиять на страницу за своими границами, и на
+ * одной странице должно быть можно поставить две карты с разными темами.
+ *
+ * Базовые значения здесь — светлая тема. `dark.css` переопределяет их классом
+ * `.vnm-theme-dark`, который по специфичности сильнее.
+ */
+.vnm-root {
+  /* Поверхности и текст */
+  --vnm-bg: #f1f3f8;
+  --vnm-surface: #ffffff;
+  --vnm-surface-raised: #ffffff;
+  --vnm-surface-sunken: #e9edf5;
+  --vnm-fg: #1f2937;
+  --vnm-fg-muted: #6b7280;
+  --vnm-fg-inverted: #ffffff;
+  --vnm-border: #e5e7eb;
+  --vnm-border-strong: #cbd5e1;
+
+  /* Акцент и выделение */
+  --vnm-accent: #3b82f6;
+  --vnm-accent-fg: #ffffff;
+  --vnm-accent-soft: rgba(59, 130, 246, 0.12);
+  --vnm-focus-ring: #2563eb;
+  --vnm-selection: rgba(59, 130, 246, 0.18);
+  --vnm-highlight: #f59e0b;
+  --vnm-highlight-soft: rgba(245, 158, 11, 0.18);
+
+  /* Рёбра */
+  --vnm-edge: #94a3b8;
+  --vnm-edge-active: #6366f1;
+  --vnm-edge-dimmed: #cbd5e1;
+  --vnm-edge-label-bg: #ffffff;
+  --vnm-edge-width: 1.5px;
+  --vnm-edge-width-active: 2.5px;
+
+  /* Состояния узлов. Ключи — значения `entity.status` у потребителя. */
+  --vnm-status-online: #22c55e;
+  --vnm-status-offline: #ef4444;
+  --vnm-status-warning: #f59e0b;
+  --vnm-status-unknown: #9ca3af;
+
+  /* Геометрия */
+  --vnm-node-radius: 8px;
+  --vnm-node-size: 44px;
+  --vnm-node-width: 180px;
+  --vnm-node-padding: 10px;
+  --vnm-radius-sm: 4px;
+  --vnm-radius-md: 8px;
+  --vnm-radius-lg: 12px;
+  --vnm-space-1: 4px;
+  --vnm-space-2: 8px;
+  --vnm-space-3: 12px;
+  --vnm-space-4: 16px;
+  --vnm-space-5: 24px;
+
+  /* Типографика */
+  --vnm-font: inherit;
+  --vnm-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --vnm-font-size: 13px;
+  --vnm-font-size-sm: 11px;
+  --vnm-font-size-lg: 15px;
+  --vnm-line-height: 1.4;
+  --vnm-font-weight-medium: 500;
+  --vnm-font-weight-bold: 600;
+
+  /* Тени и слои */
+  --vnm-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.08);
+  --vnm-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.1);
+  --vnm-shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.16);
+  --vnm-panel-width: 340px;
+  --vnm-toolbar-height: 48px;
+
+  /* Полотно */
+  --vnm-canvas-dot: #d3dae6;
+  --vnm-canvas-dot-size: 1px;
+  --vnm-canvas-grid: 20px;
+
+  /* Анимация. Уважает prefers-reduced-motion ниже. */
+  --vnm-transition: 120ms ease;
+  --vnm-dimmed-opacity: 0.25;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vnm-root {
+    --vnm-transition: 0ms;
+  }
+}

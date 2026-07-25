@@ -32,6 +32,11 @@ export default defineConfigWithVueTs(
       'vue/multi-word-component-names': 'off',
       'vue/require-default-prop': 'off',
       'vue/block-order': ['error', { order: ['script', 'template', 'style'] }],
+      // Форматированием владеет Prettier. Эти два правила спорят с ним об одном
+      // и том же и дают шум, который «исправляется» обратно на каждом формате.
+      'vue/max-attributes-per-line': 'off',
+      'vue/singleline-html-element-content-newline': 'off',
+      'vue/html-self-closing': 'off',
       eqeqeq: ['error', 'always', { null: 'ignore' }],
       'prefer-const': 'error',
       'no-console': ['error', { allow: ['warn', 'error'] }],
