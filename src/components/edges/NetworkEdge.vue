@@ -67,7 +67,7 @@ const classes = computed(() => [
   },
 ])
 
-const labelSlot = computed(() => map.slots['edge-label'])
+const labelSlot = computed(() => map.slot('edge-label'))
 
 /** Подпись показывается только там, где она несёт смысл. */
 const labelText = computed(() => {

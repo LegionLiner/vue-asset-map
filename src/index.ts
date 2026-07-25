@@ -34,6 +34,8 @@ export { default as NetworkMap } from './components/NetworkMap.vue'
 export { default as BaseNode } from './components/nodes/BaseNode.vue'
 export { default as GroupNode } from './components/nodes/GroupNode.vue'
 export { default as NetworkEdge } from './components/edges/NetworkEdge.vue'
+export { default as DetailsPanel } from './components/panel/DetailsPanel.vue'
+export { default as DetailsSection } from './components/panel/DetailsSection.vue'
 
 // Реестр типов узлов — для тех, кто собирает свой набор компонентов.
 export {
@@ -69,12 +71,18 @@ export type { NodeSize } from './composables/useLayout'
 export { builtinLocales, createTranslator, defaultLocale, en, resolveLocale, ru } from './locale/index'
 
 export type {
+  DetailsHeaderSlotProps,
+  DetailsSlotProps,
+  EdgeLabelSlotProps,
+  EmptySlotProps,
   FocusOptions,
   NetworkMapExposed,
   NetworkMapLayoutSpec,
   NetworkMapModels,
   NetworkMapProps,
+  NetworkMapSlots,
   NodeEventPayload,
+  NodeSlotProps,
   Viewport,
 } from './types/props'
 

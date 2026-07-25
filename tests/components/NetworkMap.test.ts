@@ -6,6 +6,7 @@ import NetworkMap from '../../src/components/NetworkMap.vue'
 import { groupIdFor } from '../../src/core/collapse'
 import type { LayoutEngine } from '../../src/layout/types'
 import type { XY } from '../../src/types/entity'
+import type { NetworkMapSlots } from '../../src/types/props'
 import { entities, links, statusColors, views } from '../../fixtures/infra'
 
 /** Движок-шпион: считает вызовы и раскладывает узлы в предсказуемый ряд. */
@@ -23,7 +24,11 @@ function spyEngine(): LayoutEngine & { calls: number } {
   return engine as LayoutEngine & { calls: number }
 }
 
-async function mountMap(props: Record<string, unknown> = {}, slots: Record<string, unknown> = {}) {
+/**
+ * Слоты типизируются публичным контрактом компонента: так тест заодно проверяет,
+ * что `#node-{kind}` с произвольным именем вообще проходит проверку типов.
+ */
+async function mountMap(props: Record<string, unknown> = {}, slots: NetworkMapSlots = {}) {
   const wrapper = mount(NetworkMap, {
     props: {
       entities,

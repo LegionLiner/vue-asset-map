@@ -1,4 +1,4 @@
-import { inject, provide, type Component, type ComputedRef, type InjectionKey, type Slots } from 'vue'
+import { inject, provide, type Component, type ComputedRef, type InjectionKey, type Slot } from 'vue'
 import type { EntityId, NetworkEntity } from '../types/entity'
 import type { NetworkGraph } from '../types/graph'
 import type { CollapsedGroup } from '../types/collapse'
@@ -23,8 +23,14 @@ export interface MapContext {
   /** `true` — масштаб ниже порога, узлы рисуются упрощённо. */
   simplified: ComputedRef<boolean>
 
-  /** Слоты карты: узлы ищут в них `node-{kind}` и `node-badge`. */
-  slots: Readonly<Slots>
+  /**
+   * Слот карты по имени.
+   *
+   * Функция, а не сам объект слотов: у `NetworkMap` слоты описаны точным типом
+   * (`NetworkMapSlots`), и он несовместим с внутренним `Slots` из Vue. Поиск по
+   * имени — единственное, что нужно узлам, рёбрам и панели.
+   */
+  slot: (name: string) => Slot | undefined
 
   statusColorOf: (status: string | undefined) => string | undefined
   iconFor: (kind: string) => Component | undefined

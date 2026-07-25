@@ -1,5 +1,5 @@
 import type { Component } from 'vue'
-import type { EntityId, NetworkEntity, XY } from './entity'
+import type { Badge, EntityId, NetworkEntity, XY } from './entity'
 import type { NetworkLink } from './link'
 import type { NetworkView } from './view'
 import type { CollapsedGroup, CollapseRule } from './collapse'
@@ -74,6 +74,62 @@ export interface FocusOptions {
   duration?: number
   /** Выделить узел заодно. Дефолт true. */
   select?: boolean
+}
+
+/** Слот без параметров. */
+export type EmptySlotProps = Record<string, never>
+
+/**
+ * Параметры слотов `node-*`.
+ *
+ * Один тип на все слоты этого семейства — и на `#node-{kind}`, и на
+ * `#node-badge`. Иначе их нельзя описать общей сигнатурой `node-${string}`, а без
+ * неё TypeScript не пропустит слот с произвольным именем типа `#node-router`.
+ */
+export interface NodeSlotProps<E = unknown> {
+  entity: NetworkEntity<E> | undefined
+  nodeId: string
+  /** `true` — масштаб ниже порога LOD, узел рисуется упрощённо. */
+  simplified: boolean
+  /** Заполнен только для слота `node-badge`. */
+  badge?: Badge
+}
+
+export interface DetailsSlotProps<E = unknown> {
+  entity: NetworkEntity<E>
+  close: () => void
+  /** Активный таб панели. */
+  tab: string
+}
+
+export interface DetailsHeaderSlotProps<E = unknown> {
+  entity: NetworkEntity<E>
+  close: () => void
+}
+
+export interface EdgeLabelSlotProps<L = unknown> {
+  link: NetworkLink<L> | undefined
+  aggregated: boolean
+  count: number
+}
+
+/**
+ * Публичный контракт слотов.
+ *
+ * Объявляется через `defineSlots`, а не выводится из шаблона: узлы и рёбра
+ * рендерятся внутри VueFlow и берут слоты из контекста карты, поэтому вывести их
+ * из разметки `NetworkMap` невозможно.
+ */
+export type NetworkMapSlots<E = unknown, L = unknown> = {
+  'toolbar-left'?(props: EmptySlotProps): unknown
+  'toolbar-right'?(props: EmptySlotProps): unknown
+  empty?(props: EmptySlotProps): unknown
+  loading?(props: EmptySlotProps): unknown
+  details?(props: DetailsSlotProps<E>): unknown
+  'details-header'?(props: DetailsHeaderSlotProps<E>): unknown
+  'edge-label'?(props: EdgeLabelSlotProps<L>): unknown
+} & {
+  [kind: `node-${string}`]: ((props: NodeSlotProps<E>) => unknown) | undefined
 }
 
 /**

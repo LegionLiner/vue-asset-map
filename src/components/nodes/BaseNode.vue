@@ -35,10 +35,10 @@ const icon = computed(() => (entity.value ? map.iconFor(entity.value.kind) : und
 const kindSlot = computed(() => {
   const kind = entity.value?.kind
   if (!kind) return undefined
-  return map.slots[`node-${kind}`]
+  return map.slot(`node-${kind}`)
 })
 
-const badgeSlot = computed(() => map.slots['node-badge'])
+const badgeSlot = computed(() => map.slot('node-badge'))
 
 const classes = computed(() => [
   'vnm-node',
@@ -143,7 +143,14 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
         :aria-label="map.t('node.badges', { count: badges.length })"
       >
         <template v-for="badge in badges" :key="badge.id">
-          <component :is="badgeSlot" v-if="badgeSlot" :badge="badge" :entity="entity" />
+          <component
+            :is="badgeSlot"
+            v-if="badgeSlot"
+            :badge="badge"
+            :entity="entity"
+            :node-id="id"
+            :simplified="map.simplified.value"
+          />
           <span
             v-else
             class="vnm-node__badge"

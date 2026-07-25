@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="E = unknown, L = unknown">
-import { computed, ref, shallowRef, useSlots, watch } from 'vue'
+import { computed, ref, shallowRef, useSlots, watch, type Slot } from 'vue'
 import { VueFlow, useVueFlow, type NodeDragEvent } from '@vue-flow/core'
 import type { EntityId, XY } from '../types/entity'
 import type { CollapsedGroup } from '../types/collapse'
@@ -9,6 +9,7 @@ import type {
   FocusOptions,
   NetworkMapExposed,
   NetworkMapProps,
+  NetworkMapSlots,
   NodeEventPayload,
   Viewport,
 } from '../types/props'
@@ -20,6 +21,7 @@ import { useLayout, type NodeSize } from '../composables/useLayout'
 import { useSelection } from '../composables/useSelection'
 import { useFlowElements } from '../composables/useFlowElements'
 import { provideMapContext, type ArrowDirection, type MapContext } from '../composables/useMapContext'
+import DetailsPanel from './panel/DetailsPanel.vue'
 import { buildEdgeTypes, buildNodeTypes } from '../registry/nodeRegistry'
 import { createTranslator, resolveLocale } from '../locale/index'
 import { findPaths } from '../core/traverse'
@@ -67,6 +69,8 @@ const filters = defineModel<FilterState>('filters', {
   default: (): FilterState => ({ query: '', kinds: [], statuses: [] }),
 })
 const viewport = defineModel<Viewport>('viewport', { default: () => ({ x: 0, y: 0, zoom: 1 }) })
+
+defineSlots<NetworkMapSlots<E, L>>()
 
 const slots = useSlots()
 
@@ -359,7 +363,10 @@ const context: MapContext = {
   graph,
   showSublabels,
   simplified,
-  slots,
+  // Точный тип слотов из `defineSlots` сужает `useSlots()` до `NetworkMapSlots`,
+  // а поиск по произвольному имени требует индексируемого объекта. Расширение
+  // до `Record` — единственное место, где это нужно.
+  slot: (name) => (slots as Record<string, Slot | undefined>)[name],
   statusColorOf: (status) => (status ? props.themeConfig?.statusColors?.[status] : undefined),
   iconFor: (kind) => props.themeConfig?.kindIcons?.[kind],
   groupById: (groupId) => collapseState.groupById.value.get(groupId),
@@ -451,23 +458,14 @@ defineExpose({
         </div>
       </div>
 
-      <aside v-if="showDetailsPanel && detailsEntity && !panelClosed" class="vnm-panel">
-        <slot name="details" :entity="detailsEntity" :close="closePanel">
-          <div class="vnm-panel__header">
-            <slot name="details-header" :entity="detailsEntity">
-              <span class="vnm-panel__title">{{ detailsEntity.label }}</span>
-            </slot>
-            <button
-              type="button"
-              class="vnm-panel__close"
-              :aria-label="t('details.close')"
-              @click="closePanel"
-            >
-              ×
-            </button>
-          </div>
-        </slot>
-      </aside>
+      <!-- Панель сама достаёт слоты `details` и `details-header` из контекста
+           карты: пробрасывать их вручную пришлось бы с `v-if` на каждый, чтобы
+           не забить дефолтную реализацию пустым слотом. -->
+      <DetailsPanel
+        v-if="showDetailsPanel && detailsEntity && !panelClosed"
+        :entity="detailsEntity"
+        @close="closePanel"
+      />
     </div>
   </div>
 </template>
@@ -546,54 +544,7 @@ defineExpose({
   pointer-events: none;
 }
 
-.vnm-panel {
-  display: flex;
-  flex: 0 0 var(--vnm-panel-width);
-  flex-direction: column;
-  width: var(--vnm-panel-width);
-  min-height: 0;
-  border-left: 1px solid var(--vnm-border);
-  background: var(--vnm-surface);
-  overflow-y: auto;
-}
-
-.vnm-panel__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--vnm-space-2);
-  padding: var(--vnm-space-3);
-  border-bottom: 1px solid var(--vnm-border);
-}
-
-.vnm-panel__title {
-  font-size: var(--vnm-font-size-lg);
-  font-weight: var(--vnm-font-weight-bold);
-}
-
-.vnm-panel__close {
-  flex: 0 0 auto;
-  width: 24px;
-  height: 24px;
-  border: 1px solid transparent;
-  border-radius: var(--vnm-radius-sm);
-  background: transparent;
-  color: var(--vnm-fg-muted);
-  font-size: var(--vnm-font-size-lg);
-  line-height: 1;
-  cursor: pointer;
-}
-
-.vnm-panel__close:hover {
-  border-color: var(--vnm-border);
-  background: var(--vnm-surface-sunken);
-  color: var(--vnm-fg);
-}
-
-.vnm-panel__close:focus-visible {
-  outline: 2px solid var(--vnm-focus-ring);
-  outline-offset: 1px;
-}
+/* Стили панели живут в DetailsPanel.vue — там же, где её разметка. */
 
 /* VueFlow рисует свои узлы в обёртке — снимаем её собственные рамки. */
 .vnm-canvas .vue-flow__node {

@@ -127,17 +127,22 @@ function neighborsOf(id: string): DemoLink[] {
       :theme-config="{ statusColors }"
       :show-toolbar="false"
     >
-      <!-- Панель подробностей: библиотека даёт контейнер, содержимое — наше. -->
-      <template #details="{ entity, close }">
-        <div class="pg-details">
-          <div class="pg-details__header">
-            <span>
-              <div class="pg-details__name">{{ entity.label }}</div>
-              <div class="pg-details__kind">{{ entity.kind }} · {{ entity.status ?? '—' }}</div>
-            </span>
-            <button type="button" class="pg-details__close" @click="close">Закрыть</button>
+      <!-- Панель подробностей: библиотека даёт контейнер, шапку, кнопку закрытия
+           и табы; наполнение — наше. Пакет не знает наших полей `meta`. -->
+      <template #details="{ entity, tab }">
+        <div v-if="tab === 'links'" class="pg-details">
+          <div class="pg-details__section-title">Связи ({{ neighborsOf(entity.id).length }})</div>
+          <div class="pg-details__rows">
+            <template v-for="link in neighborsOf(entity.id)" :key="link.id">
+              <span class="pg-details__key">{{ link.layers.join(', ') }}</span>
+              <span class="pg-details__value">
+                {{ link.source === entity.id ? link.target : link.source }}
+              </span>
+            </template>
           </div>
+        </div>
 
+        <div v-else class="pg-details">
           <div v-if="entity.sublabels?.length">
             <div class="pg-details__section-title">Адреса</div>
             <div class="pg-details__rows">
@@ -164,20 +169,6 @@ function neighborsOf(id: string): DemoLink[] {
               <span v-for="tag in (entity.meta as AssetMeta).tags" :key="tag" class="pg-details__tag">
                 {{ tag }}
               </span>
-            </div>
-          </div>
-
-          <div>
-            <div class="pg-details__section-title">
-              Связи ({{ neighborsOf(entity.id).length }})
-            </div>
-            <div class="pg-details__rows">
-              <template v-for="link in neighborsOf(entity.id)" :key="link.id">
-                <span class="pg-details__key">{{ link.layers.join(', ') }}</span>
-                <span class="pg-details__value">
-                  {{ link.source === entity.id ? link.target : link.source }}
-                </span>
-              </template>
             </div>
           </div>
 
