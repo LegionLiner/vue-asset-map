@@ -2,18 +2,10 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
-/**
- * Плейграунд смотрит на исходники библиотеки через alias, а не на `dist`:
- * правки видны без пересборки. Реальный путь потребителя (установка собранного
- * пакета) проверяется отдельно — упаковкой `npm pack` в чистое приложение.
- */
 export default defineConfig({
   root: fileURLToPath(new URL('.', import.meta.url)),
   plugins: [vue()],
   resolve: {
-    // Массив с регулярками, а не объект: строковый ключ `vue-asset-map` перехватил
-    // бы и подпуть `vue-asset-map/style.css`, который должен вести в CSS, а не в
-    // точку входа. Алиасы повторяют карту `exports` из package.json.
     alias: [
       {
         find: /^vue-asset-map\/style\.css$/,

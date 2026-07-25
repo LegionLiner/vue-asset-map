@@ -1,9 +1,3 @@
-/**
- * Демо-инфраструктура: одна и та же фикстура используется плейграундом и тестами.
- *
- * Лежит вне `src/`, потому что не должна попадать в публикуемый пакет: это
- * данные примера, а не часть API библиотеки.
- */
 import type {
   FilterGroupDef,
   AssetEntity,
@@ -14,7 +8,6 @@ import type {
 } from '../src/types/index'
 import { connectionMarkers } from '../src/core/markers'
 
-/** Метаданные активов в этом демо. Потребитель задаёт свою форму. */
 export interface AssetMeta {
   owner?: string
   os?: string
@@ -25,18 +18,14 @@ export interface AssetMeta {
   ramGb?: number
   location?: string
   tags?: string[]
-  /** Подсеть актива — по ней фильтрует группа «Подсеть». */
   subnet?: 'internet' | 'vpn' | 'docker'
-  /** Тип актива в терминах инвентаризации, а не в терминах отрисовки. */
   assetType?: 'device' | 'vm' | 'container' | 'database' | 'service'
-  /** Критичность актива. */
   severity?: 'critical' | 'high' | 'medium' | 'low'
 }
 
 export type DemoEntity = AssetEntity<AssetMeta>
 export type DemoLink = AssetLink<{ bandwidth?: string; protocol?: string }>
 
-/** Слои связей. Значения совпадают с id видов — это и есть дефолт проекции. */
 export const LAYER_PHYSICAL = 'physical'
 export const LAYER_LOGICAL = 'logical'
 
@@ -268,7 +257,6 @@ export const entities: DemoEntity[] = [
     },
   }),
 
-  // 14 однотипных контейнеров: на них проверяется автоматическая свёртка.
   ...Array.from({ length: 14 }, (_, index) =>
     entity(`ct-web-${index + 1}`, KIND_CONTAINER, `web-${String(index + 1).padStart(2, '0')}`, {
       status: index === 3 ? 'offline' : 'online',
@@ -295,7 +283,6 @@ const link = (
 ): DemoLink => ({ id, source, target, layers, ...extra })
 
 export const links: DemoLink[] = [
-  // Физическая топология: всё сходится к Интернету.
   link('l-inet-cf', 'internet', 'cloudflare', [LAYER_PHYSICAL], { kind: 'solid' }),
   link('l-inet-tailscale', 'internet', 'vps-tailscale', [LAYER_PHYSICAL], { kind: 'solid' }),
   link('l-inet-brainstorm', 'internet', 'vps-brainstorm', [LAYER_PHYSICAL], { kind: 'solid' }),
@@ -315,20 +302,16 @@ export const links: DemoLink[] = [
   link('l-keen2-ws-vlad', 'keenetic-2', 'ws-vlad', [LAYER_PHYSICAL], { kind: 'solid' }),
   link('l-keen2-ws-andrey', 'keenetic-2', 'ws-andrey', [LAYER_PHYSICAL], { kind: 'solid' }),
 
-  // Второй канал офиса B: настоящая кратность связи между двумя узлами.
   link('l-keen2-inet-backup', 'keenetic-2', 'internet', [LAYER_PHYSICAL], { kind: 'dashed' }),
 
-  // Контейнеры висят на своём гипервизоре.
   ...Array.from({ length: 14 }, (_, index) =>
     link(`l-beelink-ct-${index + 1}`, 'pve-beelink', `ct-web-${index + 1}`, [LAYER_PHYSICAL], {
       kind: 'solid',
     }),
   ),
-  // Пара связей внутри фермы контейнеров: попадут в internalLinkCount группы.
   link('l-ct-1-2', 'ct-web-1', 'ct-web-2', [LAYER_PHYSICAL], { kind: 'solid' }),
   link('l-ct-2-3', 'ct-web-2', 'ct-web-3', [LAYER_PHYSICAL], { kind: 'solid' }),
 
-  // Логический вид: VPN-оверлей вокруг Tailscale VPS.
   link('o-ts-brainstorm', 'vps-tailscale', 'vps-brainstorm', [LAYER_LOGICAL], { kind: 'dashed' }),
   link('o-ts-nginx', 'vps-tailscale', 'vps-nginx', [LAYER_LOGICAL], { kind: 'dashed' }),
   link('o-ts-artjom', 'vps-tailscale', 'ws-artjom', [LAYER_LOGICAL], { kind: 'dashed' }),
@@ -339,7 +322,6 @@ export const links: DemoLink[] = [
   link('o-ts-pve-artjom', 'vps-tailscale', 'pve-artjom', [LAYER_LOGICAL], { kind: 'dashed' }),
   link('o-ts-pve-beelink', 'vps-tailscale', 'pve-beelink', [LAYER_LOGICAL], { kind: 'dashed' }),
   link('o-ts-pve-gpu', 'vps-tailscale', 'pve-gpu', [LAYER_LOGICAL], { kind: 'dashed' }),
-  // Прямой пиринг мимо координатора: в логическом виде появляется второй путь.
   link('o-artjom-dmitry', 'ws-artjom', 'ws-dmitry', [LAYER_LOGICAL], { kind: 'dashed' }),
 ]
 
@@ -355,20 +337,11 @@ export const views: AssetView[] = [
     id: LAYER_LOGICAL,
     label: 'VPN-оверлей',
     showSublabels: true,
-    // В оверлее не участвуют облака и контейнеры — их нечего показывать пустыми.
     hideIsolated: true,
     layout: { engine: 'radial', options: { rootId: 'vps-tailscale' } },
   },
 ]
 
-/**
- * Списки фильтров этого демо.
- *
- * Библиотека не знает ни про «подсеть», ни про «критичность»: она умеет только
- * собрать значения через `valuesOf` и сопоставить с ними выбор. Подписи и порядок
- * значений задаёт потребитель — здесь порядок по возрастанию критичности, а не
- * алфавитный.
- */
 export const filterGroups: FilterGroupDef[] = [
   {
     id: 'subnet',
@@ -406,26 +379,12 @@ export const filterGroups: FilterGroupDef[] = [
   },
 ]
 
-/**
- * Опорные узлы маркеров этого демо: центры, к которым сходятся связи.
- *
- * Порядок задаёт цвета: библиотека раздаёт палитру по нему.
- */
 export const markerAnchors: MarkerAnchor[] = [
   { id: 'keenetic-1', label: 'Keenetic 1' },
   { id: 'keenetic-2', label: 'Keenetic 2' },
   { id: 'vps-tailscale', label: 'Tailscale VPS' },
 ]
 
-/**
- * Маркеры принадлежности этого демо — по связям графа.
- *
- * Слои не ограничены намеренно: рабочая станция подключена к роутеру физически и
- * к координатору VPN логически, и оба кружка должны быть видны в любом виде.
- * Поэтому у `Artjom` их два — за `Keenetic 1` и за `Tailscale VPS`.
- *
- * Цвета не заданы: библиотека раздаст их из палитры по порядку опорных узлов.
- */
 export const nodeMarkers: NodeMarkerDef[] = connectionMarkers(markerAnchors)
 
 export const statusColors: Record<string, string> = {
@@ -434,7 +393,6 @@ export const statusColors: Record<string, string> = {
   degraded: 'var(--vam-status-warning)',
 }
 
-/** Синтетический граф для бенчмарка: `nodes` узлов и примерно `edges` рёбер. */
 export function generateLargeGraph(
   nodeCount: number,
   edgeCount: number,
@@ -444,7 +402,6 @@ export function generateLargeGraph(
 
   for (let index = 0; index < nodeCount; index += 1) {
     const kind = kinds[index % kinds.length] ?? KIND_WORKSTATION
-    // Иерархия: каждый 20-й узел — «полка», остальные висят на ближайшей полке.
     const isShelf = index % 20 === 0
     const shelfIndex = Math.floor(index / 20) * 20
     bigEntities.push({
@@ -459,8 +416,6 @@ export function generateLargeGraph(
 
   const bigLinks: DemoLink[] = []
   for (let index = 0; index < edgeCount; index += 1) {
-    // Детерминированная «случайность»: без Math.random, чтобы бенчмарк был
-    // воспроизводим прогон к прогону.
     const source = (index * 7919) % nodeCount
     const target = (index * 104729 + 13) % nodeCount
     if (source === target) continue

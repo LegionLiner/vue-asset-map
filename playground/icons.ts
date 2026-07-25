@@ -1,13 +1,5 @@
 import { h, type FunctionalComponent } from 'vue'
 
-/**
- * Иконки типов активов — часть демо, а не библиотеки.
- *
- * Именно так потребитель и подключает свои иконки: `themeConfig.kindIcons`
- * сопоставляет `kind` компоненту. Библиотека не знает ни одного типа заранее.
- *
- * Обводка — `currentColor`, чтобы иконка внутри узла красилась темой карты.
- */
 const icon =
   (paths: string[], viewBox = '0 0 32 32', width = 2): FunctionalComponent =>
   () =>
@@ -25,7 +17,6 @@ const icon =
       ),
     )
 
-/** Облако — «Интернет» и внешние сервисы. */
 export const CloudIcon: FunctionalComponent = () =>
   h(
     'svg',
@@ -41,7 +32,6 @@ export const CloudIcon: FunctionalComponent = () =>
     ],
   )
 
-/** Роутер. */
 export const RouterIcon = icon([
   'M4 18h24v8H4z',
   'M16 18V9',
@@ -51,21 +41,12 @@ export const RouterIcon = icon([
   'M15 22h2',
 ])
 
-/** Сервер и гипервизор. */
 export const ServerIcon = icon(['M5 5h22v9H5z', 'M5 18h22v9H5z', 'M10 9.5h1', 'M10 22.5h1'])
 
-/** Виртуальная машина, VPS. */
 export const VpsIcon = icon(['M4 6h24v15H4z', 'M12 25h8', 'M16 21v4'])
 
-/** Рабочая станция. */
 export const WorkstationIcon = icon(['M6 6h20v14H6z', 'M11 26h10', 'M16 20v6'])
 
-/**
- * Иконки плеера для демо-окна «История».
- *
- * Зеркальные варианты не дублируют путь, а разворачиваются через CSS
- * (`transform: scaleX(-1)`) — в разметке окна.
- */
 export const IconFastRewind: FunctionalComponent = () =>
   h(
     'svg',
@@ -92,7 +73,6 @@ export const IconStepRewind: FunctionalComponent = () =>
     ],
   )
 
-/** Контейнер. */
 export const ContainerIcon = icon([
   'M6 12l10-5 10 5v8l-10 5-10-5z',
   'M16 17l10-5',

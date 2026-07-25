@@ -1,5 +1,5 @@
 /**
- * Дымовая проверка собранного пакета в чистом Node.
+ * Проверка собранного пакета в чистом Node.
  *
  * Зачем отдельно от тестов: Vitest и любой бандлер подкладывают свою
  * интероперабельность для CommonJS-зависимостей, поэтому ошибки вида
@@ -68,8 +68,6 @@ for (const engine of [main.manualLayout, main.radialLayout]) {
 console.log('layout-dagre subpath (vue-asset-map/layout-dagre)')
 const dagreModule = await import(new URL('layout/dagre.js', dist).href)
 check('экспортирует dagreLayout', typeof dagreModule.dagreLayout?.run === 'function')
-// Главное здесь — именно вызов: импорт CommonJS-зависимости проходит и при
-// сломанной интероперабельности, а падает только обращение к её функции.
 const dagrePositions = await dagreModule.dagreLayout.run(layoutGraph, { rankdir: 'LR' })
 check('dagre действительно считает раскладку', dagrePositions.size === 2)
 check(
