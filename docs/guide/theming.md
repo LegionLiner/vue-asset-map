@@ -47,20 +47,20 @@ Scope it to one map by adding a class of your own:
 
 ### The tokens worth knowing
 
-| Group | Tokens |
-| --- | --- |
-| Surfaces | `--vam-bg`, `--vam-surface`, `--vam-surface-raised`, `--vam-surface-sunken` |
-| Text | `--vam-fg`, `--vam-fg-muted`, `--vam-fg-subtle` |
-| Accent | `--vam-accent`, `--vam-accent-fg`, `--vam-accent-soft`, `--vam-selection`, `--vam-focus-ring` |
-| Edges | `--vam-edge`, `--vam-edge-active`, `--vam-edge-width` |
-| Node | `--vam-node-size`, `--vam-node-size-root`, `--vam-node-label-width`, `--vam-node-label-height`, `--vam-node-label-gap`, `--vam-node-toggle-size`, `--vam-node-status-size` |
-| Node text | `--vam-node-label-color`, `--vam-node-sublabel-color`, `--vam-node-overlay-color` |
-| Markers | `--vam-marker-1`, `--vam-marker-2`, `--vam-marker-3`, `--vam-marker-infected`, `--vam-marker-size`, `--vam-marker-gap`, `--vam-marker-offset` |
-| Infection | `--vam-infected-bg`, `--vam-infected-border`, `--vam-infected-fg` |
-| Windows | `--vam-window-width`, `--vam-window-radius`, `--vam-window-header-height`, `--vam-windows-top`, `--vam-details-top` |
-| Filters | `--vam-filter-width`, `--vam-filter-height` |
-| Canvas | `--vam-canvas-dot`, `--vam-canvas-dot-size`, `--vam-canvas-grid` |
-| Motion | `--vam-transition`, `--vam-dimmed-opacity` |
+| Group     | Tokens                                                                                                                                                                     |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Surfaces  | `--vam-bg`, `--vam-surface`, `--vam-surface-raised`, `--vam-surface-sunken`                                                                                                |
+| Text      | `--vam-fg`, `--vam-fg-muted`, `--vam-fg-subtle`                                                                                                                            |
+| Accent    | `--vam-accent`, `--vam-accent-fg`, `--vam-accent-soft`, `--vam-selection`, `--vam-focus-ring`                                                                              |
+| Edges     | `--vam-edge`, `--vam-edge-active`, `--vam-edge-width`                                                                                                                      |
+| Node      | `--vam-node-size`, `--vam-node-size-root`, `--vam-node-label-width`, `--vam-node-label-height`, `--vam-node-label-gap`, `--vam-node-toggle-size`, `--vam-node-status-size` |
+| Node text | `--vam-node-label-color`, `--vam-node-sublabel-color`, `--vam-node-overlay-color`                                                                                          |
+| Markers   | `--vam-marker-1`, `--vam-marker-2`, `--vam-marker-3`, `--vam-marker-infected`, `--vam-marker-size`, `--vam-marker-gap`, `--vam-marker-offset`                              |
+| Infection | `--vam-infected-bg`, `--vam-infected-border`, `--vam-infected-fg`                                                                                                          |
+| Windows   | `--vam-window-width`, `--vam-window-radius`, `--vam-window-header-height`, `--vam-windows-top`, `--vam-details-top`                                                        |
+| Filters   | `--vam-filter-width`, `--vam-filter-height`                                                                                                                                |
+| Canvas    | `--vam-canvas-dot`, `--vam-canvas-dot-size`, `--vam-canvas-grid`                                                                                                           |
+| Motion    | `--vam-transition`, `--vam-dimmed-opacity`                                                                                                                                 |
 
 The label plate has a fixed width on purpose: sublabels appear and disappear as views change, and a breathing size
 would jolt the whole layout.

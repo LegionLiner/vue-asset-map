@@ -34,12 +34,7 @@ function clear(): void {
     :layout="{ engine: 'radial' }"
   >
     <template #toolbar-right>
-      <button
-        type="button"
-        class="demo-toolbar-button"
-        :disabled="selection.length !== 2"
-        @click="trace"
-      >
+      <button type="button" class="demo-toolbar-button" :disabled="selection.length !== 2" @click="trace">
         Trace path ({{ selection.length }}/2 selected)
       </button>
       <button v-if="traced.length" type="button" class="demo-toolbar-button" @click="clear">

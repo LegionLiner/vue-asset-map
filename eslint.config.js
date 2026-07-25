@@ -1,11 +1,6 @@
 import pluginVue from 'eslint-plugin-vue'
 import { defineConfigWithVueTs, vueTsConfigs } from '@vue/eslint-config-typescript'
 
-/**
- * The interesting part of this config is the `src/core` + `src/layout` block:
- * those trees are framework-free by contract, and the restricted-imports rule is
- * what actually enforces it (acceptance criterion, not a convention).
- */
 export default defineConfigWithVueTs(
   {
     ignores: [
@@ -32,7 +27,6 @@ export default defineConfigWithVueTs(
       'no-restricted-syntax': [
         'error',
         {
-          // `as unknown as X` double-casts are banned; use a type guard instead.
           selector: 'TSAsExpression > TSUnknownKeyword',
           message: 'Double casts through `unknown` are banned. Narrow with a type guard instead.',
         },
@@ -40,8 +34,6 @@ export default defineConfigWithVueTs(
       'vue/multi-word-component-names': 'off',
       'vue/require-default-prop': 'off',
       'vue/block-order': ['error', { order: ['script', 'template', 'style'] }],
-      // Prettier owns formatting. These rules argue with it over the same code
-      // and produce noise that gets "fixed" straight back on every format run.
       'vue/max-attributes-per-line': 'off',
       'vue/singleline-html-element-content-newline': 'off',
       'vue/html-self-closing': 'off',
@@ -79,9 +71,6 @@ export default defineConfigWithVueTs(
     },
   },
   {
-    // Docs sources live outside the library tsconfig projects: VitePress compiles
-    // them, `vue-tsc --build` does not, so type-aware linting has no program to
-    // attach them to.
     name: 'vue-asset-map/docs',
     files: ['docs/**/*.ts', 'docs/**/*.vue'],
     languageOptions: { parserOptions: { projectService: false, project: false } },
@@ -93,7 +82,6 @@ export default defineConfigWithVueTs(
     name: 'vue-asset-map/configs',
     files: ['*.config.ts', '*.config.js', 'playground/**/*.ts', 'scripts/**/*.mjs'],
     rules: {
-      // Scripts and configs are CLI tools: their console output is the result.
       'no-console': 'off',
     },
   },

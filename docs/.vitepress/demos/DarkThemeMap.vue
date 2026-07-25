@@ -20,11 +20,7 @@ const theme = ref<'light' | 'dark'>('dark')
     :layout="{ engine: 'radial' }"
   >
     <template #toolbar-right>
-      <button
-        type="button"
-        class="demo-toolbar-button"
-        @click="theme = theme === 'dark' ? 'light' : 'dark'"
-      >
+      <button type="button" class="demo-toolbar-button" @click="theme = theme === 'dark' ? 'light' : 'dark'">
         {{ theme === 'dark' ? 'Switch to light' : 'Switch to dark' }}
       </button>
     </template>

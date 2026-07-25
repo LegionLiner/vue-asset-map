@@ -115,7 +115,7 @@ export const columnsLayout: LayoutEngine<{ gap?: number }> = {
 ```ts
 import { builtinLayoutEngines, resolveLayoutEngine } from 'vue-asset-map'
 
-resolveLayoutEngine('radial')                       // radialLayout
+resolveLayoutEngine('radial') // radialLayout
 resolveLayoutEngine('columns', { columns: columnsLayout })
 ```
 

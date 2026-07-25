@@ -84,7 +84,6 @@ function clearPath(): void {
   lastPath.value = undefined
 }
 
-
 const addOpen = ref(false)
 
 const draft = reactive({
@@ -139,7 +138,6 @@ function submitAdd(): void {
   draft.overlayIp = ''
 }
 
-
 const metaLabels: Record<keyof AssetMeta, string> = {
   owner: 'Владелец',
   os: 'ОС',
@@ -169,7 +167,6 @@ function metaRows(meta: AssetMeta | undefined): { key: string; label: string; va
 function neighborsOf(id: string): DemoLink[] {
   return links.value.filter((link) => link.source === id || link.target === id)
 }
-
 
 const historyStep = ref('сейчас')
 

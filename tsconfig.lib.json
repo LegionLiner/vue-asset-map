@@ -5,10 +5,6 @@
     "moduleResolution": "Bundler",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "jsx": "preserve",
-    // `node` нужен guard-тестам, которые читают исходники с диска: содержимое
-    // CSS через бандлер получить нельзя (Vitest отключает обработку CSS).
-    // Отсутствие node-глобалей в `src/` теперь проверяет не tsconfig, а
-    // явный тест `tests/guards/purity.test.ts` — см. D-301 в DECISIONS.md.
     "types": ["vite/client", "node"],
 
     "strict": true,
@@ -27,8 +23,6 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
 
-    // Алиасы нужны только плейграунду: он импортирует библиотеку так же, как
-    // это будет делать потребитель — по имени пакета, а не по относительному пути.
     "baseUrl": ".",
     "paths": {
       "vue-asset-map": ["./src/index.ts"],

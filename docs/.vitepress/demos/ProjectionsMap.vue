@@ -25,9 +25,7 @@ const visible = computed(() => {
     :layout="{ engine: 'radial' }"
   >
     <template #toolbar-right>
-      <span class="demo-toolbar-button">
-        {{ visible.nodes }} nodes · {{ visible.links }} links
-      </span>
+      <span class="demo-toolbar-button">{{ visible.nodes }} nodes · {{ visible.links }} links</span>
     </template>
   </AssetMap>
 </template>

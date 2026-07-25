@@ -104,49 +104,49 @@ A link belongs to a view when its `layers` contain the view id, so `l4` shows up
 The ones reached for most often; the full list is in the
 [API reference](https://LegionLiner.github.io/vue-asset-map/api/).
 
-| Prop | Type | Default | Description |
-| --- | --- | --- | --- |
-| `entities` | `AssetEntity<E>[]` | — | Nodes. Never mutated by the map. |
-| `links` | `AssetLink<L>[]` | — | Edges. Never mutated by the map. |
-| `views` | `AssetView[]` | — | Projections. Without them everything is drawn. |
-| `layout` | `AssetMapLayoutSpec` | `manual` | Engine by name or as an instance, plus its options. |
-| `collapse` | `CollapseRule \| false` | threshold `10` | `false` turns group collapsing off. |
-| `themeConfig` | `ThemeConfig` | — | `statusColors` and `kindIcons`, keyed by your own values. |
-| `theme` | `'light' \| 'dark' \| 'auto'` | `'light'` | `'auto'` reads the OS setting once. |
-| `markers` | `NodeMarkerDef[]` | — | Membership dots under the labels. |
-| `maxDetailsWindows` | `number` | `2` | `0` disables the details windows. |
-| `locale` | `string \| PartialLocaleMessages` | `ru` | Locale code, or a dictionary of overrides. |
+| Prop                | Type                              | Default        | Description                                               |
+| ------------------- | --------------------------------- | -------------- | --------------------------------------------------------- |
+| `entities`          | `AssetEntity<E>[]`                | —              | Nodes. Never mutated by the map.                          |
+| `links`             | `AssetLink<L>[]`                  | —              | Edges. Never mutated by the map.                          |
+| `views`             | `AssetView[]`                     | —              | Projections. Without them everything is drawn.            |
+| `layout`            | `AssetMapLayoutSpec`              | `manual`       | Engine by name or as an instance, plus its options.       |
+| `collapse`          | `CollapseRule \| false`           | threshold `10` | `false` turns group collapsing off.                       |
+| `themeConfig`       | `ThemeConfig`                     | —              | `statusColors` and `kindIcons`, keyed by your own values. |
+| `theme`             | `'light' \| 'dark' \| 'auto'`     | `'light'`      | `'auto'` reads the OS setting once.                       |
+| `markers`           | `NodeMarkerDef[]`                 | —              | Membership dots under the labels.                         |
+| `maxDetailsWindows` | `number`                          | `2`            | `0` disables the details windows.                         |
+| `locale`            | `string \| PartialLocaleMessages` | `ru`           | Locale code, or a dictionary of overrides.                |
 
 Two-way bindings: `view`, `selection`, `expanded`, `filters`, `viewport`, `openDetails`, `collapsedNodes`,
 `openFilterGroups`. Each works without a `v-model` too — the component then owns that state itself.
 
 ## Events
 
-| Event | Payload | Fired when |
-| --- | --- | --- |
-| `node-click` | `{ id, entity, group, event }` | A node or a group node is clicked. |
-| `selection-change` | `EntityId[]` | The selection changes, in selection order. |
-| `expand` / `collapse` | `{ groupId, group }` | A collapsed group is opened or closed. |
-| `layout-done` | `{ engine, positions }` | A layout run finished and was applied. |
-| `error` | `unknown` | A layout engine threw, or an unknown engine name was requested. |
+| Event                 | Payload                        | Fired when                                                      |
+| --------------------- | ------------------------------ | --------------------------------------------------------------- |
+| `node-click`          | `{ id, entity, group, event }` | A node or a group node is clicked.                              |
+| `selection-change`    | `EntityId[]`                   | The selection changes, in selection order.                      |
+| `expand` / `collapse` | `{ groupId, group }`           | A collapsed group is opened or closed.                          |
+| `layout-done`         | `{ engine, positions }`        | A layout run finished and was applied.                          |
+| `error`               | `unknown`                      | A layout engine threw, or an unknown engine name was requested. |
 
 ## Slots
 
-| Slot | Props | Purpose |
-| --- | --- | --- |
-| `details` | `{ entity, close, tab }` | Body of a details window. |
-| `node-{kind}` | `{ entity, nodeId, simplified }` | Replaces the contents of a node circle. |
-| `toolbar-left` / `toolbar-right` | — | Your own controls in the map header. |
-| `windows` | — | Custom floating windows above the canvas. |
-| `edge-label` | `{ link, aggregated, count }` | Replaces an edge label. |
+| Slot                             | Props                            | Purpose                                   |
+| -------------------------------- | -------------------------------- | ----------------------------------------- |
+| `details`                        | `{ entity, close, tab }`         | Body of a details window.                 |
+| `node-{kind}`                    | `{ entity, nodeId, simplified }` | Replaces the contents of a node circle.   |
+| `toolbar-left` / `toolbar-right` | —                                | Your own controls in the map header.      |
+| `windows`                        | —                                | Custom floating windows above the canvas. |
+| `edge-label`                     | `{ link, aggregated, count }`    | Replaces an edge label.                   |
 
 ## Requirements
 
-| | Version |
-| --- | --- |
-| Vue | `^3.4.0` |
+|                             | Version   |
+| --------------------------- | --------- |
+| Vue                         | `^3.4.0`  |
 | Vue Flow (`@vue-flow/core`) | `^1.42.0` |
-| Node, to build from source | `>=20` |
+| Node, to build from source  | `>=20`    |
 
 The package is ESM-only, and its type declarations target `moduleResolution: "bundler"` — the default of a Vite or
 webpack project.

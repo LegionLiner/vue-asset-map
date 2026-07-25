@@ -103,49 +103,49 @@ const selection = ref<string[]>([])
 
 Самое частое; полный список — в [справочнике API](https://LegionLiner.github.io/vue-asset-map/ru/api/).
 
-| Prop | Тип | По умолчанию | Что делает |
-| --- | --- | --- | --- |
-| `entities` | `AssetEntity<E>[]` | — | Узлы. Карта их не мутирует. |
-| `links` | `AssetLink<L>[]` | — | Связи. Карта их не мутирует. |
-| `views` | `AssetView[]` | — | Проекции. Без них рисуется всё. |
-| `layout` | `AssetMapLayoutSpec` | `manual` | Движок по имени или объектом, плюс его опции. |
-| `collapse` | `CollapseRule \| false` | порог `10` | `false` выключает свёртку групп. |
-| `themeConfig` | `ThemeConfig` | — | `statusColors` и `kindIcons` по вашим значениям. |
-| `theme` | `'light' \| 'dark' \| 'auto'` | `'light'` | `'auto'` читает системную настройку один раз. |
-| `markers` | `NodeMarkerDef[]` | — | Кружки принадлежности под подписями. |
-| `maxDetailsWindows` | `number` | `2` | `0` полностью выключает окна подробностей. |
-| `locale` | `string \| PartialLocaleMessages` | `ru` | Код локали или словарь переопределений. |
+| Prop                | Тип                               | По умолчанию | Что делает                                       |
+| ------------------- | --------------------------------- | ------------ | ------------------------------------------------ |
+| `entities`          | `AssetEntity<E>[]`                | —            | Узлы. Карта их не мутирует.                      |
+| `links`             | `AssetLink<L>[]`                  | —            | Связи. Карта их не мутирует.                     |
+| `views`             | `AssetView[]`                     | —            | Проекции. Без них рисуется всё.                  |
+| `layout`            | `AssetMapLayoutSpec`              | `manual`     | Движок по имени или объектом, плюс его опции.    |
+| `collapse`          | `CollapseRule \| false`           | порог `10`   | `false` выключает свёртку групп.                 |
+| `themeConfig`       | `ThemeConfig`                     | —            | `statusColors` и `kindIcons` по вашим значениям. |
+| `theme`             | `'light' \| 'dark' \| 'auto'`     | `'light'`    | `'auto'` читает системную настройку один раз.    |
+| `markers`           | `NodeMarkerDef[]`                 | —            | Кружки принадлежности под подписями.             |
+| `maxDetailsWindows` | `number`                          | `2`          | `0` полностью выключает окна подробностей.       |
+| `locale`            | `string \| PartialLocaleMessages` | `ru`         | Код локали или словарь переопределений.          |
 
 Двусторонние привязки: `view`, `selection`, `expanded`, `filters`, `viewport`, `openDetails`, `collapsedNodes`,
 `openFilterGroups`. Каждая работает и без `v-model` — тогда состоянием управляет сам компонент.
 
 ## События
 
-| Событие | Полезная нагрузка | Когда |
-| --- | --- | --- |
-| `node-click` | `{ id, entity, group, event }` | Клик по узлу или групповому узлу. |
-| `selection-change` | `EntityId[]` | Изменилось выделение, в порядке выбора. |
-| `expand` / `collapse` | `{ groupId, group }` | Группа раскрыта или свёрнута. |
-| `layout-done` | `{ engine, positions }` | Раскладка досчитана и применена. |
-| `error` | `unknown` | Движок раскладки упал или запрошено неизвестное имя движка. |
+| Событие               | Полезная нагрузка              | Когда                                                       |
+| --------------------- | ------------------------------ | ----------------------------------------------------------- |
+| `node-click`          | `{ id, entity, group, event }` | Клик по узлу или групповому узлу.                           |
+| `selection-change`    | `EntityId[]`                   | Изменилось выделение, в порядке выбора.                     |
+| `expand` / `collapse` | `{ groupId, group }`           | Группа раскрыта или свёрнута.                               |
+| `layout-done`         | `{ engine, positions }`        | Раскладка досчитана и применена.                            |
+| `error`               | `unknown`                      | Движок раскладки упал или запрошено неизвестное имя движка. |
 
 ## Слоты
 
-| Слот | Параметры | Зачем |
-| --- | --- | --- |
-| `details` | `{ entity, close, tab }` | Тело окна подробностей. |
-| `node-{kind}` | `{ entity, nodeId, simplified }` | Подменяет содержимое круга узла. |
-| `toolbar-left` / `toolbar-right` | — | Свои контролы в шапке карты. |
-| `windows` | — | Свои плавающие окна поверх полотна. |
-| `edge-label` | `{ link, aggregated, count }` | Подменяет подпись связи. |
+| Слот                             | Параметры                        | Зачем                               |
+| -------------------------------- | -------------------------------- | ----------------------------------- |
+| `details`                        | `{ entity, close, tab }`         | Тело окна подробностей.             |
+| `node-{kind}`                    | `{ entity, nodeId, simplified }` | Подменяет содержимое круга узла.    |
+| `toolbar-left` / `toolbar-right` | —                                | Свои контролы в шапке карты.        |
+| `windows`                        | —                                | Свои плавающие окна поверх полотна. |
+| `edge-label`                     | `{ link, aggregated, count }`    | Подменяет подпись связи.            |
 
 ## Требования
 
-| | Версия |
-| --- | --- |
-| Vue | `^3.4.0` |
-| Vue Flow (`@vue-flow/core`) | `^1.42.0` |
-| Node, для сборки из исходников | `>=20` |
+|                                | Версия    |
+| ------------------------------ | --------- |
+| Vue                            | `^3.4.0`  |
+| Vue Flow (`@vue-flow/core`)    | `^1.42.0` |
+| Node, для сборки из исходников | `>=20`    |
 
 Пакет только ESM, а его декларации рассчитаны на `moduleResolution: "bundler"` — значение по умолчанию в проекте на
 Vite или webpack.

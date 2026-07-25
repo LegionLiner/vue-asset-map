@@ -9,11 +9,11 @@ Search and facets narrow one set together: an entity matches when it passes the 
 
 ## Three search modes, picked by the query itself
 
-| Query | Mode |
-| --- | --- |
-| `10.38.24.0/24` | CIDR — addresses inside labels and sublabels tested against the range |
+| Query                                    | Mode                                                                       |
+| ---------------------------------------- | -------------------------------------------------------------------------- |
+| `10.38.24.0/24`                          | CIDR — addresses inside labels and sublabels tested against the range      |
 | `10.38.24.*`, `10.38.*.*`, `10.38.24.7*` | Wildcard — matched on the textual form, so `.7*` finds both `.7` and `.70` |
-| `beelink` | Case-insensitive substring |
+| `beelink`                                | Case-insensitive substring                                                 |
 
 The CIDR base may be any address inside the network: `10.38.24.5/24` is the same range as `10.38.24.0/24`.
 

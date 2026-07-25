@@ -80,14 +80,14 @@ import { AssetMap, MapWindow } from 'vue-asset-map'
 </template>
 ```
 
-| Prop | Default | Purpose |
-| --- | --- | --- |
-| `title` | — | Caption centred in the bar. |
-| `closable` | `true` | `false` for windows that must stay. |
-| `collapsible` | `true` | Show the collapse-to-bar button. |
-| `headerOnly` | `false` | Render the bar only, with no body. |
-| `dragHandle` | `false` | Show a drag handle — needed by windows without a caption. |
-| `offset` | — | Starting offset in px, to keep windows from stacking exactly. |
+| Prop          | Default | Purpose                                                       |
+| ------------- | ------- | ------------------------------------------------------------- |
+| `title`       | —       | Caption centred in the bar.                                   |
+| `closable`    | `true`  | `false` for windows that must stay.                           |
+| `collapsible` | `true`  | Show the collapse-to-bar button.                              |
+| `headerOnly`  | `false` | Render the bar only, with no body.                            |
+| `dragHandle`  | `false` | Show a drag handle — needed by windows without a caption.     |
+| `offset`      | —       | Starting offset in px, to keep windows from stacking exactly. |
 
 Windows in the `#windows` slot render above the details windows, and the details windows measure them and start
 below — a newly opened one does not cover your history strip. Both drop below the toolbar when `#toolbar-right` has

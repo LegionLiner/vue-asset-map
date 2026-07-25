@@ -2,12 +2,12 @@
 
 Everything the package exports. Three entry points:
 
-| Import | Contents |
-| --- | --- |
-| `vue-asset-map` | Components, composables, types and everything from the core. |
-| `vue-asset-map/core` | Graph functions with no Vue and no Vue Flow. |
-| `vue-asset-map/layout-dagre` | The dagre layout engine, behind an optional dependency. |
-| `vue-asset-map/style.css` | Tokens, light and dark themes, component rules. |
+| Import                       | Contents                                                     |
+| ---------------------------- | ------------------------------------------------------------ |
+| `vue-asset-map`              | Components, composables, types and everything from the core. |
+| `vue-asset-map/core`         | Graph functions with no Vue and no Vue Flow.                 |
+| `vue-asset-map/layout-dagre` | The dagre layout engine, behind an optional dependency.      |
+| `vue-asset-map/style.css`    | Tokens, light and dark themes, component rules.              |
 
 ## Component
 
@@ -17,96 +17,96 @@ The map. Generic over the payload types of `entity.meta` and `link.meta`: `Asset
 
 #### Props
 
-| Prop | Type | Default | Description |
-| --- | --- | --- | --- |
-| `entities` | `AssetEntity<E>[]` | — | Nodes. Read-only for the map. |
-| `links` | `AssetLink<L>[]` | — | Edges. Read-only for the map. |
-| `views` | `AssetView[]` | — | Projections. Without them everything is drawn. |
-| `nodeTypes` | `Record<string, Component>` | — | Node components by `kind`, merged over the built-ins. |
-| `edgeTypes` | `Record<string, Component>` | — | Edge components by `kind`. |
-| `layout` | `AssetMapLayoutSpec` | `{ engine: 'manual' }` | Engine by name or instance, plus its options. |
-| `collapse` | `CollapseRule \| false` | `{ threshold: 10 }` | `false` disables group collapsing. |
-| `filterOptions` | `FilterOptions` | — | Search fields, neighbour depth, filter groups. |
-| `theme` | `ThemeMode` | `'light'` | `'light'`, `'dark'` or `'auto'`. |
-| `themeConfig` | `ThemeConfig` | — | `statusColors` and `kindIcons`. |
-| `locale` | `string \| PartialLocaleMessages` | `'ru'` | Locale code or an override dictionary. |
-| `showToolbar` | `boolean` | `true` | Render the built-in controls. |
-| `showDetailsPanel` | `boolean` | `true` | Open details windows on click. |
-| `showMinimap` | `boolean` | `false` | Render the overview map. |
-| `maxDetailsWindows` | `number` | `2` | `0` disables the windows entirely. |
-| `neighborHighlightDepth` | `number` | `1` | Steps of a selection that stay lit. `0` disables. |
-| `infected` | `EntityId[]` | — | Infection sources; the spread is computed with `blastRadius`. |
-| `infectionOptions` | `InfectionOptions` | — | `direction`, `maxDepth`, `layers` of the spread. |
-| `markers` | `NodeMarkerDef[]` | — | Membership dots under the labels. |
-| `markerHoverDelay` | `number` | `500` | Delay in ms before a hovered dot highlights. |
-| `onlyRenderVisibleElements` | `boolean` | `true` | Mount only what is in the viewport. |
-| `lodThreshold` | `number` | `0.5` | Zoom below which nodes render simplified. |
-| `searchDebounce` | `number` | `200` | Delay in ms before a typed query applies. |
-| `loading` | `boolean` | `false` | Show a loading overlay. |
+| Prop                        | Type                              | Default                | Description                                                   |
+| --------------------------- | --------------------------------- | ---------------------- | ------------------------------------------------------------- |
+| `entities`                  | `AssetEntity<E>[]`                | —                      | Nodes. Read-only for the map.                                 |
+| `links`                     | `AssetLink<L>[]`                  | —                      | Edges. Read-only for the map.                                 |
+| `views`                     | `AssetView[]`                     | —                      | Projections. Without them everything is drawn.                |
+| `nodeTypes`                 | `Record<string, Component>`       | —                      | Node components by `kind`, merged over the built-ins.         |
+| `edgeTypes`                 | `Record<string, Component>`       | —                      | Edge components by `kind`.                                    |
+| `layout`                    | `AssetMapLayoutSpec`              | `{ engine: 'manual' }` | Engine by name or instance, plus its options.                 |
+| `collapse`                  | `CollapseRule \| false`           | `{ threshold: 10 }`    | `false` disables group collapsing.                            |
+| `filterOptions`             | `FilterOptions`                   | —                      | Search fields, neighbour depth, filter groups.                |
+| `theme`                     | `ThemeMode`                       | `'light'`              | `'light'`, `'dark'` or `'auto'`.                              |
+| `themeConfig`               | `ThemeConfig`                     | —                      | `statusColors` and `kindIcons`.                               |
+| `locale`                    | `string \| PartialLocaleMessages` | `'ru'`                 | Locale code or an override dictionary.                        |
+| `showToolbar`               | `boolean`                         | `true`                 | Render the built-in controls.                                 |
+| `showDetailsPanel`          | `boolean`                         | `true`                 | Open details windows on click.                                |
+| `showMinimap`               | `boolean`                         | `false`                | Render the overview map.                                      |
+| `maxDetailsWindows`         | `number`                          | `2`                    | `0` disables the windows entirely.                            |
+| `neighborHighlightDepth`    | `number`                          | `1`                    | Steps of a selection that stay lit. `0` disables.             |
+| `infected`                  | `EntityId[]`                      | —                      | Infection sources; the spread is computed with `blastRadius`. |
+| `infectionOptions`          | `InfectionOptions`                | —                      | `direction`, `maxDepth`, `layers` of the spread.              |
+| `markers`                   | `NodeMarkerDef[]`                 | —                      | Membership dots under the labels.                             |
+| `markerHoverDelay`          | `number`                          | `500`                  | Delay in ms before a hovered dot highlights.                  |
+| `onlyRenderVisibleElements` | `boolean`                         | `true`                 | Mount only what is in the viewport.                           |
+| `lodThreshold`              | `number`                          | `0.5`                  | Zoom below which nodes render simplified.                     |
+| `searchDebounce`            | `number`                          | `200`                  | Delay in ms before a typed query applies.                     |
+| `loading`                   | `boolean`                         | `false`                | Show a loading overlay.                                       |
 
 #### Two-way bindings
 
-| Model | Type | Description |
-| --- | --- | --- |
-| `view` | `string \| undefined` | Active view id. |
-| `selection` | `EntityId[]` | Selected ids, in selection order. |
-| `expanded` | `Set<string>` | Group ids expanded by hand. |
-| `filters` | `FilterState` | Query, facets, group selection. |
-| `viewport` | `Viewport` | Pan in px plus zoom. |
-| `openDetails` | `EntityId[]` | Entities with an open window; the last is on top. |
-| `collapsedNodes` | `Set<EntityId>` | Nodes whose subtree is folded. |
-| `openFilterGroups` | `string[] \| undefined` | Expanded filter lists. |
+| Model              | Type                    | Description                                       |
+| ------------------ | ----------------------- | ------------------------------------------------- |
+| `view`             | `string \| undefined`   | Active view id.                                   |
+| `selection`        | `EntityId[]`            | Selected ids, in selection order.                 |
+| `expanded`         | `Set<string>`           | Group ids expanded by hand.                       |
+| `filters`          | `FilterState`           | Query, facets, group selection.                   |
+| `viewport`         | `Viewport`              | Pan in px plus zoom.                              |
+| `openDetails`      | `EntityId[]`            | Entities with an open window; the last is on top. |
+| `collapsedNodes`   | `Set<EntityId>`         | Nodes whose subtree is folded.                    |
+| `openFilterGroups` | `string[] \| undefined` | Expanded filter lists.                            |
 
 Each works without a `v-model`; the component then owns that state.
 
 #### Events
 
-| Event | Payload |
-| --- | --- |
-| `node-click`, `node-dblclick`, `node-context-menu` | `NodeEventPayload` |
-| `edge-click` | `{ id: string; event: MouseEvent }` |
-| `pane-click` | `MouseEvent` |
-| `expand`, `collapse` | `{ groupId: string; group: CollapsedGroup \| undefined }` |
-| `node-expand`, `node-collapse` | `{ id: EntityId; entity: AssetEntity<E> \| undefined }` |
-| `selection-change` | `EntityId[]` |
-| `layout-start` | `string` — engine name |
-| `layout-done` | `{ engine: string; positions: number }` |
-| `error` | `unknown` |
+| Event                                              | Payload                                                   |
+| -------------------------------------------------- | --------------------------------------------------------- |
+| `node-click`, `node-dblclick`, `node-context-menu` | `NodeEventPayload`                                        |
+| `edge-click`                                       | `{ id: string; event: MouseEvent }`                       |
+| `pane-click`                                       | `MouseEvent`                                              |
+| `expand`, `collapse`                               | `{ groupId: string; group: CollapsedGroup \| undefined }` |
+| `node-expand`, `node-collapse`                     | `{ id: EntityId; entity: AssetEntity<E> \| undefined }`   |
+| `selection-change`                                 | `EntityId[]`                                              |
+| `layout-start`                                     | `string` — engine name                                    |
+| `layout-done`                                      | `{ engine: string; positions: number }`                   |
+| `error`                                            | `unknown`                                                 |
 
 #### Slots
 
-| Slot | Props |
-| --- | --- |
-| `toolbar-left`, `toolbar-right` | — |
-| `empty`, `loading` | — |
-| `windows` | — |
-| `details` | `DetailsSlotProps<E>` |
-| `details-header` | `DetailsHeaderSlotProps<E>` |
-| `edge-label` | `EdgeLabelSlotProps<L>` |
-| `node-{kind}`, `node-badge` | `NodeSlotProps<E>` |
+| Slot                            | Props                       |
+| ------------------------------- | --------------------------- |
+| `toolbar-left`, `toolbar-right` | —                           |
+| `empty`, `loading`              | —                           |
+| `windows`                       | —                           |
+| `details`                       | `DetailsSlotProps<E>`       |
+| `details-header`                | `DetailsHeaderSlotProps<E>` |
+| `edge-label`                    | `EdgeLabelSlotProps<L>`     |
+| `node-{kind}`, `node-badge`     | `NodeSlotProps<E>`          |
 
 #### Exposed methods — `AssetMapExposed<E, L>`
 
-| Method | Signature |
-| --- | --- |
-| `fitView` | `() => Promise<void>` |
-| `focus` | `(id: EntityId, options?: FocusOptions) => Promise<void>` |
-| `relayout` | `() => Promise<void>` |
-| `highlightPath` | `(from: EntityId, to: EntityId) => EntityId[]` |
-| `clearHighlight` | `() => void` |
-| `getGraph` | `() => AssetGraph<E, L>` |
+| Method           | Signature                                                 |
+| ---------------- | --------------------------------------------------------- |
+| `fitView`        | `() => Promise<void>`                                     |
+| `focus`          | `(id: EntityId, options?: FocusOptions) => Promise<void>` |
+| `relayout`       | `() => Promise<void>`                                     |
+| `highlightPath`  | `(from: EntityId, to: EntityId) => EntityId[]`            |
+| `clearHighlight` | `() => void`                                              |
+| `getGraph`       | `() => AssetGraph<E, L>`                                  |
 
 ### Other components
 
-| Component | Purpose |
-| --- | --- |
-| `MapWindow` | Floating window chrome: bar, dragging, collapsing, closing. |
-| `DetailsPanel` | Default details window. |
-| `DetailsSection` | One section of a details panel: heading plus content. |
-| `BaseNode`, `GroupNode` | Default node and group node. |
-| `AssetEdge` | Default edge. |
-| `MiniMap` | Overview map. |
-| `SearchInput`, `ViewSwitcher`, `FilterMenu` | Toolbar controls; usable outside the map. |
+| Component                                   | Purpose                                                     |
+| ------------------------------------------- | ----------------------------------------------------------- |
+| `MapWindow`                                 | Floating window chrome: bar, dragging, collapsing, closing. |
+| `DetailsPanel`                              | Default details window.                                     |
+| `DetailsSection`                            | One section of a details panel: heading plus content.       |
+| `BaseNode`, `GroupNode`                     | Default node and group node.                                |
+| `AssetEdge`                                 | Default edge.                                               |
+| `MiniMap`                                   | Overview map.                                               |
+| `SearchInput`, `ViewSwitcher`, `FilterMenu` | Toolbar controls; usable outside the map.                   |
 
 ## Types
 
@@ -149,19 +149,19 @@ Each works without a `v-model`; the component then owns that state.
 
 ## Composables
 
-| Composable | Returns |
-| --- | --- |
-| `useAssetGraph(entities, links)` | `{ graph, issues }` — indexes plus repair reports. |
-| `useViewProjection(graph, views, viewId)` | `{ view, projection, showSublabels }` |
-| `useFilters(graph, projection, filters, options, debounceMs)` | `{ result, facets, active, visibleIds, matchedIds }` |
-| `useCollapse(graph, visibleIds, projection, rule, expanded, collapsedParents?)` | Group state plus toggles. |
-| `useLayout(params)` | `{ positions, running, engineName, relayout, positionOf, … }` |
-| `useFlowElements(params)` | `{ nodes, edges }` for `<VueFlow>`. |
-| `useSelection(selection)` | Selection state and mutators. |
-| `useNodeMarkers(graph, markers, hoverDelay)` | `{ markersFor, hoveredMarker, memberIds, … }` |
-| `useMapContext()` | The context nodes and edges read. Throws outside `<AssetMap>`. |
-| `useTranslate()` | A translator that falls back to the built-in locale. |
-| `resolveTheme(mode)` | `ComputedRef<ResolvedTheme>`. |
+| Composable                                                                      | Returns                                                        |
+| ------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `useAssetGraph(entities, links)`                                                | `{ graph, issues }` — indexes plus repair reports.             |
+| `useViewProjection(graph, views, viewId)`                                       | `{ view, projection, showSublabels }`                          |
+| `useFilters(graph, projection, filters, options, debounceMs)`                   | `{ result, facets, active, visibleIds, matchedIds }`           |
+| `useCollapse(graph, visibleIds, projection, rule, expanded, collapsedParents?)` | Group state plus toggles.                                      |
+| `useLayout(params)`                                                             | `{ positions, running, engineName, relayout, positionOf, … }`  |
+| `useFlowElements(params)`                                                       | `{ nodes, edges }` for `<VueFlow>`.                            |
+| `useSelection(selection)`                                                       | Selection state and mutators.                                  |
+| `useNodeMarkers(graph, markers, hoverDelay)`                                    | `{ markersFor, hoveredMarker, memberIds, … }`                  |
+| `useMapContext()`                                                               | The context nodes and edges read. Throws outside `<AssetMap>`. |
+| `useTranslate()`                                                                | A translator that falls back to the built-in locale.           |
+| `resolveTheme(mode)`                                                            | `ComputedRef<ResolvedTheme>`.                                  |
 
 ## Core
 
@@ -169,16 +169,16 @@ Available from both `vue-asset-map` and `vue-asset-map/core`.
 
 ### Graph
 
-| Function | Purpose |
-| --- | --- |
+| Function                                | Purpose                                                |
+| --------------------------------------- | ------------------------------------------------------ |
 | `buildGraph(entities, links, options?)` | Builds the indexes; reports repairs through `onIssue`. |
-| `emptyGraph()` | A graph with nothing in it. |
-| `parentIdOf(graph, id)` | Effective parent, `null` for a root. |
-| `ancestorsOf(graph, id)` | Chain up to the root. Cycle-safe. |
-| `descendantsOf(graph, id)` | Depth-first, excluding the node. Cycle-safe. |
-| `incidentLinks(graph, id, layers?)` | Links touching a node. |
-| `matchesLayers(link, layers)` | Empty `layers` matches everything. |
-| `otherEnd(link, id)` | The far end; a self-loop returns `id`. |
+| `emptyGraph()`                          | A graph with nothing in it.                            |
+| `parentIdOf(graph, id)`                 | Effective parent, `null` for a root.                   |
+| `ancestorsOf(graph, id)`                | Chain up to the root. Cycle-safe.                      |
+| `descendantsOf(graph, id)`              | Depth-first, excluding the node. Cycle-safe.           |
+| `incidentLinks(graph, id, layers?)`     | Links touching a node.                                 |
+| `matchesLayers(link, layers)`           | Empty `layers` matches everything.                     |
+| `otherEnd(link, id)`                    | The far end; a self-loop returns `id`.                 |
 
 ### Projection
 

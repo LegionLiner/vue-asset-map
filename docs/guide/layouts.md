@@ -114,7 +114,7 @@ the name may come from view data — that is, from outside.
 ```ts
 import { builtinLayoutEngines, resolveLayoutEngine } from 'vue-asset-map'
 
-resolveLayoutEngine('radial')                       // radialLayout
+resolveLayoutEngine('radial') // radialLayout
 resolveLayoutEngine('columns', { columns: columnsLayout })
 ```
 

@@ -31,7 +31,7 @@ follow the order of the input arrays, so the same input gives the same map.
 
 The rest of the invariants:
 
-- **Grouping happens under the nearest *visible* ancestor.** When a projection hides a parent, its children group one
+- **Grouping happens under the nearest _visible_ ancestor.** When a projection hides a parent, its children group one
   level up rather than under a hidden id.
 - **Groups never nest.** Levels are walked top-down and a collapsed level is not descended into.
 - **Expanding by hand always wins.** `expandedIds` is checked before the rule, so it beats both `shouldCollapse` and
