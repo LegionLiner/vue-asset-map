@@ -366,7 +366,6 @@ describe('раскладка схлопнутого графа из фиксту
 
     expect(positions.size).toBe(collapsed.nodeIds.length)
     expect(positions.get('internet')).toEqual({ x: 0, y: 0 })
-    // Групповой узел тоже разложен.
     expect(positions.has('group:pve-beelink:container')).toBe(true)
   })
 })

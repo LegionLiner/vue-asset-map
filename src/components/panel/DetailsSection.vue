@@ -1,14 +1,14 @@
 <script setup lang="ts">
 /**
- * Секция панели подробностей: заголовок плюс содержимое.
+ * One section of the details panel: a heading plus content.
  *
- * Существует затем, чтобы потребитель, наполняющий слот `#details`, мог собрать
- * панель из тех же блоков, что и дефолтная реализация, и не подбирать отступы
- * и типографику на глаз.
+ * Exists so that a consumer filling the `#details` slot can assemble a panel out
+ * of the same blocks the default implementation uses, instead of matching
+ * spacing and typography by eye.
  */
 defineProps<{
   title: string
-  /** Показывать секцию как пустую, а не прятать: полезно для «нет данных». */
+  /** Render the section as empty instead of hiding it — for "no data" states. */
   empty?: boolean
 }>()
 </script>
@@ -53,7 +53,6 @@ defineProps<{
   font-size: var(--vnm-font-size-sm);
 }
 
-/* Пары «ключ — значение» внутри секции. */
 .vnm-field__key {
   overflow: hidden;
   color: var(--vnm-fg-muted);

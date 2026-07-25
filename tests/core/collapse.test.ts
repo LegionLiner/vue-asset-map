@@ -130,7 +130,6 @@ describe('collapseGraph: рёбра', () => {
     const result = collapseGraph(graph)
 
     expect(result.groups[0]?.internalLinkCount).toBe(3)
-    // Петли на групповом узле нет.
     expect(result.links.some((link) => link.source === link.target)).toBe(false)
   })
 

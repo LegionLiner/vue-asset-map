@@ -1,10 +1,10 @@
 /*
- * Тёмная тема.
+ * Dark theme.
  *
- * Включается классом `.vnm-theme-dark`, а не `@media (prefers-color-scheme)`:
- * в продукте есть явный переключатель, и он должен побеждать системную
- * настройку. `theme: 'auto'` читает систему один раз при инициализации и
- * ставит соответствующий класс — дальше решает пользователь.
+ * Applied through the `.vnm-theme-dark` class rather than
+ * `@media (prefers-color-scheme)`: the product has an explicit switch and it has
+ * to beat the system setting. `theme: 'auto'` reads the system once at
+ * initialisation and sets the class; from then on the user decides.
  */
 .vnm-root.vnm-theme-dark {
   --vnm-bg: #0f172a;
@@ -31,13 +31,13 @@
   --vnm-edge-dimmed: #2b3550;
   --vnm-edge-label-bg: #1b2438;
 
-  /* Заражение: на тёмном фоне светлая заливка слепит, поэтому она темнее. */
+  /* On a dark background a light fill glares, so the infection fill is darker. */
   --vnm-infected-bg: #3a2226;
   --vnm-infected-border: #e57373;
   --vnm-infected-fg: #e57373;
   --vnm-infected-edge: #e57373;
 
-  /* Состояния в тёмной теме светлее: на тёмном фоне насыщенный цвет глухой. */
+  /* Status colors are lighter here: a saturated hue reads as muddy on dark. */
   --vnm-status-online: #74c281;
   --vnm-status-offline: #e57373;
   --vnm-status-warning: #e0a256;

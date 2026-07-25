@@ -4,23 +4,23 @@ import GroupNode from '../components/nodes/GroupNode.vue'
 import NetworkEdge from '../components/edges/NetworkEdge.vue'
 
 /**
- * Внутренние типы, которыми компонент помечает узлы для VueFlow.
+ * Internal `node.type` values the map hands to VueFlow.
  *
- * `kind` сущности не подставляется в `node.type` напрямую: VueFlow ругается в
- * консоль на неизвестный тип, а `kind` — открытый строковый союз из данных
- * потребителя. Поэтому свой `kind` попадает в `type` только если под него
- * действительно зарегистрирован компонент.
+ * An entity's `kind` is not used as `node.type` directly: VueFlow logs a warning
+ * for an unknown type, and `kind` is an open string union coming from consumer
+ * data. A `kind` reaches `type` only when a component is actually registered
+ * under it.
  */
 export const NODE_TYPE_BASE = 'vnm-node'
 export const NODE_TYPE_GROUP = 'vnm-group'
 export const EDGE_TYPE_BASE = 'vnm-edge'
 
 /**
- * Реестр компонентов узлов: пользовательский мержится с дефолтным.
+ * Node component registry: the consumer's entries merged over the built-ins.
  *
- * `markRaw` обязателен: VueFlow держит реестр в реактивном объекте, а
- * реактивный прокси над определением компонента — предупреждение в консоли и
- * лишняя работа на каждый рендер.
+ * `markRaw` is mandatory: VueFlow keeps the registry in a reactive object, and a
+ * reactive proxy around a component definition means a console warning plus
+ * wasted work on every render.
  */
 export function buildNodeTypes(custom?: Record<string, Component>): Record<string, Component> {
   const types: Record<string, Component> = {
@@ -35,6 +35,7 @@ export function buildNodeTypes(custom?: Record<string, Component>): Record<strin
   return types
 }
 
+/** Edge component registry, following the same rules as {@link buildNodeTypes}. */
 export function buildEdgeTypes(custom?: Record<string, Component>): Record<string, Component> {
   const types: Record<string, Component> = {
     [EDGE_TYPE_BASE]: markRaw(NetworkEdge),
@@ -47,12 +48,12 @@ export function buildEdgeTypes(custom?: Record<string, Component>): Record<strin
   return types
 }
 
-/** Тип узла для VueFlow: свой компонент под `kind`, иначе базовый. */
+/** `node.type` for an entity: its own `kind` when registered, else the base node. */
 export function nodeTypeFor(kind: string, types: Readonly<Record<string, Component>>): string {
   return Object.prototype.hasOwnProperty.call(types, kind) ? kind : NODE_TYPE_BASE
 }
 
-/** Тип ребра: свой компонент под `kind` ребра, иначе базовый. */
+/** `edge.type` for a link: its own `kind` when registered, else the base edge. */
 export function edgeTypeFor(kind: string | undefined, types: Readonly<Record<string, Component>>): string {
   if (kind !== undefined && Object.prototype.hasOwnProperty.call(types, kind)) return kind
   return EDGE_TYPE_BASE

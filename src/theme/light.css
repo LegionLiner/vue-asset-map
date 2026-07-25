@@ -1,10 +1,10 @@
 /*
- * Светлая тема.
+ * Light theme.
  *
- * Значения совпадают с базовыми из `tokens.css`, но объявлены явно: если
- * страница ставит `.vnm-theme-light` на карту, вложенную в тёмный контейнер,
- * тема обязана победить наследование — а для этого нужен свой блок с более
- * высокой специфичностью, а не расчёт на базовые токены.
+ * The values match the base ones in `tokens.css` but are restated explicitly:
+ * when a page puts `.vnm-theme-light` on a map nested inside a dark container,
+ * the theme has to beat inheritance, and that needs a block of its own with
+ * higher specificity rather than reliance on the base tokens.
  */
 .vnm-root.vnm-theme-light {
   --vnm-bg: #f7f8fa;

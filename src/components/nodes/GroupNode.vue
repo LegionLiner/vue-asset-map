@@ -5,11 +5,11 @@ import { useMapContext } from '../../composables/useMapContext'
 import type { NetworkNodeData } from '../../composables/useFlowElements'
 
 /**
- * Свёрнутая группа однотипных узлов.
+ * A collapsed group of same-kind nodes.
  *
- * Тот же круг с подписью, что и у обычного узла, но вместо иконки — число
- * участников: свёртка не должна выглядеть как пропажа данных, поэтому счётчик
- * стоит на самом заметном месте.
+ * The same circle and plate as an ordinary node, but the icon is replaced by the
+ * member count: collapsing must not look like data going missing, so the count
+ * takes the most visible spot.
  */
 const props = defineProps<{
   id: string
@@ -23,7 +23,8 @@ const group = computed(() => (props.data?.variant === 'group' ? props.data.group
 const memberCount = computed(() => group.value?.memberIds.length ?? 0)
 const internalLinkCount = computed(() => group.value?.internalLinkCount ?? 0)
 
-/** Состояния участников: группа не должна прятать факт «внутри что-то упало». */
+// Member statuses are surfaced so a group cannot hide that something inside it
+// is down.
 const memberStatuses = computed(() => {
   const counts = new Map<string, number>()
   for (const memberId of group.value?.memberIds ?? []) {
@@ -48,8 +49,8 @@ const classes = computed(() => [
     'vnm-node--matched': map.isMatched(props.id),
     'vnm-node--dimmed': map.isDimmed(props.id),
     'vnm-node--simplified': map.simplified.value,
-    // Группа считается заражённой, если захвачен хоть один её участник: иначе
-    // свёртка прятала бы факт заражения.
+    // A group counts as infected when any single member is captured, otherwise
+    // collapsing would conceal the infection.
     'vnm-node--infected': map.isInfected(props.id),
   },
 ])
@@ -103,7 +104,7 @@ function onKeydown(event: KeyboardEvent): void {
 </template>
 
 <style>
-/* Пунктирная рамка и «стопка» позади круга: узел читается как «здесь их много». */
+/* Dashed frame plus a "stack" behind the circle, so the node reads as "many". */
 .vnm-group__circle {
   border-style: dashed;
   background: var(--vnm-surface-sunken);

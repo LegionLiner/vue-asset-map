@@ -6,31 +6,32 @@ import { IconCheckbox, IconCheckboxChecked, IconChevron, IconFilter } from '../i
 import type { FacetCounts, FilterGroupDef, FilterState } from '../../types/filter'
 
 /**
- * Фильтры: кнопка на полотне и раскрывающаяся панель со списками значений.
+ * Filters: a button over the canvas plus a drop-down panel of value lists.
  *
- * Списки — данные, а не код. «Подсеть», «Тип актива», «Критичность» задаёт
- * потребитель через `groups`; без них панель показывает встроенные фасеты по
- * типу и состоянию, собранные из самих сущностей.
+ * The lists are data, not code. "Subnet", "Asset type" and "Severity" all come
+ * from the consumer through `groups`; without them the panel falls back to the
+ * built-in kind and status facets collected from the entities themselves.
  *
- * Состояние состояния фильтра всегда заменяется новым объектом, а не правится на
- * месте: снаружи оно может быть контролируемым через `v-model:filters`, и мутация
- * не породила бы события обновления.
+ * Filter state is always replaced with a new object, never edited in place: it
+ * may be controlled from outside through `v-model:filters`, and a mutation would
+ * not raise an update event.
  */
 const model = defineModel<FilterState>({
   default: (): FilterState => ({ query: '', kinds: [], statuses: [] }),
 })
 
 /**
- * Какие списки раскрыты.
+ * Which lists are expanded.
  *
- * Наружу через `v-model:openGroups`, а не в `localStorage`: пакет не пишет в
- * хранилище браузера — сохранять состояние между сессиями решает приложение.
+ * Exposed through `v-model:openGroups` rather than written to `localStorage`:
+ * the package never touches browser storage — persisting across sessions is the
+ * application's decision.
  */
 const openGroups = defineModel<string[] | undefined>('openGroups', { default: undefined })
 
 const props = defineProps<{
   facets: FacetCounts
-  /** Описания списков. Без них показываются фасеты по kind и status. */
+  /** List definitions. Without them the kind and status facets are shown. */
   groups?: readonly FilterGroupDef[]
 }>()
 
@@ -39,7 +40,7 @@ const t = useTranslate()
 const open = ref(false)
 const query = ref('')
 
-/** Встроенные списки, когда потребитель своих не задал. */
+/** Built-in lists used when the consumer declared none. */
 const fallbackGroups = computed<FilterGroupDef[]>(() => [
   { id: 'kinds', label: t.value('filter.kinds') },
   { id: 'statuses', label: t.value('filter.statuses'), valuesOf: (entity) => [entity.status ?? ''] },
@@ -48,10 +49,10 @@ const fallbackGroups = computed<FilterGroupDef[]>(() => [
 const groups = computed(() => props.groups ?? fallbackGroups.value)
 
 /**
- * Значения списка: объявленные потребителем или собранные из данных.
+ * Values of a list: either declared by the consumer or collected from the data.
  *
- * Счётчики приходят из фасетов по проекции вида, поэтому не обнуляются при
- * выборе значения — иначе снять фильтр было бы некуда.
+ * Counts come from facets over the view projection, so they do not drop to zero
+ * once a value is picked — otherwise there would be no way back.
  */
 function optionsOf(group: FilterGroupDef): { value: string; label: string; count: number }[] {
   const counts = props.facets.groups.get(group.id) ?? fallbackCounts(group.id)
@@ -70,7 +71,7 @@ function optionsOf(group: FilterGroupDef): { value: string; label: string; count
   return options.filter((option) => option.label.toLowerCase().includes(needle))
 }
 
-/** Встроенные списки берут счётчики из готовых фасетов по kind и status. */
+/** The built-in lists read their counts from the kind and status facets. */
 function fallbackCounts(groupId: string): ReadonlyMap<string, number> {
   if (groupId === 'kinds') return props.facets.kinds
   if (groupId === 'statuses') return props.facets.statuses
@@ -97,7 +98,7 @@ function toggleGroup(group: FilterGroupDef): void {
     : [...current, group.id]
 }
 
-/** Выбранные значения списка. Встроенные списки живут в своих полях состояния. */
+/** Selected values of a list; the built-in lists live in their own state fields. */
 function selectedOf(groupId: string): readonly string[] {
   if (groupId === 'kinds' && !props.groups) return model.value.kinds
   if (groupId === 'statuses' && !props.groups) return model.value.statuses
@@ -128,11 +129,11 @@ function toggleValue(groupId: string, value: string): void {
 
 function reset(): void {
   if (activeCount.value === 0) return
-  // Запрос не трогаем: сброс фасетов и сброс поиска — разные действия.
+  // The query is left alone: clearing facets and clearing search are separate acts.
   model.value = { ...model.value, kinds: [], statuses: [], groups: {} }
 }
 
-/** Значения группы у сущности — реэкспорт для потребителя, строящего свои списки. */
+/** Re-exported for consumers building lists of their own. */
 defineExpose({ groupValuesOf })
 </script>
 
@@ -267,8 +268,8 @@ defineExpose({ groupValuesOf })
   gap: var(--vnm-space-2);
   box-sizing: border-box;
   width: var(--vnm-filter-width);
-  /* Высота ограничена и полотном: панель раскрывается внутри карты, и вылезать
-     за её пределы ей нельзя — иначе появлялся бы скролл. */
+  /* Bounded by the canvas as well: the panel opens inside the map and must not
+     spill past it, or a scrollbar would appear. */
   max-height: min(var(--vnm-filter-height), 80vh);
   padding: var(--vnm-space-4);
   overflow: hidden;
@@ -416,7 +417,8 @@ defineExpose({ groupValuesOf })
   cursor: pointer;
 }
 
-/* Настоящий чекбокс остаётся для клавиатуры и скринридеров, а рисуется иконка. */
+/* The real checkbox stays for keyboard and screen readers; the icon is what
+   gets drawn. */
 .vnm-filter__checkbox {
   position: absolute;
   width: 1px;

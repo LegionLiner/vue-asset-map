@@ -2,18 +2,37 @@ import type { EntityId } from '../types/entity'
 import type { NetworkGraph } from '../types/graph'
 import { matchesLayers, otherEnd } from './graph'
 
+/** Options of {@link findPaths}. */
 export interface FindPathsOptions {
-  /** Максимальная длина пути в рёбрах. Дефолт 6. */
+  /**
+   * Longest path to consider, measured in edges.
+   *
+   * @default 6
+   */
   maxDepth?: number
-  /** Сколько путей вернуть. Дефолт 10. */
+  /**
+   * Stop after this many paths.
+   *
+   * @default 10
+   */
   maxPaths?: number
   layers?: readonly string[]
 }
 
+/** Options of {@link blastRadius}. */
 export interface BlastRadiusOptions {
+  /**
+   * Which way influence propagates along directed links.
+   *
+   * @default 'both'
+   */
   direction?: 'downstream' | 'upstream' | 'both'
   layers?: readonly string[]
-  /** Ограничить радиус числом шагов. Дефолт — без ограничения. */
+  /**
+   * Cap the radius at this many steps.
+   *
+   * @default unlimited
+   */
   maxDepth?: number
 }
 
@@ -21,10 +40,10 @@ const DEFAULT_MAX_DEPTH = 6
 const DEFAULT_MAX_PATHS = 10
 
 /**
- * Узлы на расстоянии до `depth` рёбер от `id`.
+ * Nodes within `depth` edges of `id`.
  *
- * Сам `id` в результат не входит — даже если он достижим из себя по циклу:
- * потребителю нужны «соседи», а не «замкнутая окрестность».
+ * `id` itself is never in the result, not even when a cycle makes it reachable
+ * from itself: callers want the neighbourhood, not its closure.
  */
 export function neighbors<E, L>(
   graph: NetworkGraph<E, L>,
@@ -59,11 +78,11 @@ export function neighbors<E, L>(
 }
 
 /**
- * Простые пути между двумя узлами.
+ * Simple paths between two nodes.
  *
- * Пути простые — узел не повторяется, поэтому обход завершается на любом цикле.
- * Порядок результатов детерминирован: рёбра перебираются в порядке индекса
- * `adjacency`, то есть в порядке входного массива связей.
+ * Paths are simple — no node repeats — so the walk terminates on any cycle.
+ * Result order is deterministic: links are visited in `adjacency` order, which
+ * is the order of the input links array.
  */
 export function findPaths<E, L>(
   graph: NetworkGraph<E, L>,
@@ -85,7 +104,7 @@ export function findPaths<E, L>(
 
   const walk = (current: EntityId): void => {
     if (paths.length >= maxPaths) return
-    // path.length - 1 — длина в рёбрах.
+    // `path.length - 1` is the length in edges, not in nodes.
     if (path.length - 1 >= maxDepth) return
 
     for (const linkId of graph.adjacency.get(current) ?? []) {
@@ -113,11 +132,12 @@ export function findPaths<E, L>(
 }
 
 /**
- * Что затронет отказ узла: сам узел плюс всё, до чего распространяется влияние.
+ * What a node's failure reaches: the node itself plus everything influence
+ * spreads to. Also drives the infection overlay.
  *
- * Направление считается только по ориентированным рёбрам (`directed === true`).
- * Неориентированное ребро проходится в обе стороны при любом `direction` — по
- * такому ребру нельзя утверждать, кто от кого зависит.
+ * `direction` only constrains directed links (`directed === true`). An
+ * undirected link is walked both ways whatever `direction` says, because it
+ * carries no claim about which end depends on which.
  */
 export function blastRadius<E, L>(
   graph: NetworkGraph<E, L>,

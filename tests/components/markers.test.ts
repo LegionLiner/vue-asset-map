@@ -240,7 +240,6 @@ describe('подсветка по наведению на маркер', () => {
   it('наведение главнее выделения', async () => {
     const wrapper = await mountMap({ view: 'physical' })
 
-    // Выделяем Cloudflare: подсвечиваются он и его связи.
     await node(wrapper, 'Cloudflare').trigger('click')
     await nextTick()
     expect(node(wrapper, 'Cloudflare').classes()).not.toContain('vnm-node--dimmed')

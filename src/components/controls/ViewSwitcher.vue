@@ -4,11 +4,11 @@ import { useTranslate } from '../../composables/useTranslate'
 import type { NetworkView } from '../../types/view'
 
 /**
- * Переключатель проекций: сегментированный контрол на белой плашке.
+ * Projection switcher: a segmented control on an opaque plate.
  *
- * Кнопки с `aria-pressed`, а не `<select>`: видов обычно два-три, и переключение
- * в один клик важнее компактности. Названия видов приходят из данных — пакет не
- * знает ни одного имени вида заранее.
+ * Buttons with `aria-pressed` rather than a `<select>`: there are usually two or
+ * three views, and switching in one click beats compactness. View captions come
+ * from the data — the package knows no view name in advance.
  */
 const model = defineModel<string | undefined>({ default: undefined })
 
@@ -18,7 +18,7 @@ const props = defineProps<{
 
 const t = useTranslate()
 
-/** Активен либо выбранный вид, либо первый — так же, как в `resolveView`. */
+/** Active view is the selected one, or the first — matching `resolveView`. */
 const activeId = computed(() => {
   if (model.value !== undefined && props.views.some((view) => view.id === model.value)) {
     return model.value
@@ -44,9 +44,10 @@ function select(viewId: string): void {
       @click="select(view.id)"
     >
       <span class="vnm-views__label">{{ view.label }}</span>
-      <!-- Невидимая копия жирным задаёт ширину кнопки. Активный режим по макету
-           набран 700, обычный — 400, и без резерва под жирный текст кнопки (а с
-           ними и весь переключатель) меняли бы размер при каждом переключении. -->
+      <!-- An invisible bold copy fixes the button width. The active state is set
+           in 700 and the idle one in 400, so without reserving room for the bold
+           text the buttons — and the whole switcher — would resize on each
+           switch. -->
       <span class="vnm-views__sizer" aria-hidden="true">{{ view.label }}</span>
     </button>
   </div>
@@ -64,8 +65,8 @@ function select(viewId: string): void {
   background: var(--vnm-surface);
 }
 
-/* Grid в одну клетку: подпись и невидимая жирная копия лежат друг на друге,
-   поэтому ширина кнопки всегда рассчитана по жирному варианту. */
+/* A single grid cell: the caption and the invisible bold copy stack on top of
+   each other, so the width is always computed from the bold variant. */
 .vnm-views__button {
   display: grid;
   align-self: stretch;

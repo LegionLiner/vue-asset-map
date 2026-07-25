@@ -1,15 +1,14 @@
 /*
- * Дизайн-токены карты.
+ * Design tokens of the map.
  *
- * Все значения объявлены на `.vnm-root` — корневом элементе компонента, а не на
- * `:root`: пакет не имеет права влиять на страницу за своими границами, и на
- * одной странице должно быть можно поставить две карты с разными темами.
+ * Every value is declared on `.vnm-root`, the component's own root element, and
+ * never on `:root`: the package may not affect the page beyond its own bounds,
+ * and two maps with different themes have to be able to coexist on one page.
  *
- * Базовые значения здесь — светлая тема. `dark.css` переопределяет их классом
- * `.vnm-theme-dark`, который по специфичности сильнее.
+ * The base values here are the light theme. `dark.css` overrides them through
+ * the `.vnm-theme-dark` class, which wins on specificity.
  */
 .vnm-root {
-  /* Поверхности и текст */
   --vnm-bg: #f7f8fa;
   --vnm-surface: #ffffff;
   --vnm-surface-raised: #ffffff;
@@ -21,7 +20,6 @@
   --vnm-border: #dfe5ee;
   --vnm-border-strong: #7c92b2;
 
-  /* Акцент и выделение */
   --vnm-accent: #4d6d9a;
   --vnm-accent-fg: #ffffff;
   --vnm-accent-soft: rgba(77, 109, 154, 0.1);
@@ -30,7 +28,6 @@
   --vnm-highlight: #d9822b;
   --vnm-highlight-soft: rgba(217, 130, 43, 0.16);
 
-  /* Рёбра */
   --vnm-edge: #b9c5d6;
   --vnm-edge-active: #5a5ee7;
   --vnm-edge-dimmed: #e4e9f1;
@@ -39,11 +36,9 @@
   --vnm-edge-width-active: 2px;
 
   /*
-   * Маркеры принадлежности: кружки под подписью узла.
-   *
-   * Палитра из трёх цветов раздаётся маркерам по порядку, если у маркера не
-   * задан свой цвет. Четвёртый — для заражённых узлов: их маркеры красятся им
-   * независимо от того, какого цвета маркер обычно.
+   * The three-color palette is handed to markers in declaration order whenever a
+   * marker sets no color of its own. The fourth is for infected nodes: their
+   * dots take it whatever color the marker normally has.
    */
   --vnm-marker-1: #7c92b2;
   --vnm-marker-2: #5a5ee7;
@@ -55,40 +50,38 @@
   --vnm-marker-offset: 4px;
   --vnm-marker-bg: #ffffff;
 
-  /* Режим «заражения»: помеченные сущности и всё, что они захватывают. */
+  /* Infection mode: the marked entities and everything they capture. */
   --vnm-infected-bg: #f9eeee;
   --vnm-infected-border: #cb5555;
   --vnm-infected-fg: #cb5555;
   --vnm-infected-edge: #cb5555;
 
-  /* Состояния узлов. Ключи — значения `entity.status` у потребителя. */
+  /* Node states. The keys are the consumer's own `entity.status` values. */
   --vnm-status-online: #5fab6b;
   --vnm-status-offline: #d05353;
   --vnm-status-warning: #d9822b;
   --vnm-status-unknown: #b9c5d6;
 
-  /* Узел: круг с подписью под ним */
   --vnm-node-size: 36px;
   --vnm-node-size-root: 60px;
   --vnm-node-label-gap: 6px;
-  /* Блок подписей — плашка фиксированного размера: при смене вида подписи
-     появляются и исчезают, и «дышащая» высота дёргала бы всю раскладку. */
+  /* The label plate has a fixed width: sublabels appear and disappear as views
+     change, and a breathing size would jolt the whole layout. */
   --vnm-node-label-width: 127.5px;
   --vnm-node-label-height: auto;
   --vnm-node-label-padding: 3px 4.5px;
   --vnm-node-label-radius: 4.5px;
-  /* 16 + 13 + 13 = 42: имя и два адреса ровно укладываются в высоту плашки. */
+  /* 16 + 13 + 13 = 42: a label and two addresses fit the plate exactly. */
   --vnm-node-sublabel-line: 13px;
   --vnm-node-radius: 4px;
   --vnm-node-toggle-size: 18px;
   --vnm-node-status-size: 9px;
 
-  /* Подписи узла: внешний адрес и оверлейный различаются цветом */
+  /* External and overlay addresses are told apart by color alone. */
   --vnm-node-label-color: #1b2636;
   --vnm-node-sublabel-color: #7c92b2;
   --vnm-node-overlay-color: #5a5ee7;
 
-  /* Геометрия */
   --vnm-radius-sm: 4px;
   --vnm-radius-md: 6px;
   --vnm-radius-lg: 8px;
@@ -98,7 +91,7 @@
   --vnm-space-4: 16px;
   --vnm-space-5: 24px;
 
-  /* Типографика. Шрифт задан с запасом системных: файлы шрифта пакет не везёт. */
+  /* The font stack falls back to system faces: the package ships no font files. */
   --vnm-font: 'Nunito Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --vnm-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --vnm-font-size: 14px;
@@ -110,43 +103,39 @@
   --vnm-font-weight-medium: 600;
   --vnm-font-weight-bold: 700;
 
-  /* Тени и слои */
   --vnm-shadow-sm: 0 1px 2px rgba(27, 38, 54, 0.06);
   --vnm-shadow-md: 0 2px 8px rgba(27, 38, 54, 0.1);
   --vnm-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.16);
   --vnm-toolbar-height: 36px;
 
-  /* Плавающие окна */
   --vnm-window-width: 480px;
   --vnm-window-radius: 8px;
   --vnm-window-header-height: 24px;
   /*
-   * Отступ окон от верха полотна.
+   * Top offset of the floating windows.
    *
-   * Значение по умолчанию — просто отступ от края. Если в правом слоте тулбара
-   * что-то есть, компонент подменяет токен так, чтобы окна начинались под
-   * тулбаром и не перекрывали кнопки приложения.
+   * The default is plain padding from the edge. When the toolbar's right slot
+   * has anything in it, the component overrides this token so windows start
+   * below the toolbar instead of covering the application's buttons.
    */
   --vnm-windows-top: var(--vnm-space-4);
   /*
-   * Отступ окон подробностей.
+   * Top offset of the details windows.
    *
-   * По умолчанию совпадает с `--vnm-windows-top`. Если сверху стоят свои окна
-   * потребителя (например, история), компонент замеряет занятую ими высоту и
-   * подменяет токен, чтобы окно подробностей открывалось под ними, а не поверх.
+   * Matches `--vnm-windows-top` by default. When the consumer's own windows sit
+   * up there (a history strip, say), the component measures the height they take
+   * and overrides this token so a details window opens below them, not over them.
    */
   --vnm-details-top: var(--vnm-windows-top);
 
-  /* Панель фильтров */
   --vnm-filter-width: 304px;
   --vnm-filter-height: 684px;
 
-  /* Полотно */
   --vnm-canvas-dot: #dfe5ee;
   --vnm-canvas-dot-size: 1px;
   --vnm-canvas-grid: 20px;
 
-  /* Анимация. Уважает prefers-reduced-motion ниже. */
+  /* Animation; overridden by the prefers-reduced-motion block below. */
   --vnm-transition: 120ms ease;
   --vnm-dimmed-opacity: 0.3;
 }

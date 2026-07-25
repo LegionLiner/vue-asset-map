@@ -5,23 +5,24 @@ import { ru } from './ru'
 export { en } from './en'
 export { ru } from './ru'
 
-/** Встроенные локали. Дефолт — русский: продукт русскоязычный. */
+/** Locales shipped with the package, addressable by code in the `locale` prop. */
 export const builtinLocales: Readonly<Record<string, LocaleMessages>> = Object.freeze({ ru, en })
 
+/** Locale used when `locale` is absent, and the source of fallback keys. */
 export const defaultLocale = ru
 
 /**
- * Сводит prop `locale` к полному словарю.
+ * Reduces the `locale` prop to a complete dictionary.
  *
- * Принимает код (`'en'`), полный словарь или частичный: недостающие ключи
- * добираются из дефолтной локали, поэтому потребитель может переопределить две
- * строки, а не копировать словарь целиком.
+ * Accepts a code (`'en'`), a full dictionary or a partial one: missing keys come
+ * from the default locale, so a consumer can override two strings instead of
+ * copying the whole dictionary.
  */
 export function resolveLocale(locale?: string | PartialLocaleMessages): LocaleMessages {
   if (locale === undefined) return defaultLocale
 
   if (typeof locale === 'string') {
-    // Неизвестный код — не ошибка: интерфейс просто останется на дефолте.
+    // An unknown code is not an error: the UI simply stays on the default.
     return builtinLocales[locale] ?? defaultLocale
   }
 
@@ -29,10 +30,10 @@ export function resolveLocale(locale?: string | PartialLocaleMessages): LocaleMe
 }
 
 /**
- * Переводчик с подстановкой `{name}`.
+ * Builds a translator that substitutes `{name}` placeholders from `params`.
  *
- * Неизвестный ключ возвращается как есть: пустая надпись прячет проблему, а
- * видимый ключ сразу показывает, чего не хватает в словаре.
+ * An unknown key is returned verbatim: an empty label would hide the problem,
+ * while a visible key shows immediately what the dictionary is missing.
  */
 export function createTranslator(messages: LocaleMessages): Translate {
   return (key: LocaleKey, params?: Record<string, string | number>): string => {

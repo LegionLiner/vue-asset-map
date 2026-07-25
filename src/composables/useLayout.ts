@@ -8,18 +8,20 @@ import { isLayoutAborted, type LayoutEngine, type LayoutGraph, type LayoutNode }
 import { resolveLayoutEngine } from '../layout/index'
 import { manualLayout } from '../layout/manual'
 
+/** Rendered size of a node in canvas px, measured before layout runs. */
 export interface NodeSize {
   width: number
   height: number
 }
 
+/** Parameters of {@link useLayout}. */
 export interface UseLayoutParams<E, L> {
   graph: ComputedRef<NetworkGraph<E, L>>
   collapsed: ComputedRef<CollapseResult<unknown>>
-  /** Раскладка из props — сильнее, чем раскладка вида. */
+  /** Layout from props; outranks the view's own layout. */
   spec: Ref<NetworkMapLayoutSpec | undefined>
   view: ComputedRef<NetworkView | undefined>
-  /** Дополнительные движки, зарегистрированные потребителем. */
+  /** Extra engines registered by the consumer, addressable by name. */
   engines?: Ref<Readonly<Record<string, LayoutEngine>> | undefined>
   sizeOf: (nodeId: string) => NodeSize
   onStart?: (engineName: string) => void
@@ -27,33 +29,33 @@ export interface UseLayoutParams<E, L> {
   onError?: (error: unknown) => void
 }
 
+/** Return value of {@link useLayout}. */
 export interface UseLayoutReturn {
+  /** Latest engine output. Replaced wholesale, never mutated in place. */
   positions: Ref<ReadonlyMap<EntityId, XY>>
   running: Ref<boolean>
   engineName: ComputedRef<string>
   relayout: () => Promise<void>
-  /** Записать позицию, полученную перетаскиванием мышью. */
+  /** Records a position produced by dragging a node. */
   setManualPosition: (id: EntityId, position: XY) => void
   clearManualPositions: () => void
-  /** Итоговая позиция узла с учётом приоритетов. */
+  /** Final position of a node, priorities applied. */
   positionOf: (id: string) => XY | undefined
 }
 
 /**
- * Запуск раскладки и применение её результата.
+ * Runs the layout engine and applies its result.
  *
- * Приоритет позиций: перетащенное мышью → `entity.position` с бэкенда →
- * результат движка. Первые два уходят в движок как `pinned`, поэтому движок их
- * не переставляет, а не «переставляет, но мы потом чиним».
+ * Position priority: dragged by hand → `entity.position` from the backend →
+ * engine output. The first two are handed to the engine as `pinned`, so the
+ * engine leaves them alone rather than moving them and being corrected after.
  *
- * Каждый новый запрос отменяет предыдущий через `AbortSignal`: если пользователь
- * успел трижды переключить вид, применится результат только последней раскладки.
- * Результат применяется одним присваиванием `Map` — один триггер реактивности на
- * всю раскладку, а не на узел.
+ * Every run aborts the previous one through `AbortSignal`: switch views three
+ * times quickly and only the last layout is applied. The result lands as a
+ * single `Map` assignment — one reactive trigger per layout, not per node.
  *
- * Раскладка сознательно не зависит от фильтра: поиск скрывает и подсвечивает
- * узлы, но не перестраивает карту — иначе граф прыгал бы на каждой набранной
- * букве.
+ * Layout deliberately ignores the filter: search hides and highlights nodes but
+ * never rebuilds the map, or the graph would jump on every keystroke.
  */
 export function useLayout<E, L>(params: UseLayoutParams<E, L>): UseLayoutReturn {
   const { graph, collapsed, spec, view, engines, sizeOf, onStart, onDone, onError } = params
@@ -64,7 +66,7 @@ export function useLayout<E, L>(params: UseLayoutParams<E, L>): UseLayoutReturn 
 
   let controller: AbortController | undefined
 
-  /** Раскладка из props сильнее раскладки вида: props ближе к потребителю. */
+  // Props outrank the view: props sit closer to the consumer.
   const activeSpec = computed<NetworkMapLayoutSpec | undefined>(() => spec.value ?? view.value?.layout)
 
   const engine = computed<LayoutEngine>(() => {
@@ -72,8 +74,8 @@ export function useLayout<E, L>(params: UseLayoutParams<E, L>): UseLayoutReturn 
     const resolved = resolveLayoutEngine(requested, engines?.value)
     if (resolved) return resolved
     if (typeof requested === 'string') {
-      // Имя движка приходит из данных вида, то есть снаружи. Опечатка не должна
-      // гасить карту — откатываемся на manual и сообщаем наружу.
+      // Engine names arrive from view data, i.e. from outside. A typo must not
+      // blank the map — fall back to manual and report it.
       onError?.(new Error(`Unknown layout engine "${requested}", falling back to "manual"`))
     }
     return manualLayout
@@ -113,9 +115,9 @@ export function useLayout<E, L>(params: UseLayoutParams<E, L>): UseLayoutReturn 
     try {
       const result = await active.run(buildLayoutGraph(), activeSpec.value?.options, current.signal)
 
-      // Пока раскладка считалась, мог прийти новый запрос. Устаревший результат
-      // не применяется — проверка нужна и здесь, а не только внутри движка:
-      // сторонний движок может не уважать signal.
+      // A newer run may have started while this one was computing. Checked here
+      // as well as inside the engine, because a third-party engine may ignore
+      // the signal entirely.
       if (current.signal.aborted || controller !== current) return
 
       positions.value = result
@@ -131,9 +133,8 @@ export function useLayout<E, L>(params: UseLayoutParams<E, L>): UseLayoutReturn 
     }
   }
 
-  // Пересчёт при смене структуры схлопнутого графа, вида или движка.
-  // `collapsed` — новый объект на каждое перевычисление, поэтому его хватает как
-  // признака «граф изменился».
+  // `collapsed` is a fresh object on every recomputation, which makes it a
+  // sufficient "the graph changed" signal on its own.
   watch([collapsed, engine, activeSpec], () => void relayout(), { immediate: true })
 
   const setManualPosition = (id: EntityId, position: XY): void => {
@@ -147,10 +148,8 @@ export function useLayout<E, L>(params: UseLayoutParams<E, L>): UseLayoutReturn 
     manual.value = new Map()
   }
 
-  /**
-   * Итоговая позиция. Приоритет тот же, что и при передаче в движок, — так
-   * узел не дёргается между «до» и «после» применения результата.
-   */
+  // Same priority order as the one handed to the engine, so a node does not
+  // jump between "before" and "after" the result is applied.
   const positionOf = (id: string): XY | undefined =>
     manual.value.get(id) ?? graph.value.entities.get(id)?.position ?? positions.value.get(id)
 

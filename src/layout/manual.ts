@@ -2,13 +2,27 @@ import type { EntityId, XY } from '../types/entity'
 import type { LayoutEngine, LayoutGraph } from './types'
 import { applyPinned, unpinnedNodes, yieldAndCheck } from './shared'
 
+/** Options of {@link manualLayout}. */
 export interface ManualLayoutOptions {
-  /** Сколько узлов в строке сетки. Дефолт 8. */
+  /**
+   * Nodes per grid row.
+   *
+   * @default 8
+   */
   columns?: number
-  /** Шаг сетки по горизонтали. Дефолт — ширина узла + 48. */
+  /**
+   * Horizontal grid step, in px.
+   *
+   * @default widest node + 48
+   */
   columnGap?: number
-  /** Шаг сетки по вертикали. Дефолт — высота узла + 48. */
+  /**
+   * Vertical grid step, in px.
+   *
+   * @default tallest node + 48
+   */
   rowGap?: number
+  /** Canvas position of the grid's top-left corner. */
   origin?: XY
 }
 
@@ -16,12 +30,12 @@ const DEFAULT_COLUMNS = 8
 const DEFAULT_GAP = 48
 
 /**
- * Раскладка «как прислали»: закреплённые позиции сохраняются как есть, всё
- * остальное выкладывается в детерминированную сетку.
+ * As-supplied layout: pinned positions are kept untouched, everything else goes
+ * into a deterministic grid.
  *
- * Смысл движка — не рисовать красиво, а не терять координаты. Это дефолт для
- * случая, когда позиции приходят с бэкенда, и опорная точка для тестов:
- * результат зависит только от порядка входного массива.
+ * The point is not to look good but to lose no coordinates. It is the engine to
+ * use when positions come from a backend, and the baseline for tests: the result
+ * depends only on the order of the input array.
  */
 export const manualLayout: LayoutEngine<ManualLayoutOptions> = {
   name: 'manual',
@@ -33,8 +47,7 @@ export const manualLayout: LayoutEngine<ManualLayoutOptions> = {
     const origin = options?.origin ?? { x: 0, y: 0 }
     const loose = unpinnedNodes(graph.nodes)
 
-    // Шаг сетки — по самому крупному узлу, чтобы карточки не наезжали друг на
-    // друга при разнородных размерах.
+    // Stepped by the largest node so cards of mixed sizes cannot overlap.
     const maxWidth = loose.reduce((max, node) => Math.max(max, node.width), 0)
     const maxHeight = loose.reduce((max, node) => Math.max(max, node.height), 0)
     const columnGap = options?.columnGap ?? maxWidth + DEFAULT_GAP

@@ -113,7 +113,6 @@ describe('findPaths', () => {
     expect(paths).toHaveLength(5)
     for (const path of paths) {
       expect(path.length - 1).toBeLessThanOrEqual(4)
-      // Пути простые: узлы не повторяются.
       expect(new Set(path).size).toBe(path.length)
       expect(path[0]).toBe('n0')
       expect(path[path.length - 1]).toBe('n11')

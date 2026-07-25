@@ -1,32 +1,37 @@
 import { computed, onScopeDispose, ref, type ComputedRef, type Ref } from 'vue'
 import type { XY } from '../types/entity'
 
+/** Return value of {@link useDraggableWindow}. */
 export interface UseDraggableWindowReturn {
+  /** Offset from the window's CSS position, in px. */
   position: Ref<XY>
   dragging: Ref<boolean>
-  /** Стили для корневого элемента окна. */
+  /** Bind to the window root: a `transform` carrying the current offset. */
   style: ComputedRef<Record<string, string>>
-  /** Навешивается на шапку окна. */
+  /** Bind to the title bar. */
   onPointerDown: (event: PointerEvent) => void
+  /** Returns the window to the offset it started at. */
   reset: () => void
 }
 
 /**
- * Интерактивные элементы, с которых перетаскивание не начинается.
+ * Interactive elements that must not start a drag.
  *
- * Без этого исключения кнопки в шапке перестают нажиматься: `preventDefault()`
- * на `pointerdown` запрещает браузеру синтезировать `click`, а
- * `setPointerCapture` увозит последующий `pointerup` на шапку вместо кнопки.
+ * Without this exception the title-bar buttons stop responding: `preventDefault()`
+ * on `pointerdown` stops the browser synthesising a `click`, and
+ * `setPointerCapture` redirects the following `pointerup` to the bar itself.
  */
 const NON_DRAGGABLE = 'button, a, input, select, textarea, [role="button"]'
 
 /**
- * Перетаскивание плавающего окна за шапку.
+ * Drags a floating window by its title bar.
  *
- * На Pointer Events, а не на mouse/touch: один код на мышь, тач и стилус, а
- * `setPointerCapture` избавляет от подписок на `document` — события продолжают
- * приходить в сам элемент, даже если курсор ушёл за его границы. Это заодно
- * решает вопрос с SSR: обращений к `document` здесь нет вообще.
+ * Built on Pointer Events rather than mouse/touch: one code path for mouse,
+ * touch and stylus, and `setPointerCapture` removes the need to subscribe to
+ * `document` — events keep arriving at the element even once the pointer leaves
+ * it. That also settles SSR: this module never touches `document`.
+ *
+ * @param initial - starting offset in px, relative to the window's CSS position.
  */
 export function useDraggableWindow(initial: XY = { x: 0, y: 0 }): UseDraggableWindowReturn {
   const position = ref<XY>({ ...initial })
@@ -47,6 +52,8 @@ export function useDraggableWindow(initial: XY = { x: 0, y: 0 }): UseDraggableWi
   const stop = (): void => {
     if (!dragging.value) return
     dragging.value = false
+    // Cast: `removeEventListener` is typed over the generic `Event`, and a
+    // `PointerEvent` handler cannot be described to it without one.
     target?.removeEventListener('pointermove', onPointerMove as EventListener)
     target?.removeEventListener('pointerup', stop)
     target?.removeEventListener('pointercancel', stop)
@@ -54,11 +61,11 @@ export function useDraggableWindow(initial: XY = { x: 0, y: 0 }): UseDraggableWi
   }
 
   const onPointerDown = (event: PointerEvent): void => {
-    // Тянуть окно должна только основная кнопка: правый клик — контекстное меню.
+    // Primary button only: a right click belongs to the context menu.
     if (event.button !== 0) return
 
-    // Нажатие на кнопку внутри шапки — это нажатие на кнопку, а не начало
-    // перетаскивания. Иначе кнопки закрытия и сжатия окна не работают вовсе.
+    // Pressing a button in the bar is a button press, not the start of a drag.
+    // Without this the close and collapse buttons do not work at all.
     if (event.target instanceof Element && event.target.closest(NON_DRAGGABLE)) return
 
     const element = event.currentTarget

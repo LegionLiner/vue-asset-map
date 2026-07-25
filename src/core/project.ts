@@ -3,25 +3,25 @@ import type { NetworkGraph } from '../types/graph'
 import type { NetworkLink } from '../types/link'
 import type { NetworkView, ProjectionResult } from '../types/view'
 
-/** Дефолтный отбор рёбер вида: слой связи совпадает с id вида. */
+/** Default link filter of a view: the link carries a layer named like the view. */
 export function defaultLinkFilter(view: NetworkView): (link: NetworkLink) => boolean {
   return (link) => link.layers.includes(view.id)
 }
 
 /**
- * Применяет вид к графу: какие сущности и связи остаются на карте.
+ * Applies a view to the graph, yielding what may appear on the map.
  *
- * Порядок шагов зафиксирован:
- *  1. `entityFilter` отбирает сущности-кандидаты;
- *  2. `linkFilter` (по умолчанию — по слою) отбирает связи, у которых оба конца
- *     остались в кандидатах;
- *  3. `hideIsolated` убирает сущности, у которых не осталось ни одной связи.
+ * The order is fixed and observable: `entityFilter` picks candidate entities,
+ * then `linkFilter` (by layer unless overridden) keeps only links whose *both*
+ * ends survived, and only then `hideIsolated` drops entities left without a
+ * single visible link.
  *
- * Шаг 3 буквален: нет инцидентной видимой связи — узла нет. Предки не «спасают»
- * потомков и наоборот. Иерархия в проекции вообще не участвует: она нужна
- * свёртке, а связность карты в поиске держит `keepPathToRoot` из фильтра.
+ * `hideIsolated` is literal: no incident visible link, no node. Ancestors do not
+ * rescue descendants or the other way round — the hierarchy plays no part in
+ * projection at all. It belongs to collapsing, and search keeps the map
+ * connected through the filter's own `keepPathToRoot`.
  *
- * Без вида (`view === undefined`) видно всё.
+ * With no view everything is visible.
  */
 export function projectGraph<E, L>(graph: NetworkGraph<E, L>, view?: NetworkView): ProjectionResult {
   const entityIds = new Set<EntityId>()
@@ -51,8 +51,8 @@ export function projectGraph<E, L>(graph: NetworkGraph<E, L>, view?: NetworkView
 }
 
 /**
- * Вид по id. Неизвестный id и отсутствующий id сводятся к первому виду в списке:
- * карта всегда должна что-то показывать, даже если снаружи пришёл мусор.
+ * Looks a view up by id. Both a missing and an unknown id fall back to the first
+ * view: the map must always render something, even when handed a bad id.
  */
 export function resolveView(
   views: readonly NetworkView[] | undefined,

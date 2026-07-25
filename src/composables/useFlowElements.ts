@@ -7,37 +7,42 @@ import type { CollapsedGroup, CollapseResult, CollapsedLink } from '../types/col
 import { isAggregatedLink } from '../core/collapse'
 import { edgeTypeFor, nodeTypeFor, NODE_TYPE_GROUP } from '../registry/nodeRegistry'
 
-/** Данные узла-сущности. */
+/** `node.data` of a node backed by a real entity. */
 export interface EntityNodeData<E = unknown> {
   variant: 'entity'
   entity: NetworkEntity<E>
 }
 
-/** Данные группового узла. */
+/** `node.data` of a synthetic node standing in for a collapsed group. */
 export interface GroupNodeData {
   variant: 'group'
   group: CollapsedGroup
 }
 
+/** `node.data` of any node on the map; discriminated by `variant`. */
 export type NetworkNodeData<E = unknown> = EntityNodeData<E> | GroupNodeData
 
+/** `edge.data` of every edge on the map. */
 export interface NetworkEdgeData {
   link: CollapsedLink<unknown>
   aggregated: boolean
+  /** Number of original links behind this edge; `1` unless `aggregated`. */
   count: number
 }
 
+/** Parameters of {@link useFlowElements}. */
 export interface UseFlowElementsParams<E, L> {
   graph: ComputedRef<NetworkGraph<E, L>>
   collapsed: ComputedRef<CollapseResult<unknown>>
   positionOf: (id: string) => XY | undefined
-  /** Видимые после фильтра. `undefined` — фильтр неактивен, видно всё. */
+  /** Survivors of the filter; `undefined` means no filter is active. */
   filterVisibleIds: ComputedRef<ReadonlySet<EntityId> | undefined>
   nodeTypes: ComputedRef<Readonly<Record<string, Component>>>
   edgeTypes: ComputedRef<Readonly<Record<string, Component>>>
   draggable: Ref<boolean>
 }
 
+/** Return value of {@link useFlowElements}: ready to feed to `<VueFlow>`. */
 export interface UseFlowElementsReturn {
   nodes: ComputedRef<Node[]>
   edges: ComputedRef<Edge[]>
@@ -46,23 +51,23 @@ export interface UseFlowElementsReturn {
 const FALLBACK_POSITION: XY = { x: 0, y: 0 }
 
 /**
- * Преобразование схлопнутого графа в элементы VueFlow.
+ * Turns the collapsed graph into VueFlow nodes and edges.
  *
- * Что здесь важно:
- *  - в `data` попадает минимум: сущность или группа. Всё изменчивое (выделение,
- *    подсветка, LOD) узлы читают из контекста карты, поэтому смена выделения не
- *    заставляет пересобирать массив узлов;
- *  - скрытие фильтром — через `node.hidden`, штатный механизм VueFlow: иначе
- *    рёбра продолжали бы тянуться к невидимым узлам;
- *  - групповой узел виден, пока виден хоть один его участник, иначе группа
- *    исчезала бы при поиске по одному из своих членов.
+ * Invariants worth knowing:
+ *  - `data` carries the bare minimum, an entity or a group. Everything volatile
+ *    (selection, highlighting, LOD) is read from the map context instead, so
+ *    changing the selection does not rebuild the node array;
+ *  - filtering hides through `node.hidden`, VueFlow's own mechanism, or edges
+ *    would keep reaching towards invisible nodes;
+ *  - a group node stays visible while any one member matches, otherwise a group
+ *    would vanish when searching for something inside it.
  */
 export function useFlowElements<E, L>(params: UseFlowElementsParams<E, L>): UseFlowElementsReturn {
   const { graph, collapsed, positionOf, filterVisibleIds, nodeTypes, edgeTypes, draggable } = params
 
   const groupById = computed(() => new Map(collapsed.value.groups.map((group) => [group.id, group])))
 
-  /** Виден ли узел схлопнутого графа с точки зрения фильтра. */
+  // A group counts as visible while any single member survives the filter.
   const isVisible = (id: string): boolean => {
     const visible = filterVisibleIds.value
     if (!visible) return true
@@ -86,8 +91,8 @@ export function useFlowElements<E, L>(params: UseFlowElementsParams<E, L>): UseF
 
       const entity = graph.value.entities.get(id)
       if (!entity) {
-        // Узел без сущности означать может только ошибку в ядре, но гасить из-за
-        // этого весь рендер нельзя — показываем заглушку базового типа.
+        // A node without an entity can only mean a bug in the core, but that is
+        // no reason to blank the render — fall back to the base node type.
         return buildNode(id, nodeTypeFor('', types), position, undefined, canDrag, isVisible(id))
       }
 
@@ -119,7 +124,7 @@ export function useFlowElements<E, L>(params: UseFlowElementsParams<E, L>): UseF
           aggregated,
           count: aggregated ? link.count : 1,
         } satisfies NetworkEdgeData,
-        // Клики по рёбрам обрабатывает сам компонент ребра.
+        // Edge clicks are handled by the edge component itself.
         selectable: false,
         focusable: false,
         updatable: false,
@@ -152,8 +157,8 @@ function buildNode(
     position,
     ...(data ? { data } : {}),
     draggable,
-    // Выделение и фокус ведёт сама карта: у VueFlow своё состояние выделения, и
-    // два источника истины на одно выделение неизбежно расходятся.
+    // Selection and focus belong to the map: VueFlow keeps selection state of
+    // its own, and two sources of truth for one selection always drift apart.
     selectable: false,
     focusable: false,
     connectable: false,

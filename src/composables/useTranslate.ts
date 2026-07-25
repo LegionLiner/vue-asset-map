@@ -4,12 +4,12 @@ import { createTranslator, defaultLocale } from '../locale/index'
 import type { Translate } from '../types/locale'
 
 /**
- * Переводчик для контролов.
+ * Translator for the standalone controls.
  *
- * Контролы обычно живут в тулбаре `<NetworkMap>` и берут локаль из контекста
- * карты, но их можно поставить и отдельно — например, в свою шапку страницы. В
- * этом случае контекста нет, и вместо исключения используется встроенная локаль:
- * контрол не должен падать только потому, что его вынесли из карты.
+ * Controls normally sit in the `<NetworkMap>` toolbar and take the locale from
+ * the map context, but they can also be placed on their own — in a page header,
+ * for instance. With no context around they fall back to the built-in locale
+ * instead of throwing: a control must not break just for being moved out.
  */
 export function useTranslate(): ComputedRef<Translate> {
   const context = inject(MAP_CONTEXT_KEY, undefined)

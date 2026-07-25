@@ -1,17 +1,17 @@
 import type { EntityId, XY } from '../types/entity'
 import { LayoutAbortedError, type LayoutGraph, type LayoutNode } from './types'
 
-/** Бросает `LayoutAbortedError`, если запрос уже отменён. */
+/** Throws {@link LayoutAbortedError} when the run has already been cancelled. */
 export function throwIfAborted(signal: AbortSignal | undefined, engineName: string): void {
   if (signal?.aborted) throw new LayoutAbortedError(engineName)
 }
 
 /**
- * Уступает управление событийному циклу и снова проверяет отмену.
+ * Yields to the event loop, checking for cancellation on both sides of the gap.
  *
- * Нужно даже синхронным движкам: без реальной точки прерывания вызов
- * `run()` + мгновенный `abort()` вернул бы результат, и требование «устаревший
- * результат не применяется» проверялось бы только на медленных движках.
+ * Synchronous engines need this too: without a real suspension point, `run()`
+ * followed by an immediate `abort()` would still return a result, and the "stale
+ * result is never applied" rule would only hold for slow engines.
  */
 export async function yieldAndCheck(signal: AbortSignal | undefined, engineName: string): Promise<void> {
   throwIfAborted(signal, engineName)
@@ -20,10 +20,11 @@ export async function yieldAndCheck(signal: AbortSignal | undefined, engineName:
 }
 
 /**
- * Закреплённые позиции побеждают результат движка.
+ * Overwrites engine output with the pinned positions, mutating and returning the
+ * map it is given.
  *
- * Единая точка для всех раскладок: движок может не уметь фиксировать узлы
- * (dagre не умеет), но снаружи поведение обязано быть одинаковым.
+ * One place for every engine: an engine need not support fixed nodes (dagre does
+ * not), yet the behaviour seen from outside has to be identical.
  */
 export function applyPinned(positions: Map<EntityId, XY>, nodes: readonly LayoutNode[]): Map<EntityId, XY> {
   for (const node of nodes) {
@@ -32,16 +33,16 @@ export function applyPinned(positions: Map<EntityId, XY>, nodes: readonly Layout
   return positions
 }
 
-/** Узлы, которые движок должен разложить сам. */
+/** Nodes with no pinned position — the ones an engine actually has to place. */
 export function unpinnedNodes(nodes: readonly LayoutNode[]): LayoutNode[] {
   return nodes.filter((node) => node.pinned === undefined)
 }
 
 /**
- * Списки смежности по id узлов графа раскладки.
+ * Undirected adjacency lists over the layout graph, self-loops excluded.
  *
- * Рёбра в несуществующие узлы игнорируются: раскладка получает уже схлопнутый
- * граф, где часть концов заменена групповыми узлами.
+ * Edges pointing at unknown nodes are ignored: layout receives an already
+ * collapsed graph, where some ends have been replaced by group nodes.
  */
 export function adjacencyOf(graph: LayoutGraph): Map<EntityId, EntityId[]> {
   const known = new Set(graph.nodes.map((node) => node.id))
@@ -58,7 +59,7 @@ export function adjacencyOf(graph: LayoutGraph): Map<EntityId, EntityId[]> {
   return adjacency
 }
 
-/** Степени узлов — по ним выбирается корень, если его не задали. */
+/** Node degrees, used to pick a root when none was given. */
 export function degreesOf(graph: LayoutGraph): Map<EntityId, number> {
   const degrees = new Map<EntityId, number>()
   for (const [id, neighbors] of adjacencyOf(graph)) degrees.set(id, neighbors.length)
@@ -66,10 +67,11 @@ export function degreesOf(graph: LayoutGraph): Map<EntityId, number> {
 }
 
 /**
- * Корень раскладки: заданный, иначе узел наибольшей степени.
+ * The layout root: `preferred` when it exists in the graph, otherwise the node of
+ * highest degree.
  *
- * При равных степенях побеждает тот, кто раньше во входном массиве — иначе
- * раскладка перестала бы быть детерминированной.
+ * Ties go to whichever node comes first in the input array; without that rule
+ * the layout would stop being deterministic.
  */
 export function pickRoot(graph: LayoutGraph, preferred?: EntityId): EntityId | undefined {
   if (preferred !== undefined && graph.nodes.some((node) => node.id === preferred)) return preferred

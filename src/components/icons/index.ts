@@ -1,14 +1,14 @@
 import { h, type FunctionalComponent, type SVGAttributes } from 'vue'
 
 /**
- * Иконки интерфейса.
+ * UI icons.
  *
- * Функциональные компоненты, а не отдельные `.vue`-файлы: у иконки нет ни
- * состояния, ни стилей — только путь.
+ * Functional components rather than separate `.vue` files: an icon has neither
+ * state nor styles, only a path.
  *
- * Все обводки и заливки — `currentColor`. Это не мелочь: иконка с зашитым
- * `#4D6D9A` не отреагировала бы на переключение темы и на переопределение
- * токенов потребителем, а цвет в пакете обязан приходить только из токенов.
+ * Every stroke and fill is `currentColor`. That is not a detail: an icon with a
+ * baked-in `#4D6D9A` would ignore both a theme switch and a consumer's token
+ * overrides, and color in this package may only come from tokens.
  */
 
 type IconProps = SVGAttributes
@@ -46,7 +46,7 @@ const stroke = (d: string, width = 1): ReturnType<typeof h> =>
     'stroke-linejoin': 'round',
   })
 
-/** Развернуть/свернуть поддерево узла: четыре стрелки из центра. */
+/** Expand or collapse a node's subtree: four arrows out of the centre. */
 export const IconExpand = svg(9, '0 0 9 9', [
   h('path', {
     'fill-rule': 'evenodd',
@@ -56,14 +56,14 @@ export const IconExpand = svg(9, '0 0 9 9', [
   }),
 ])
 
-/** Закрыть окно. */
+/** Close a window. */
 export const IconClose = svg(9, '0 0 9 9', [stroke('M0.5 8.5L8.5 0.5M0.5 0.5L8.5 8.5')])
 
 /**
- * Ручка перетаскивания окна: две колонки точек.
+ * Window drag handle: two columns of dots.
  *
- * Нужна окнам без заголовка — там не за что «взяться» глазами, и без явной ручки
- * непонятно, что окно вообще двигается.
+ * Needed by windows without a caption — there is nothing there for the eye to
+ * grab, and without an explicit handle it is not obvious the window moves.
  */
 export const IconDragHandle: FunctionalComponent<IconProps> = (_, { attrs }) =>
   h(
@@ -87,12 +87,12 @@ export const IconDragHandle: FunctionalComponent<IconProps> = (_, { attrs }) =>
   )
 IconDragHandle.inheritAttrs = false
 
-/** Сжать окно до высоты шапки. */
+/** Collapse a window to the height of its title bar. */
 export const IconCollapseWindow = svg(10, '0 0 10 11', [
   stroke('M9.5 0.5L4.5 5.5L9.5 10.5M5.5 0.5L0.5 5.5L5.5 10.5'),
 ])
 
-/** Фильтры. */
+/** Filters. */
 export const IconFilter = svg(20, '0 0 20 20', [
   h('path', {
     fill: 'currentColor',
@@ -100,16 +100,16 @@ export const IconFilter = svg(20, '0 0 20 20', [
   }),
 ])
 
-/** Поиск. */
+/** Search. */
 export const IconSearch = svg(20, '0 0 20 20', [
   h('circle', { cx: 9, cy: 9, r: 5.5, stroke: 'currentColor', 'stroke-width': 1.8 }),
   stroke('M13.5 13.5L17 17', 1.8),
 ])
 
-/** Раскрыть/свернуть список: шеврон вниз. */
+/** Expand or collapse a list: a chevron pointing down. */
 export const IconChevron = svg(20, '0 0 20 20', [stroke('M5.66667 8.83333L9.83333 13L14 8.83333', 1.8)])
 
-/** Пустой чекбокс. */
+/** Unchecked checkbox. */
 export const IconCheckbox = svg(20, '0 0 20 20', [
   h('rect', {
     x: 1,
@@ -123,10 +123,10 @@ export const IconCheckbox = svg(20, '0 0 20 20', [
 ])
 
 /**
- * Отмеченный чекбокс.
+ * Checked checkbox.
  *
- * Заливка — `currentColor`, галочка — `--vnm-accent-fg`: на тёмной заливке
- * галочка обязана оставаться контрастной, а какой это цвет, решает тема.
+ * The fill is `currentColor` and the tick is `--vnm-accent-fg`: on a dark fill
+ * the tick has to stay legible, and which color that takes is the theme's call.
  */
 export const IconCheckboxChecked = svg(20, '0 0 20 20', [
   h('rect', { width: 20, height: 20, rx: 4, fill: 'currentColor' }),

@@ -4,18 +4,18 @@ import { useTranslate } from '../../composables/useTranslate'
 import { IconSearch } from '../icons/index'
 
 /**
- * Поле поиска.
+ * Search field.
  *
- * Без своего фона: в тулбаре карты контролы «висят» над полотном, а фон даёт
- * общая плашка тулбара.
+ * Carries no background of its own: in the map toolbar the controls float over
+ * the canvas, and the toolbar plate provides the surface.
  *
- * Debounce живёт в `useFilters`, а не здесь: поле обязано отзываться на каждое
- * нажатие, иначе ввод «залипает». Отложен только пересчёт графа.
+ * Debouncing lives in `useFilters`, not here: the field has to react to every
+ * keystroke or typing feels stuck. Only the graph recomputation is deferred.
  */
 const model = defineModel<string>({ default: '' })
 
 const props = defineProps<{
-  /** Число прямых совпадений. `undefined` — не показывать счётчик. */
+  /** Number of direct hits; `undefined` hides the counter. */
   resultCount?: number
 }>()
 
@@ -33,7 +33,6 @@ const summary = computed(() => {
 
 <template>
   <div class="vnm-search">
-    <!-- Иконка слева, поле — на всю оставшуюся ширину. -->
     <IconSearch class="vnm-search__icon" />
 
     <input
@@ -44,8 +43,7 @@ const summary = computed(() => {
       :placeholder="t('search.placeholder')"
     />
 
-    <!-- Счётчик в live-области: пользователь клавиатуры узнаёт результат, не
-         уходя из поля. -->
+    <!-- Live region: keyboard users hear the result without leaving the field. -->
     <span v-if="summary" class="vnm-search__summary" role="status" aria-live="polite">
       {{ summary }}
     </span>
@@ -90,7 +88,7 @@ const summary = computed(() => {
   color: var(--vnm-fg-subtle);
 }
 
-/* Системный крестик у type="search" заменён своей кнопкой. */
+/* The native type="search" clear button is replaced by our own. */
 .vnm-search__input::-webkit-search-cancel-button {
   display: none;
 }

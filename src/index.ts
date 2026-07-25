@@ -1,16 +1,18 @@
 /**
- * Публичный API пакета `vue-asset-map`.
+ * Public API of the `vue-asset-map` package.
  *
- * Ядро доступно и отдельным подпутём `vue-asset-map/core` — там нет ни Vue, ни
- * VueFlow, поэтому его можно использовать на сервере. Стили подключаются
- * отдельно: `import 'vue-asset-map/style.css'`.
+ * The core is also available on its own subpath, `vue-asset-map/core`, free of
+ * both Vue and VueFlow and therefore usable on the server. Styles are imported
+ * separately: `import 'vue-asset-map/style.css'`.
+ *
+ * @packageDocumentation
  */
 
 export * from './core/index'
 
-// Раскладки: `manual` и `radial` встроены, `dagre` — отдельным подпутём
-// `vue-asset-map/layout-dagre`, чтобы опциональная зависимость не попадала в
-// основной бандл.
+// `manual` and `radial` are built in; `dagre` lives on the
+// `vue-asset-map/layout-dagre` subpath so its optional dependency stays out of
+// the main bundle.
 export {
   applyPinned,
   builtinLayoutEngines,
@@ -29,24 +31,23 @@ export type {
   RadialLayoutOptions,
 } from './layout/index'
 
-// Компоненты
 export { default as NetworkMap } from './components/NetworkMap.vue'
 export { default as BaseNode } from './components/nodes/BaseNode.vue'
 export { default as GroupNode } from './components/nodes/GroupNode.vue'
 export { default as NetworkEdge } from './components/edges/NetworkEdge.vue'
 export { default as MiniMap } from './components/MiniMap.vue'
-// Каркас плавающего окна: из него собираются свои окна для слота `#windows`.
+// Floating-window chrome: build custom windows for the `#windows` slot from it.
 export { default as MapWindow } from './components/MapWindow.vue'
 export type { MiniMapNode } from './components/MiniMap.vue'
 export { default as DetailsPanel } from './components/panel/DetailsPanel.vue'
 export { default as DetailsSection } from './components/panel/DetailsSection.vue'
-// Контролы работают и вне карты: локаль они берут из контекста, а при его
-// отсутствии — из встроенной.
+// The controls also work outside the map: they read the locale from context and
+// fall back to the built-in one when there is none.
 export { default as SearchInput } from './components/controls/SearchInput.vue'
 export { default as ViewSwitcher } from './components/controls/ViewSwitcher.vue'
 export { default as FilterMenu } from './components/controls/FilterMenu.vue'
 
-// Реестр типов узлов — для тех, кто собирает свой набор компонентов.
+// Node type registry, for assembling a custom set of components.
 export {
   buildEdgeTypes,
   buildNodeTypes,
@@ -57,7 +58,7 @@ export {
   nodeTypeFor,
 } from './registry/nodeRegistry'
 
-// Composables: карту можно собрать и вручную, из тех же кусков.
+// Composables: the map can also be assembled by hand from the same pieces.
 export { useNetworkGraph } from './composables/useNetworkGraph'
 export { useViewProjection } from './composables/useViewProjection'
 export { useFilters } from './composables/useFilters'
@@ -79,7 +80,6 @@ export type {
 } from './composables/useFlowElements'
 export type { NodeSize } from './composables/useLayout'
 
-// Локализация
 export { builtinLocales, createTranslator, defaultLocale, en, resolveLocale, ru } from './locale/index'
 
 export type {

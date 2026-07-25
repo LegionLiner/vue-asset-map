@@ -2,15 +2,33 @@ import type { EntityId, XY } from '../types/entity'
 import type { LayoutEngine, LayoutGraph } from './types'
 import { adjacencyOf, applyPinned, pickRoot, yieldAndCheck } from './shared'
 
+/** Options of {@link radialLayout}. */
 export interface RadialLayoutOptions {
-  /** Центр раскладки. По умолчанию — узел наибольшей степени. */
+  /**
+   * Node placed at the centre.
+   *
+   * @default the node of highest degree
+   */
   rootId?: EntityId
-  /** Радиус первого кольца. Дефолт 220. */
+  /**
+   * Radius of the first ring, in px.
+   *
+   * @default 220
+   */
   radius?: number
-  /** Прирост радиуса на каждое следующее кольцо. Дефолт 180. */
+  /**
+   * Radius added by each further ring, in px.
+   *
+   * @default 180
+   */
   ringGap?: number
-  /** Угол первого узла кольца в радианах. Дефолт `-Math.PI / 2` — вверх. */
+  /**
+   * Angle of the first node on a ring, in radians.
+   *
+   * @default -Math.PI / 2 (straight up)
+   */
   startAngle?: number
+  /** Canvas position of the centre. */
   center?: XY
 }
 
@@ -19,13 +37,11 @@ const DEFAULT_RING_GAP = 180
 const DEFAULT_START_ANGLE = -Math.PI / 2
 
 /**
- * Концентрические кольца по расстоянию от корня.
+ * Concentric rings by hop distance from the root, so ring number reads as hop
+ * count.
  *
- * Ровно то, что нужно карте сети: в физическом виде центр — «Интернет», в
- * логическом — координатор VPN, и на глаз сразу видно, сколько хопов до узла.
- *
- * Компоненты, не связанные с корнем, не выбрасываются: они получают кольца
- * дальше самого дальнего связанного, поэтому изоляты остаются видимыми.
+ * Components unreachable from the root are not dropped: they get a ring beyond
+ * the farthest connected one, which keeps isolated nodes visible.
  */
 export const radialLayout: LayoutEngine<RadialLayoutOptions> = {
   name: 'radial',
@@ -66,10 +82,10 @@ export const radialLayout: LayoutEngine<RadialLayoutOptions> = {
 }
 
 /**
- * Разбивает узлы на кольца по расстоянию от корня в рёбрах.
+ * Splits nodes into rings by hop distance from the root.
  *
- * Обход в ширину идёт по порядку входного массива узлов и рёбер, поэтому
- * порядок внутри кольца — и, значит, углы — детерминированы.
+ * The breadth-first walk follows the order of the input node and edge arrays, so
+ * the order within a ring — and therefore every angle — is deterministic.
  */
 function ringsFrom(graph: LayoutGraph, preferredRoot?: EntityId): EntityId[][] {
   const adjacency = adjacencyOf(graph)
@@ -96,7 +112,7 @@ function ringsFrom(graph: LayoutGraph, preferredRoot?: EntityId): EntityId[][] {
     }
   }
 
-  // Узлы, не достижимые из корня: своё кольцо за пределами связной части.
+  // Nodes unreachable from the root get one ring past the connected part.
   const orphans = graph.nodes.map((node) => node.id).filter((id) => !visited.has(id))
   if (orphans.length > 0) rings.push(orphans)
 

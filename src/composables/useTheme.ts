@@ -2,19 +2,19 @@ import { computed, type ComputedRef, type Ref } from 'vue'
 import type { ResolvedTheme, ThemeMode } from '../types/theme'
 
 /**
- * Сводит `theme` к `light` или `dark`.
+ * Reduces `theme` to `light` or `dark`.
  *
- * `auto` читает системную настройку **один раз** и дальше за ней не следит: в
- * продукте есть явный переключатель, и он обязан побеждать систему. Если бы
- * `auto` подписывался на `prefers-color-scheme`, смена системной темы перебила бы
- * выбор пользователя.
+ * `auto` reads the system setting **once** and then stops watching it: the
+ * product has an explicit switch, and that switch has to beat the system. Were
+ * `auto` subscribed to `prefers-color-scheme`, changing the OS theme would
+ * override the user's own choice.
  *
- * Чтение ленивое и запоминается: у карты с `theme: 'light'` обращения к
- * `matchMedia` не будет вовсе, а возврат к `auto` отдаст то же значение, что было
- * прочитано при инициализации — никаких скрытых перечитываний.
+ * The read is lazy and memoised: a map with `theme: 'light'` never calls
+ * `matchMedia` at all, and switching back to `auto` returns the same value read
+ * at initialisation rather than re-reading behind the caller's back.
  *
- * Обращение к `window` спрятано внутрь функции и защищено проверкой: на верхнем
- * уровне модуля его быть не может, пакет должен импортироваться в SSR.
+ * The `window` access sits inside the function and behind a guard — it cannot be
+ * at module top level, since the package has to import under SSR.
  */
 export function resolveTheme(
   mode: Ref<ThemeMode | undefined> | ComputedRef<ThemeMode | undefined>,
@@ -29,7 +29,7 @@ export function resolveTheme(
         ? window.matchMedia('(prefers-color-scheme: dark)').matches
           ? 'dark'
           : 'light'
-        : // SSR или окружение без matchMedia: светлая тема как нейтральный дефолт.
+        : // SSR, or an environment without matchMedia: light is the neutral default.
           'light'
 
     return cached

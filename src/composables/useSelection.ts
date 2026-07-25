@@ -1,10 +1,13 @@
 import { computed, type ComputedRef, type Ref } from 'vue'
 import type { EntityId } from '../types/entity'
 
+/** Return value of {@link useSelection}. */
 export interface UseSelectionReturn {
   selectedIds: ComputedRef<ReadonlySet<EntityId>>
+  /** First selected id: what the details panel shows. */
   primaryId: ComputedRef<EntityId | undefined>
   isSelected: (id: EntityId) => boolean
+  /** `additive` adds to the selection instead of replacing it. */
   select: (id: EntityId, additive?: boolean) => void
   deselect: (id: EntityId) => void
   toggle: (id: EntityId, additive?: boolean) => void
@@ -13,14 +16,13 @@ export interface UseSelectionReturn {
 }
 
 /**
- * Выделение узлов.
+ * Node selection.
  *
- * Наружу состояние уходит массивом (`v-model:selection`), внутри для проверок
- * держится множество: `includes` по массиву на каждый узел при каждом рендере —
- * квадратичная стоимость на больших картах.
+ * The state leaves as an array (`v-model:selection`) but is mirrored into a set
+ * for lookups: an `includes` per node per render is quadratic on large maps.
  *
- * Порядок выделения сохраняется: «первый выделенный» — это то, что показывает
- * панель подробностей, а «два выделенных» — то, между чем строится путь.
+ * Selection order is preserved: "first selected" is what the details panel
+ * shows, and "two selected" is what a path is traced between.
  */
 export function useSelection(selection: Ref<EntityId[]>): UseSelectionReturn {
   const selectedIds = computed<ReadonlySet<EntityId>>(() => new Set(selection.value))
@@ -50,8 +52,8 @@ export function useSelection(selection: Ref<EntityId[]>): UseSelectionReturn {
 
   const toggle = (id: EntityId, additive = false): void => {
     if (isSelected(id)) {
-      // Без Ctrl клик по уже выделенному оставляет его единственным выделенным:
-      // так «клик по узлу» остаётся предсказуемым, а снятие делает клик по фону.
+      // Without Ctrl, clicking an already selected node leaves it as the only
+      // selection; clearing is what clicking the background is for.
       if (additive) deselect(id)
       else replace([id])
       return

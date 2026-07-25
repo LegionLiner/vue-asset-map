@@ -1,8 +1,10 @@
 /**
- * Ядро библиотеки: чистый TypeScript без Vue и без VueFlow.
+ * The library core: plain TypeScript, free of Vue and VueFlow.
  *
- * Этот подпуть (`vue-asset-map/core`) можно использовать отдельно от рендера —
- * например, чтобы посчитать проекцию или blast radius на сервере.
+ * This subpath (`vue-asset-map/core`) is usable without the renderer — to compute
+ * a projection or a blast radius on the server, for instance.
+ *
+ * @packageDocumentation
  */
 
 export { buildGraph, emptyGraph } from './graph'
@@ -40,9 +42,9 @@ export {
 } from './ip'
 export type { CidrRange } from './ip'
 
-// Типы реэкспортируются из конкретных модулей, а не из барреля `types/index`:
-// баррель тянет `types/theme`, а тот — тип `Component` из Vue. Ссылка на Vue
-// даже в стираемом импорте сделала бы «ядро без Vue» вопросом веры, а не факта.
+// Types come from their own modules rather than the `types/index` barrel: the
+// barrel pulls in `types/theme`, which references Vue's `Component`. Even in a
+// type-only import that would make "core without Vue" a matter of trust.
 export type { Badge, EntityId, NetworkEntity, XY } from '../types/entity'
 export type { NetworkLink } from '../types/link'
 export type { NetworkView, ProjectionResult } from '../types/view'

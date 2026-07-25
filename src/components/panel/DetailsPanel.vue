@@ -7,16 +7,16 @@ import { incidentLinks, otherEnd } from '../../core/graph'
 import type { NetworkEntity, XY } from '../../types/entity'
 
 /**
- * Подробности о сущности в плавающем окне.
+ * Entity details inside a floating window.
  *
- * Каркас окна — `<MapWindow>`; здесь только содержимое. Пакет наполняет его
- * по минимуму: имя, тип, табы и плоский список полей `meta` как fallback для
- * демо. Настоящее содержимое приходит из слота `#details`: пакет не знает ни
- * имён полей потребителя, ни того, какие из них важны.
+ * The window chrome is `<MapWindow>`; this is only its contents. The package
+ * fills them in minimally — label, kind, tabs and a flat list of `meta` fields as
+ * a fallback. Real content belongs in the `#details` slot: the package knows
+ * neither the consumer's field names nor which of them matter.
  */
 const props = defineProps<{
   entity: NetworkEntity<unknown>
-  /** Сдвиг окна, чтобы несколько окон не ложились ровно друг на друга. */
+  /** Offset in px, so several windows do not stack exactly on one another. */
   offset?: XY
 }>()
 
@@ -32,11 +32,10 @@ const tabs: readonly { id: TabId; labelKey: 'details.tab.overview' | 'details.ta
 ]
 
 /**
- * Активный таб.
+ * Active tab.
  *
- * Сбрасывать его при смене сущности не нужно: карта рендерит окна с `key` по id
- * сущности, поэтому другая сущность — это другой экземпляр компонента с
- * состоянием по умолчанию.
+ * Never reset when the entity changes: the map keys its windows by entity id, so
+ * a different entity is a different component instance with default state.
  */
 const activeTab = ref<TabId>('overview')
 
@@ -53,7 +52,7 @@ const neighbors = computed(() =>
   }),
 )
 
-/** Плоский список полей `meta` — только для fallback-режима. */
+/** Flat list of `meta` fields, for the fallback rendering only. */
 const metaRows = computed(() => {
   const meta = props.entity.meta
   if (meta === null || typeof meta !== 'object') return []
@@ -121,7 +120,7 @@ const headerSlot = computed(() => map.slot('details-header'))
         :tab="activeTab"
       />
 
-      <!-- Fallback: ровно столько, чтобы демо было осмысленным. -->
+      <!-- Fallback: just enough for the package to be usable without the slot. -->
       <template v-else-if="activeTab === 'overview'">
         <DetailsSection :title="map.t('details.id')">
           <span class="vnm-field__key">{{ map.t('details.id') }}</span>
@@ -164,9 +163,9 @@ const headerSlot = computed(() => map.slot('details-header'))
 </template>
 
 <style>
-/* Окно прижато к правому верхнему углу полотна; дальше его двигает пользователь.
-   Отступ сверху — общий токен: когда в тулбаре справа есть кнопки приложения,
-   окна начинаются под ними, а не поверх. */
+/* Anchored to the top-right of the canvas; from there the user drags it. The
+   top offset is a shared token: when the toolbar has application buttons on the
+   right, windows start below them instead of on top. */
 .vnm-details {
   top: var(--vnm-details-top);
   right: var(--vnm-space-3);

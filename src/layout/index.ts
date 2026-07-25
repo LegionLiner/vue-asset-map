@@ -11,11 +11,11 @@ export type { RadialLayoutOptions } from './radial'
 export { applyPinned, throwIfAborted } from './shared'
 
 /**
- * Движки, доступные по имени из коробки.
+ * Engines addressable by name out of the box.
  *
- * `dagre` здесь отсутствует намеренно: он тянет опциональную зависимость и
- * подключается отдельным подпутём `vue-asset-map/layout-dagre`, после чего
- * передаётся объектом — `:layout="{ engine: dagreLayout }"`.
+ * `dagre` is deliberately absent: it pulls an optional dependency and is opted
+ * into through the `vue-asset-map/layout-dagre` subpath, then passed as an
+ * object — `:layout="{ engine: dagreLayout }"`.
  */
 export const builtinLayoutEngines: Readonly<Record<string, LayoutEngine>> = Object.freeze({
   [manualLayout.name]: manualLayout,
@@ -23,9 +23,9 @@ export const builtinLayoutEngines: Readonly<Record<string, LayoutEngine>> = Obje
 })
 
 /**
- * Движок по имени или объекту. Неизвестное имя — не ошибка вызова, а `undefined`:
- * решение, что делать дальше, принимает вызывающий слой (он умеет откатиться на
- * `manual` и сообщить об этом через событие `error`).
+ * Resolves an engine from a name or passes an instance through. An unknown name
+ * yields `undefined` rather than throwing: the caller decides what happens next
+ * (the map falls back to `manual` and reports it through the `error` event).
  */
 export function resolveLayoutEngine(
   engine: string | LayoutEngine | undefined,

@@ -5,25 +5,27 @@ import type { FacetCounts, FilterOptions, FilterResult, FilterState } from '../t
 import type { NetworkGraph } from '../types/graph'
 import type { ProjectionResult } from '../types/view'
 
+/** Return value of {@link useFilters}. */
 export interface UseFiltersReturn {
   result: ComputedRef<FilterResult>
+  /** Counted over the projection, so counts do not collapse as you select. */
   facets: ComputedRef<FacetCounts>
   active: ComputedRef<boolean>
-  /** Видимые сущности с учётом и вида, и фильтра. */
+  /** Entities surviving both the view and the filter. */
   visibleIds: ComputedRef<ReadonlySet<EntityId>>
-  /** Прямые совпадения — их подсвечивает рендер. */
+  /** Direct hits; these are the ones the render highlights. */
   matchedIds: ComputedRef<ReadonlySet<EntityId>>
 }
 
 const DEFAULT_DEBOUNCE_MS = 200
 
 /**
- * Поиск и фасетная фильтрация поверх проекции вида.
+ * Search and facet filtering on top of the view projection.
  *
- * Debounce живёт здесь, а не в `core`: ядро должно оставаться синхронной чистой
- * функцией, а «не пересчитывать граф на каждое нажатие клавиши» — свойство
- * интерфейса. Дебаунсится только текстовый запрос: клик по фасету — осознанное
- * единичное действие, задерживать его значит делать интерфейс вялым.
+ * Debouncing lives here rather than in `core`: the core stays a synchronous pure
+ * function, while "do not recompute the graph on every keystroke" is a property
+ * of the UI. Only the text query is debounced — clicking a facet is a single
+ * deliberate act, and delaying it would just feel sluggish.
  */
 export function useFilters<E, L>(
   graph: Ref<NetworkGraph<E, L>> | ComputedRef<NetworkGraph<E, L>>,
@@ -47,7 +49,7 @@ export function useFilters<E, L>(
     (query) => {
       clearTimer()
       const delay = debounceMs.value ?? DEFAULT_DEBOUNCE_MS
-      // Очистка поля применяется сразу: ждать возврата всей карты незачем.
+      // Clearing the field applies at once: no reason to wait to get the map back.
       if (delay <= 0 || query.length === 0) {
         debouncedQuery.value = query
         return
@@ -61,7 +63,7 @@ export function useFilters<E, L>(
 
   onScopeDispose(clearTimer)
 
-  /** Состояние с уже отложенным запросом — именно оно идёт в ядро. */
+  // State carrying the debounced query — this is what reaches the core.
   const effectiveState = computed<FilterState>(() => ({
     ...filters.value,
     query: debouncedQuery.value,
@@ -74,9 +76,9 @@ export function useFilters<E, L>(
     }),
   )
 
-  // Фасеты считаются по проекции, а не по результату фильтра: иначе выбор
-  // «offline» обнулил бы счётчики всех остальных значений, и вернуться было бы
-  // некуда. Описания групп передаются сюда же — по ним собираются их значения.
+  // Facets are counted over the projection, not over the filter result: picking
+  // "offline" would otherwise zero every other counter, leaving nowhere to go
+  // back to. Group definitions come along, since values are collected from them.
   const facets = computed(() => facetCounts(graph.value, projection.value.entityIds, options.value?.groups))
 
   const active = computed(() => isFilterActive(effectiveState.value))

@@ -5,16 +5,16 @@ import { useMapContext } from '../../composables/useMapContext'
 import type { NetworkEdgeData } from '../../composables/useFlowElements'
 
 /**
- * Ребро карты.
+ * The default map edge.
  *
- * Стиль (сплошное, пунктирное) задаётся классом по `link.kind`, а не инлайновым
- * `stroke`: цвета живут в токенах темы, и при переключении темы ребро должно
- * менять цвет само.
+ * Style (solid, dashed) comes from a class derived from `link.kind` rather than
+ * an inline `stroke`: colors live in theme tokens, and an edge has to recolor
+ * itself when the theme switches.
  */
-// VueFlow передаёт ребру десятки собственных атрибутов (sourceNode, animated,
-// labelBgStyle и прочие), а шаблон здесь — фрагмент из пути и подписи. Без
-// отключённого наследования Vue на каждое ребро пишет в консоль предупреждение
-// о «лишних» атрибутах, которые ребру и не нужны.
+// VueFlow passes an edge dozens of props of its own (sourceNode, animated,
+// labelBgStyle and more), while this template is a fragment of a path and a
+// label. Without inheritance off, Vue logs an "extraneous attributes" warning
+// for every edge on the map.
 defineOptions({ inheritAttrs: false })
 
 const props = defineProps<{
@@ -49,8 +49,8 @@ const count = computed(() => props.data?.count ?? 1)
 
 const highlighted = computed(() => map.isEdgeHighlighted(props.id))
 
-// Гашение ребра считает карта: правило зависит от режима (поиск или выделение),
-// а ребро о режимах знать не должно.
+// Dimming is decided by the map: the rule depends on the mode (search or
+// selection), and an edge has no business knowing about modes.
 const dimmed = computed(() => map.isEdgeDimmed(props.id))
 const infected = computed(() => map.isEdgeInfected(props.id))
 
@@ -67,7 +67,7 @@ const classes = computed(() => [
 
 const labelSlot = computed(() => map.slot('edge-label'))
 
-/** Подпись показывается только там, где она несёт смысл. */
+// Own label first, then the aggregate count; nothing at all when simplified.
 const labelText = computed(() => {
   if (map.simplified.value) return undefined
   if (link.value?.label !== undefined) return link.value.label
@@ -126,7 +126,8 @@ const labelText = computed(() => {
   opacity: var(--vnm-dimmed-opacity);
 }
 
-/* Заражённая связь важнее и гашения, и подсветки пути: по ней прошёл захват. */
+/* An infected link outranks both dimming and path highlighting: capture
+   travelled along it. */
 .vnm-edge--infected,
 .vnm-edge--infected.vnm-edge--dimmed,
 .vnm-edge--infected.vnm-edge--highlighted {

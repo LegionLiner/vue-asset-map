@@ -5,6 +5,7 @@ import type { CollapsedGroup, CollapseResult, CollapseRule } from '../types/coll
 import type { NetworkGraph } from '../types/graph'
 import type { ProjectionResult } from '../types/view'
 
+/** Return value of {@link useCollapse}. */
 export interface UseCollapseReturn {
   collapsed: ComputedRef<CollapseResult<unknown>>
   groups: ComputedRef<readonly CollapsedGroup[]>
@@ -12,21 +13,23 @@ export interface UseCollapseReturn {
   isExpanded: (groupId: string) => boolean
   expand: (groupId: string) => void
   collapse: (groupId: string) => void
+  /** Returns the new state: `true` when the group is now expanded. */
   toggle: (groupId: string) => boolean
-  /** Скрыто ли поддерево этой сущности кнопкой на самом узле. */
+  /** Whether this entity's subtree is folded by the button on the node itself. */
   isSubtreeCollapsed: (id: EntityId) => boolean
+  /** Returns the new state: `true` when the subtree is now hidden. */
   toggleSubtree: (id: EntityId) => boolean
 }
 
 /**
- * Свёртка групп поверх видимого подграфа.
+ * Group collapsing over the visible subgraph.
  *
- * Выполняется до раскладки: позиции считаются уже по схлопнутому графу, иначе
- * групповой узел встал бы на место, рассчитанное для 14 отдельных.
+ * Runs before layout: positions are computed on the collapsed graph, or a single
+ * group node would land in space laid out for fourteen separate ones.
  *
- * `expanded` — множество снаружи (`v-model:expanded`). Мутировать его на месте
- * нельзя: реактивность на `Set` в Vue работает, но потребитель мог передать
- * обычное множество из своего стора, поэтому наружу всегда уходит новый `Set`.
+ * `expanded` comes from outside (`v-model:expanded`) and is never mutated in
+ * place: Vue does track `Set` mutations, but the consumer may have passed a
+ * plain set out of their own store, so a new `Set` always goes back out.
  */
 export function useCollapse<E, L>(
   graph: Ref<NetworkGraph<E, L>> | ComputedRef<NetworkGraph<E, L>>,
@@ -65,7 +68,6 @@ export function useCollapse<E, L>(
     expanded.value = next
   }
 
-  /** Возвращает новое состояние: `true` — раскрыта. */
   const toggle = (groupId: string): boolean => {
     if (isExpanded(groupId)) {
       collapse(groupId)
@@ -77,7 +79,6 @@ export function useCollapse<E, L>(
 
   const isSubtreeCollapsed = (id: EntityId): boolean => collapsedParents?.value.has(id) === true
 
-  /** Возвращает новое состояние: `true` — поддерево скрыто. */
   const toggleSubtree = (id: EntityId): boolean => {
     if (!collapsedParents) return false
 

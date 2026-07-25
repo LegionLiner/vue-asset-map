@@ -6,31 +6,48 @@ import { IconClose, IconCollapseWindow, IconDragHandle } from './icons/index'
 import type { XY } from '../types/entity'
 
 /**
- * Плавающее окно поверх полотна: шапка, перетаскивание, сжатие, закрытие.
+ * A floating window over the canvas: title bar, dragging, collapsing, closing.
  *
- * Отдельный компонент, а не часть панели подробностей, потому что окна нужны не
- * только ей: потребитель собирает из него свои — историю, легенду, журнал
- * событий — и получает ту же шапку, то же перетаскивание и те же токены темы,
- * не переписывая логику указателя заново.
+ * A component of its own rather than part of the details panel, because windows
+ * are needed elsewhere too: a consumer builds their own — history, legend, event
+ * log — out of it and gets the same bar, the same dragging and the same theme
+ * tokens without reimplementing pointer handling.
  *
- * Позиционирование задаёт вызывающая сторона обычным `style`: атрибуты падают на
- * корень, а `transform` от перетаскивания с ними складывается.
+ * Positioning is the caller's job, through an ordinary `style`: attributes fall
+ * through to the root, and the drag `transform` composes with them.
  */
 const props = withDefaults(
   defineProps<{
-    /** Подпись в центре шапки. */
+    /** Caption centred in the title bar. */
     title?: string
-    /** Кнопка закрытия. Окна вроде истории закрывать нельзя — передайте `false`. */
+    /**
+     * Show the close button. Pass `false` for windows that must stay, such as a
+     * history strip.
+     *
+     * @default true
+     */
     closable?: boolean
-    /** Кнопка сжатия до высоты шапки. */
+    /**
+     * Show the button that collapses the window to its title bar.
+     *
+     * @default true
+     */
     collapsible?: boolean
-    /** Окно без тела: только шапка со своим содержимым. */
+    /**
+     * Render the bar only, with no body below it.
+     *
+     * @default false
+     */
     headerOnly?: boolean
-    /** Ручка перетаскивания слева. Нужна окнам без заголовка. */
+    /**
+     * Show a drag handle on the left. Needed by windows without a caption.
+     *
+     * @default false
+     */
     dragHandle?: boolean
-    /** Начальный сдвиг. Полезен, чтобы окна не ложились ровно друг на друга. */
+    /** Starting offset in px; useful to keep windows from stacking exactly. */
     offset?: XY
-    /** Подписи кнопок. Без них берутся из локали. */
+    /** Button labels. Taken from the locale when omitted. */
     closeLabel?: string
     collapseLabel?: string
     expandLabel?: string
@@ -49,9 +66,9 @@ const emit = defineEmits<{
 }>()
 
 defineSlots<{
-  /** Содержимое шапки между кнопками. Без него показывается `title`. */
+  /** Bar content between the buttons. Falls back to `title`. */
   header?(props: { collapsed: boolean }): unknown
-  /** Тело окна. Не рендерится при `headerOnly` и в сжатом состоянии. */
+  /** Window body. Not rendered when `headerOnly`, nor while collapsed. */
   default?(props: { collapsed: boolean }): unknown
 }>()
 
@@ -73,9 +90,9 @@ function toggleCollapsed(): void {
 }
 
 defineExpose({
-  /** Сжато ли окно — снаружи это иногда нужно знать. */
+  /** Whether the window is collapsed to its bar. */
   collapsed,
-  /** Вернуть окно в исходное положение. */
+  /** Moves the window back to its starting offset. */
   resetPosition: reset,
 })
 </script>
@@ -145,7 +162,7 @@ defineExpose({
   line-height: var(--vnm-line-height);
 }
 
-/* Окно из одной шапки: ширину задаёт содержимое, а не общий токен. */
+/* A bar-only window is sized by its content, not by the shared width token. */
 .vnm-window--header-only {
   width: auto;
 }
@@ -160,7 +177,7 @@ defineExpose({
   border-radius: var(--vnm-window-radius) var(--vnm-window-radius) 0 0;
   background: var(--vnm-surface-sunken);
   cursor: grab;
-  /* Иначе браузер начнёт своё «перетаскивание» и выделение текста в шапке. */
+  /* Otherwise the browser starts its own drag and selects text in the bar. */
   touch-action: none;
   user-select: none;
 }
@@ -169,7 +186,8 @@ defineExpose({
   cursor: grabbing;
 }
 
-/* Сжатое окно и окно без тела — только шапка: скругление возвращается снизу. */
+/* Collapsed and bar-only windows are just the bar, so the bottom corners get
+   their radius back. */
 .vnm-window--collapsed .vnm-window__header,
 .vnm-window--header-only .vnm-window__header {
   border-radius: var(--vnm-window-radius);

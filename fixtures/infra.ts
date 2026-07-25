@@ -12,7 +12,6 @@ import type {
   NodeMarkerDef,
   MarkerAnchor,
 } from '../src/types/index'
-// Помощник из ядра: собирает маркеры по связям вокруг опорных узлов.
 import { connectionMarkers } from '../src/core/markers'
 
 /** Метаданные активов в этом демо. Потребитель задаёт свою форму. */
@@ -56,7 +55,6 @@ const entity = (id: string, kind: string, label: string, extra: Partial<DemoEnti
 })
 
 export const entities: DemoEntity[] = [
-  // --- Облака -------------------------------------------------------------
   entity('internet', KIND_CLOUD, 'Интернет', {
     status: 'online',
     meta: { subnet: 'internet', assetType: 'service', severity: 'critical', location: 'WAN' },
@@ -73,7 +71,6 @@ export const entities: DemoEntity[] = [
     },
   }),
 
-  // --- VPS ----------------------------------------------------------------
   entity('vps-tailscale', KIND_VPS, 'Tailscale VPS', {
     status: 'online',
     sublabels: ['46.8.158.127', '100.64.0.2'],
@@ -137,7 +134,6 @@ export const entities: DemoEntity[] = [
     },
   }),
 
-  // --- Роутеры ------------------------------------------------------------
   entity('keenetic-1', KIND_ROUTER, 'Keenetic 1', {
     status: 'online',
     sublabels: ['pteam.keenetic.pro', '192.168.1.1'],
@@ -161,7 +157,6 @@ export const entities: DemoEntity[] = [
     },
   }),
 
-  // --- Гипервизоры --------------------------------------------------------
   entity('pve-artjom', KIND_HYPERVISOR, 'Proxmox Artjom home', {
     status: 'online',
     sublabels: ['192.168.1.10'],
@@ -207,7 +202,6 @@ export const entities: DemoEntity[] = [
     },
   }),
 
-  // --- Рабочие станции ----------------------------------------------------
   entity('ws-artjom', KIND_WORKSTATION, 'Artjom', {
     status: 'online',
     sublabels: ['10.38.24.70', '100.64.0.70'],
@@ -274,7 +268,7 @@ export const entities: DemoEntity[] = [
     },
   }),
 
-  // --- 14 однотипных контейнеров: проверка автоматической свёртки ----------
+  // 14 однотипных контейнеров: на них проверяется автоматическая свёртка.
   ...Array.from({ length: 14 }, (_, index) =>
     entity(`ct-web-${index + 1}`, KIND_CONTAINER, `web-${String(index + 1).padStart(2, '0')}`, {
       status: index === 3 ? 'offline' : 'online',
@@ -301,7 +295,7 @@ const link = (
 ): DemoLink => ({ id, source, target, layers, ...extra })
 
 export const links: DemoLink[] = [
-  // --- Физическая топология: всё сходится к Интернету ---------------------
+  // Физическая топология: всё сходится к Интернету.
   link('l-inet-cf', 'internet', 'cloudflare', [LAYER_PHYSICAL], { kind: 'solid' }),
   link('l-inet-tailscale', 'internet', 'vps-tailscale', [LAYER_PHYSICAL], { kind: 'solid' }),
   link('l-inet-brainstorm', 'internet', 'vps-brainstorm', [LAYER_PHYSICAL], { kind: 'solid' }),
@@ -334,7 +328,7 @@ export const links: DemoLink[] = [
   link('l-ct-1-2', 'ct-web-1', 'ct-web-2', [LAYER_PHYSICAL], { kind: 'solid' }),
   link('l-ct-2-3', 'ct-web-2', 'ct-web-3', [LAYER_PHYSICAL], { kind: 'solid' }),
 
-  // --- Логический вид: VPN-оверлей вокруг Tailscale VPS -------------------
+  // Логический вид: VPN-оверлей вокруг Tailscale VPS.
   link('o-ts-brainstorm', 'vps-tailscale', 'vps-brainstorm', [LAYER_LOGICAL], { kind: 'dashed' }),
   link('o-ts-nginx', 'vps-tailscale', 'vps-nginx', [LAYER_LOGICAL], { kind: 'dashed' }),
   link('o-ts-artjom', 'vps-tailscale', 'ws-artjom', [LAYER_LOGICAL], { kind: 'dashed' }),

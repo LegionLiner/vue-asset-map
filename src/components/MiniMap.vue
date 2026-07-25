@@ -4,33 +4,38 @@ import { useTranslate } from '../composables/useTranslate'
 import type { XY } from '../types/entity'
 
 /**
- * Обзорная карта.
+ * Overview map.
  *
- * Своя, а не `@vue-flow/minimap`: тот идёт отдельным npm-пакетом со своей
- * палитрой, а требование «ни одного захардкоженного цвета» и «никаких UI-китов»
- * проще выполнить своим SVG на токенах, чем перекрывая чужие стили.
+ * Home-grown rather than `@vue-flow/minimap`: that one is a separate npm package
+ * with a palette of its own, and "no hardcoded colors, no UI kits" is easier to
+ * satisfy with a token-driven SVG than by overriding someone else's styles.
  *
- * Клик перемещает вьюпорт: наружу уходит точка в координатах полотна, а решение
- * о центрировании принимает карта — у неё для этого есть API VueFlow.
+ * A click emits a point in canvas coordinates; centring on it is the map's
+ * decision, since the map is the one holding VueFlow's API.
  */
+/** One node as drawn on the overview; all coordinates are canvas px. */
 export interface MiniMapNode {
   id: string
   x: number
   y: number
   width: number
   height: number
-  /** Подсвечивать как совпадение поиска. */
+  /** Draw as a search hit. */
   matched?: boolean
   selected?: boolean
 }
 
 const props = defineProps<{
   nodes: MiniMapNode[]
-  /** Текущий вьюпорт полотна: сдвиг и масштаб. */
+  /** Current canvas viewport: pan offset in px plus zoom factor. */
   viewport: { x: number; y: number; zoom: number }
-  /** Размер полотна в пикселях. */
+  /** Canvas size in px. */
   canvas: { width: number; height: number }
-  /** Сторона обзорной карты в пикселях. Дефолт 180×120. */
+  /**
+   * Overview size in px.
+   *
+   * @default 180×120
+   */
   size?: { width: number; height: number }
 }>()
 
@@ -42,7 +47,7 @@ const box = computed(() => props.size ?? { width: 180, height: 120 })
 
 const PADDING = 24
 
-/** Габариты содержимого плюс запас, чтобы узлы не липли к рамке. */
+/** Content bounds plus padding, so nodes do not touch the frame. */
 const bounds = computed(() => {
   if (props.nodes.length === 0) {
     return { x: 0, y: 0, width: 1, height: 1 }
@@ -60,8 +65,8 @@ const bounds = computed(() => {
     maxY = Math.max(maxY, node.y + node.height)
   }
 
-  // Вьюпорт тоже входит в габариты: иначе, уехав мышью в пустоту, пользователь
-  // теряет рамку вьюпорта с обзорной карты и не понимает, куда смотрит.
+  // The viewport is part of the bounds: pan off into empty space and otherwise
+  // its rectangle leaves the overview, stranding the user with no reference.
   const view = viewportRect.value
   minX = Math.min(minX, view.x)
   minY = Math.min(minY, view.y)
@@ -76,7 +81,7 @@ const bounds = computed(() => {
   }
 })
 
-/** Прямоугольник вьюпорта в координатах полотна. */
+/** The viewport rectangle, converted from screen px to canvas coordinates. */
 const viewportRect = computed(() => {
   const zoom = props.viewport.zoom === 0 ? 1 : props.viewport.zoom
   return {
@@ -92,7 +97,8 @@ const viewBox = computed(() => {
   return `${x} ${y} ${width} ${height}`
 })
 
-/** Толщина обводки в координатах полотна: на глаз должна быть постоянной. */
+// Stroke width is expressed in canvas units so it looks constant on screen
+// whatever the overview scale works out to be.
 const strokeWidth = computed(() => bounds.value.width / box.value.width)
 
 function onClick(event: MouseEvent): void {

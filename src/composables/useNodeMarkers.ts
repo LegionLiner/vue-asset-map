@@ -3,57 +3,61 @@ import type { EntityId, NetworkEntity } from '../types/entity'
 import type { NetworkGraph } from '../types/graph'
 import type { NodeMarkerDef, ResolvedNodeMarker } from '../types/marker'
 
+/** Return value of {@link useNodeMarkers}. */
 export interface UseNodeMarkersReturn {
-  /** Маркеры сущности в порядке объявления. */
+  /** Markers of an entity, in declaration order. */
   markersFor: (id: EntityId) => readonly ResolvedNodeMarker[]
-  /** Маркер, на который сейчас навели и выдержали задержку. */
+  /** Marker currently hovered, once the delay has elapsed. */
   hoveredMarker: Ref<string | undefined>
-  /** Сущности, у которых есть наведённый маркер. */
+  /** Entities carrying the hovered marker; empty while nothing is hovered. */
   memberIds: ComputedRef<ReadonlySet<EntityId>>
-  /** Навести: подсветка включится после задержки. */
+  /** Pointer entered a dot: highlighting starts after the delay. */
   onMarkerEnter: (markerId: string) => void
-  /** Убрать курсор: отменяет и ожидание, и подсветку. */
+  /** Pointer left: cancels both the pending delay and active highlighting. */
   onMarkerLeave: () => void
-  /** Включить подсветку немедленно — для фокуса с клавиатуры. */
+  /** Highlights immediately, for keyboard focus. */
   onMarkerFocus: (markerId: string) => void
 }
 
 const DEFAULT_HOVER_DELAY_MS = 500
 
-/** Палитра по умолчанию: цвета раздаются маркерам по порядку объявления. */
+/** Colors are handed out by declaration order and wrap around when exhausted. */
 const PALETTE = ['var(--vnm-marker-1)', 'var(--vnm-marker-2)', 'var(--vnm-marker-3)'] as const
 
 /**
- * Маркеры принадлежности узлов и подсветка по наведению.
+ * Membership markers for nodes, plus the hover highlighting they drive.
  *
- * Соответствие «сущность → маркеры» считается один раз на смену данных: иначе
- * каждый узел на каждом рендере прогонял бы по себе все предикаты `match`.
+ * The entity → markers index is computed once per data change; otherwise every
+ * node would run every `match` predicate on every render.
  *
- * Задержка перед подсветкой нужна, чтобы курсор, проходящий над кружками по
- * пути к чему-то другому, не устраивал мигание всей карты. Уход курсора
- * отменяет и ожидание, и уже включённую подсветку.
+ * The delay before highlighting keeps a pointer that merely crosses the dots on
+ * its way elsewhere from flashing the whole map. Leaving cancels both the
+ * pending delay and highlighting that already started.
  */
 export function useNodeMarkers<E, L>(
   graph: Ref<NetworkGraph<E, L>> | ComputedRef<NetworkGraph<E, L>>,
   markers: Ref<NodeMarkerDef[] | undefined>,
   hoverDelay: Ref<number | undefined>,
 ): UseNodeMarkersReturn {
-  /** Маркеры с раздатым цветом: индекс в палитре зависит только от порядка. */
+  // Palette index depends on declaration order alone, so a marker keeps its
+  // color no matter which nodes carry it.
   const resolved = computed<ResolvedNodeMarker[]>(() =>
     (markers.value ?? []).map((marker, index) => ({
       id: marker.id,
+      // Cast: the modulo keeps the index in range, which `noUncheckedIndexedAccess`
+      // cannot see.
       color: marker.color ?? (PALETTE[index % PALETTE.length] as string),
       label: marker.label ?? marker.id,
     })),
   )
 
   /**
-   * Индекс «сущность → её маркеры».
+   * Entity → its markers.
    *
-   * Обход идёт по маркерам, а не по сущностям: маркер с `members` считает свой
-   * состав одним проходом по графу, тогда как предикат `match` пришлось бы
-   * вызывать сущности × маркеры раз. Порядок кружков у узла — порядок объявления
-   * маркеров, потому что внешний цикл идёт по ним.
+   * Iterates markers rather than entities: a marker with `members` computes its
+   * set in one pass over the graph, while a `match` predicate would have to run
+   * entities × markers times. Dot order on a node is marker declaration order,
+   * because that is what the outer loop follows.
    */
   const byEntity = computed(() => {
     const index = new Map<EntityId, ResolvedNodeMarker[]>()
@@ -72,7 +76,7 @@ export function useNodeMarkers<E, L>(
 
       if (def.members) {
         for (const entityId of def.members(graph.value)) {
-          // Маркер мог назвать узел, которого в данных уже нет.
+          // A marker may name a node that is no longer in the data.
           if (graph.value.entities.has(entityId)) attach(entityId, marker)
         }
         return
@@ -81,6 +85,8 @@ export function useNodeMarkers<E, L>(
       const match = def.match
       if (!match) return
       for (const entity of graph.value.entities.values()) {
+        // Cast: `match` is declared over `NetworkEntity<unknown>`, and `meta` is
+        // only read by the consumer's own predicate.
         if (match(entity as NetworkEntity, graph.value)) attach(entity.id, marker)
       }
     })
@@ -127,7 +133,7 @@ export function useNodeMarkers<E, L>(
     hoveredMarker.value = undefined
   }
 
-  /** С клавиатуры ждать нечего: фокус — уже осознанное действие. */
+  // Nothing to wait for on the keyboard: focus is already a deliberate act.
   const onMarkerFocus = (markerId: string): void => {
     clearTimer()
     hoveredMarker.value = markerId

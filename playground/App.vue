@@ -107,7 +107,6 @@ function clearPath(): void {
   lastPath.value = undefined
 }
 
-// --- Модалка добавления актива --------------------------------------------
 
 const addOpen = ref(false)
 
@@ -165,7 +164,6 @@ function submitAdd(): void {
   draft.overlayIp = ''
 }
 
-// --- Кастомное содержимое панели подробностей ------------------------------
 
 /** Ярлыки для полей `meta` — это данные потребителя, библиотека их не знает. */
 const metaLabels: Record<keyof AssetMeta, string> = {
@@ -198,7 +196,6 @@ function neighborsOf(id: string): DemoLink[] {
   return links.value.filter((link) => link.source === id || link.target === id)
 }
 
-// --- Демо-окно «История» ---------------------------------------------------
 
 const historyStep = ref('сейчас')
 

@@ -1,29 +1,50 @@
 /*
- * Default-импорт, а не `import * as dagre`.
+ * Default import, not `import * as dagre`.
  *
- * `@dagrejs/dagre` — CommonJS, и в Node ESM пространство имён собирается
- * статическим анализатором: из `module.exports` он распознаёт `graphlib`, но не
- * `layout`, поэтому `dagre.layout` оказывается `undefined` — но только в чистом
- * Node, потому что бандлеры и Vitest дают свою интероперабельность. Ошибка
- * ловится лишь на собранном пакете, за этим следит `scripts/verify-dist.mjs`.
+ * `@dagrejs/dagre` is CommonJS, and Node ESM builds the namespace object by
+ * static analysis: it detects `graphlib` on `module.exports` but not `layout`, so
+ * `dagre.layout` comes out `undefined` — in plain Node only, since bundlers and
+ * Vitest supply their own interop. The failure is visible only on the built
+ * package, which is what `scripts/verify-dist.mjs` guards.
  */
 import dagre from '@dagrejs/dagre'
 import type { EntityId, XY } from '../types/entity'
 import type { LayoutEngine, LayoutGraph } from './types'
 import { applyPinned, yieldAndCheck } from './shared'
 
+/** Options of {@link dagreLayout}; passed straight through to dagre. */
 export interface DagreLayoutOptions {
-  /** Направление ярусов: сверху вниз, слева направо и т.д. Дефолт `TB`. */
+  /**
+   * Rank direction: top-to-bottom, left-to-right and so on.
+   *
+   * @default 'TB'
+   */
   rankdir?: 'TB' | 'BT' | 'LR' | 'RL'
-  /** Выравнивание внутри яруса. */
+  /** Alignment within a rank. */
   align?: 'UL' | 'UR' | 'DL' | 'DR'
-  /** Зазор между узлами одного яруса. Дефолт 48. */
+  /**
+   * Gap between nodes of one rank, in px.
+   *
+   * @default 48
+   */
   nodesep?: number
-  /** Зазор между ярусами. Дефолт 96. */
+  /**
+   * Gap between ranks, in px.
+   *
+   * @default 96
+   */
   ranksep?: number
-  /** Зазор между рёбрами. Дефолт 24. */
+  /**
+   * Gap between edges, in px.
+   *
+   * @default 24
+   */
   edgesep?: number
-  /** Алгоритм расстановки по ярусам. Дефолт `network-simplex`. */
+  /**
+   * Rank assignment algorithm.
+   *
+   * @default 'network-simplex'
+   */
   ranker?: 'network-simplex' | 'tight-tree' | 'longest-path'
 }
 
@@ -36,14 +57,14 @@ const DEFAULTS = {
 } as const
 
 /**
- * Ярусная раскладка на dagre.
+ * Layered layout backed by dagre.
  *
- * Живёт в отдельном подпути `vue-asset-map/layout-dagre`, а `@dagrejs/dagre` —
- * в `optionalDependencies`: движок нужен не всем, а весит он больше, чем всё
- * остальное ядро. Кто импортировал этот модуль — тот и поставил зависимость.
+ * Lives behind the separate `vue-asset-map/layout-dagre` subpath, with
+ * `@dagrejs/dagre` in `optionalDependencies`: not everyone needs the engine, and
+ * it outweighs the rest of the core. Importing this module is the opt-in.
  *
- * Dagre не умеет фиксировать узлы, поэтому закреплённые позиции возвращаются
- * поверх результата: снаружи поведение такое же, как у остальных движков.
+ * Dagre cannot fix nodes in place, so pinned positions are re-applied over its
+ * output — from outside, behaviour matches every other engine.
  */
 export const dagreLayout: LayoutEngine<DagreLayoutOptions> = {
   name: 'dagre',
@@ -72,8 +93,8 @@ export const dagreLayout: LayoutEngine<DagreLayoutOptions> = {
     const known = new Set(graph.nodes.map((node) => node.id))
     for (const edge of graph.edges) {
       if (!known.has(edge.source) || !known.has(edge.target)) continue
-      // multigraph: имя ребра различает параллельные связи, иначе dagre
-      // оставил бы от пучка только одно.
+      // Naming the edge is what keeps parallel links apart; without it dagre
+      // would reduce a bundle to a single edge.
       inner.setEdge(edge.source, edge.target, {}, edge.id)
     }
 
@@ -83,7 +104,7 @@ export const dagreLayout: LayoutEngine<DagreLayoutOptions> = {
     for (const node of graph.nodes) {
       const laid = inner.node(node.id)
       if (!laid) continue
-      // Dagre отдаёт центр узла, а карта позиционирует по левому верхнему углу.
+      // Dagre reports node centres; the map positions by the top-left corner.
       positions.set(node.id, { x: laid.x - node.width / 2, y: laid.y - node.height / 2 })
     }
 

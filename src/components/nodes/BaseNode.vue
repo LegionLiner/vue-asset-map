@@ -6,14 +6,15 @@ import type { NetworkNodeData } from '../../composables/useFlowElements'
 import { IconExpand } from '../icons/index'
 
 /**
- * Базовый узел карты: круг с иконкой и подписи под ним.
+ * The default map node: a circle with an icon and a label plate beneath it.
  *
- * Размер круга берётся из масштаба узла: корневые сущности крупнее дочерних —
- * это единственный визуальный признак уровня, а не отдельное поле в данных.
+ * Circle size follows the node's level — root entities are drawn larger than
+ * children, which is the only visual cue for depth; there is no field for it in
+ * the data.
  *
- * Взаимодействия уходят в контекст карты, а не в события VueFlow: так поведение
- * не зависит от того, включено ли у VueFlow собственное выделение, и одинаково
- * работает для мыши и клавиатуры.
+ * Interactions go to the map context rather than to VueFlow events, so behaviour
+ * does not depend on whether VueFlow's own selection is enabled and works the
+ * same for mouse and keyboard.
  */
 const props = defineProps<{
   id: string
@@ -27,7 +28,6 @@ const entity = computed(() => (props.data?.variant === 'entity' ? props.data.ent
 
 const isRoot = computed(() => map.isRootNode(props.id))
 
-/** Кнопка свёртки поддерева нужна только там, где есть что сворачивать. */
 const hasChildren = computed(() => map.hasChildren(props.id))
 const subtreeCollapsed = computed(() => map.isSubtreeCollapsed(props.id))
 
@@ -43,18 +43,16 @@ const statusColor = computed(() => map.statusColorOf(entity.value?.status))
 const markers = computed(() => map.markersFor(props.id))
 
 /**
- * Цвет кружка.
- *
- * У заражённого узла маркеры красятся цветом заражения независимо от своего:
- * принадлежность важна, но факт захвата важнее, и кружки не должны спорить с
- * остальной раскраской узла.
+ * On an infected node the dots take the infection color whatever their own is:
+ * membership matters, but capture matters more, and the dots must not argue
+ * with the rest of the node's coloring.
  */
 function markerColor(marker: { color: string }): string {
   return map.isInfected(props.id) ? 'var(--vnm-marker-infected)' : marker.color
 }
 const icon = computed(() => (entity.value ? map.iconFor(entity.value.kind) : undefined))
 
-/** Слот `#node-{kind}` подменяет содержимое круга. */
+/** `#node-{kind}` replaces the contents of the circle. */
 const kindSlot = computed(() => {
   const kind = entity.value?.kind
   return kind ? map.slot(`node-${kind}`) : undefined
@@ -97,7 +95,7 @@ const arrowKeys: Readonly<Record<string, ArrowDirection>> = {
 function onKeydown(event: KeyboardEvent): void {
   if (event.key === 'Enter' || event.key === ' ') {
     event.preventDefault()
-    // Клавиатура повторяет клик, включая аддитивное выделение по Ctrl/Meta.
+    // The keyboard mirrors a click, additive selection on Ctrl/Meta included.
     map.onNodeClick(props.id, new MouseEvent('click', { ctrlKey: event.ctrlKey, metaKey: event.metaKey }))
     return
   }
@@ -110,7 +108,7 @@ function onKeydown(event: KeyboardEvent): void {
 }
 
 function onToggle(event: MouseEvent): void {
-  // Клик по кнопке не должен заодно выделять узел.
+  // Pressing the button must not select the node as well.
   event.stopPropagation()
   map.onToggleSubtree(props.id)
 }
@@ -132,8 +130,8 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
     @contextmenu="map.onNodeContextMenu(id, $event)"
     @keydown="onKeydown"
   >
-    <!-- Хэндлы в центре круга: рёбра карты идут от центра к центру, иначе в
-         радиальной раскладке линии выходили бы из одного и того же края. -->
+    <!-- Handles sit at the centre of the circle: edges run centre to centre, or
+         a radial layout would have every line leave from the same edge. -->
     <Handle type="target" :position="Position.Top" class="vnm-node__handle" />
     <Handle type="source" :position="Position.Bottom" class="vnm-node__handle" />
 
@@ -183,8 +181,6 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
       </span>
     </div>
 
-    <!-- Маркеры принадлежности: те же группировки, что и связи, но читаются
-         взглядом — нажимать на узел не нужно. -->
     <span v-if="markers.length > 0 && !map.simplified.value" class="vnm-node__markers">
       <button
         v-for="marker in markers"
@@ -246,9 +242,9 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
   transition: opacity var(--vnm-transition);
 }
 
-/* Обводка идёт по кругу и по плашке подписей отдельно, а не одним
-   прямоугольником вокруг узла: между ними пустое место, и общая рамка обводила
-   бы в том числе его. */
+/* The circle and the label plate are outlined separately rather than as one
+   rectangle around the node: there is empty space between them, and a shared
+   frame would enclose that space too. */
 .vnm-node:focus-visible {
   outline: none;
 }
@@ -278,8 +274,8 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
   opacity: var(--vnm-dimmed-opacity);
 }
 
-/* Заражение: заливка, обводка и иконка круга плюс плашка подписей. Ставится
-   после состояний выделения намеренно — захват важнее того, что узел выбран. */
+/* Placed after the selection states on purpose: being captured outranks being
+   selected, so infection wins the cascade. */
 .vnm-node--infected .vnm-node__circle {
   border-color: var(--vnm-infected-border);
   background: var(--vnm-infected-bg);
@@ -291,7 +287,7 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
   background: var(--vnm-infected-bg);
 }
 
-/* Помеченный руками источник заражения выделен толще, чем захваченные им. */
+/* A hand-marked source is drawn heavier than the nodes it captured. */
 .vnm-node--infection-source .vnm-node__circle {
   border-width: 2px;
 }
@@ -358,7 +354,6 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
   background: var(--vnm-status-unknown);
 }
 
-/* Кнопка свёртки поддерева: справа сверху, поверх круга. */
 .vnm-node__toggle {
   position: absolute;
   top: calc(var(--vnm-node-toggle-size) / -3);
@@ -376,7 +371,7 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
   cursor: pointer;
 }
 
-/* У корневых узлов статус и кнопка не должны налезать друг на друга. */
+/* On root nodes the status dot and the toggle must not overlap. */
 .vnm-node--root .vnm-node__status {
   top: 2px;
   right: 2px;
@@ -392,7 +387,6 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
   outline-offset: 1px;
 }
 
-/* Плашка подписей: белый прямоугольник фиксированного размера под кругом. */
 .vnm-node__info {
   display: flex;
   flex-direction: column;
@@ -402,8 +396,8 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
   width: var(--vnm-node-label-width);
   height: var(--vnm-node-label-height);
   padding: var(--vnm-node-label-padding);
-  /* Рамка есть всегда, но прозрачная: при выделении она не должна сдвигать
-     содержимое на пиксель. */
+  /* Always present but transparent, so selecting a node cannot shift its
+     contents by a pixel. */
   border: 1px solid transparent;
   border-radius: var(--vnm-node-label-radius);
   background: var(--vnm-surface);
@@ -432,19 +426,18 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
   color: var(--vnm-node-sublabel-color);
 }
 
-/* Оверлейный адрес отличается от внешнего цветом: в логическом виде это
-   единственный способ различить их с одного взгляда. */
+/* The overlay address differs from the external one by color: in the logical
+   view that is the only way to tell them apart at a glance. */
 .vnm-node__sublabel-overlay {
   color: var(--vnm-node-overlay-color);
 }
 
-/* Маркеры принадлежности: ряд кружков под плашкой, по центру. */
 .vnm-node__markers {
   display: flex;
   justify-content: center;
   gap: var(--vnm-marker-gap);
-  /* Отступ задаётся здесь, а не через gap контейнера: у плашки и у бейджей свои
-     расстояния, и общий gap развалил бы оба. */
+  /* Spacing lives here rather than in the container's gap: the plate and the
+     badges have their own distances, and one shared gap would break both. */
   margin-top: calc(var(--vnm-marker-offset) - var(--vnm-node-label-gap));
 }
 
@@ -459,7 +452,7 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
   padding: 0;
   border: 0;
   border-radius: 50%;
-  /* Белая подложка: кружок читается и на плашке, и на полотне. */
+  /* Opaque backing, so a dot reads both over the plate and over the canvas. */
   background: var(--vnm-marker-bg);
   cursor: pointer;
 }
@@ -476,7 +469,8 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
   background: var(--vnm-marker-1);
 }
 
-/* Бейджи — под плашкой, а не внутри: внутри места ровно под три строки. */
+/* Badges go under the plate, not inside it: inside there is room for exactly
+   three lines. */
 .vnm-node__badges {
   display: flex;
   justify-content: center;
@@ -492,7 +486,7 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
   line-height: 14px;
 }
 
-/* LOD: на мелком масштабе остаётся только круг с иконкой. */
+/* LOD: below the zoom threshold only the circle with its icon remains. */
 .vnm-node--simplified {
   width: auto;
   gap: 0;

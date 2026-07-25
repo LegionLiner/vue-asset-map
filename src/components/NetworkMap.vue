@@ -39,10 +39,10 @@ const props = withDefaults(defineProps<NetworkMapProps<E, L>>(), {
   onlyRenderVisibleElements: true,
   lodThreshold: 0.5,
   loading: false,
-  // `collapse` по типу — `CollapseRule | false`, поэтому Vue считает его
-  // boolean-пропом и по своим правилам приводит отсутствующее значение к `false`.
-  // Без явного `default: undefined` свёртка была бы выключена по умолчанию —
-  // ровно противоположно требованию «группа >10 детей свёрнута».
+  // `collapse` is typed `CollapseRule | false`, so Vue treats it as a boolean
+  // prop and casts an absent value to `false`. Without an explicit
+  // `default: undefined` collapsing would be off by default — the exact opposite
+  // of the intended "a group of more than 10 children is collapsed".
   collapse: undefined,
 })
 
@@ -63,11 +63,10 @@ const emit = defineEmits<{
 }>()
 
 /**
- * Двусторонние привязки.
+ * Two-way bindings.
  *
- * `defineModel` — это и есть «useVModel-подобный паттерн» из требований: если
- * снаружи есть `v-model`, состояние контролируется снаружи; если нет — ref
- * работает как локальный, и компонент управляет состоянием сам.
+ * With a `v-model` attached the state is controlled from outside; without one
+ * the ref stays local and the component owns the state itself.
  */
 const viewId = defineModel<string | undefined>('view', { default: undefined })
 const selection = defineModel<EntityId[]>('selection', { default: () => [] })
@@ -76,9 +75,9 @@ const filters = defineModel<FilterState>('filters', {
   default: (): FilterState => ({ query: '', kinds: [], statuses: [] }),
 })
 const viewport = defineModel<Viewport>('viewport', { default: () => ({ x: 0, y: 0, zoom: 1 }) })
-/** Сущности, для которых открыты окна подробностей. Последняя — сверху. */
+/** Entities with an open details window; the last one is on top. */
 const openDetails = defineModel<EntityId[]>('openDetails', { default: () => [] })
-/** Узлы, чьи потомки скрыты кнопкой на самом узле. */
+/** Nodes whose descendants are folded by the button on the node itself. */
 const collapsedNodes = defineModel<Set<EntityId>>('collapsedNodes', {
   default: () => new Set<EntityId>(),
 })
@@ -87,14 +86,10 @@ defineSlots<NetworkMapSlots<E, L>>()
 
 const slots = useSlots()
 
-// --- Локаль и тема ---------------------------------------------------------
-
 const messages = computed(() => resolveLocale(props.locale))
 const t = computed(() => createTranslator(messages.value))
 
 const theme = resolveTheme(computed(() => props.theme))
-
-// --- Конвейер данных -------------------------------------------------------
 
 const { graph } = useNetworkGraph<E, L>(
   computed(() => props.entities),
@@ -117,9 +112,9 @@ const filterState = useFilters(
 
 const collapseState = useCollapse(
   graph,
-  // Свёртка строится по проекции вида, а не по результату фильтра: иначе набор
-  // групп менялся бы на каждой букве в поиске и карта перестраивалась бы под
-  // руками. Фильтр влияет только на видимость и подсветку.
+  // Collapsing follows the view projection, not the filter result: otherwise the
+  // set of groups would change on every letter typed and the map would rebuild
+  // under the user's hands. The filter only affects visibility and highlighting.
   computed(() => projection.value.entityIds),
   projection,
   computed(() => props.collapse),
@@ -128,14 +123,14 @@ const collapseState = useCollapse(
 )
 
 /**
- * Габариты узла для раскладки.
+ * Node size for layout, in canvas px.
  *
- * Узел — круг плюс плашка подписей фиксированного размера, поэтому от вида и от
- * числа подписей высота не зависит: иначе переключение вида, скрывающего
- * подписи, меняло бы габариты всех узлов и раскладка «прыгала» бы.
+ * A node is a circle plus a fixed-size label plate, so height depends on neither
+ * the view nor the number of sublabels: otherwise switching to a view that hides
+ * sublabels would resize every node and the layout would jump.
  *
- * Значения повторяют токены `--vnm-node-*`. Читать их из CSS во время раскладки
- * нельзя: раскладка считается и без DOM, в том числе в тестах ядра.
+ * The numbers mirror the `--vnm-node-*` tokens. Reading them from CSS during
+ * layout is not an option: layout also runs without a DOM, in the core tests.
  */
 const NODE_LABEL_WIDTH = 127.5
 const NODE_LABEL_HEIGHT = 42
@@ -164,11 +159,9 @@ const layoutState = useLayout({
 })
 
 /**
- * Частичное обновление состояния фильтра.
- *
- * Всегда новый объект: `filters` может быть контролируемым снаружи через
- * `v-model:filters`, и правка на месте не породила бы события обновления —
- * вдобавок это была бы мутация объекта, принадлежащего потребителю.
+ * Always builds a new object: `filters` may be controlled from outside through
+ * `v-model:filters`, where editing in place would raise no update event — and
+ * would mutate an object belonging to the consumer.
  */
 function patchFilters(patch: Partial<FilterState>): void {
   filters.value = { ...filters.value, ...patch }
@@ -187,8 +180,6 @@ watch(
   (ids) => emit('selection-change', [...ids]),
 )
 
-// --- Реестры компонентов ---------------------------------------------------
-
 const nodeTypes = computed(() => buildNodeTypes(props.nodeTypes))
 const edgeTypes = computed(() => buildEdgeTypes(props.edgeTypes))
 
@@ -202,8 +193,6 @@ const { nodes, edges } = useFlowElements({
   draggable: ref(true),
 })
 
-// --- VueFlow ---------------------------------------------------------------
-
 const {
   fitView: flowFitView,
   setViewport,
@@ -212,7 +201,7 @@ const {
   dimensions: canvasSize,
 } = useVueFlow()
 
-/** Узлы для обзорной карты: только видимые, с уже вычисленными позициями. */
+/** Overview nodes: the visible ones, with positions already computed. */
 const minimapNodes = computed<MiniMapNode[]>(() =>
   nodes.value
     .filter((node) => node.hidden !== true)
@@ -230,14 +219,14 @@ const minimapNodes = computed<MiniMapNode[]>(() =>
     }),
 )
 
-/** Клик по обзорной карте: центрируем полотно на выбранной точке. */
+/** A click on the overview centres the canvas on the point it reports. */
 function focusPoint(point: XY): void {
   void setCenter(point.x, point.y, { zoom: flowViewport.value.zoom, duration: 200 })
 }
 
 const simplified = computed(() => flowViewport.value.zoom < props.lodThreshold)
 
-/** Синхронизация вьюпорта в обе стороны без петли обновлений. */
+/** Two-way viewport sync, guarded against an update loop. */
 let syncingViewport = false
 
 watch(flowViewport, (next) => {
@@ -256,8 +245,6 @@ watch(viewport, (next) => {
   })
 })
 
-// --- Подсветка пути --------------------------------------------------------
-
 const highlightedNodeIds = shallowRef<ReadonlySet<string>>(new Set())
 const highlightedEdgeIds = shallowRef<ReadonlySet<string>>(new Set())
 
@@ -268,11 +255,12 @@ function clearHighlight(): void {
 }
 
 /**
- * Подсветка пути между двумя узлами.
+ * Highlights a path between two nodes.
  *
- * Ищется по исходному графу с учётом слоёв текущего вида, а рисуется по
- * схлопнутому: если участок пути спрятан в группу, подсвечивается групповой узел
- * и ведущие к нему рёбра — иначе путь визуально обрывался бы.
+ * Searched on the original graph, restricted to the current view's layers, but
+ * drawn on the collapsed one: where a stretch of the path is hidden inside a
+ * group, the group node and the edges leading to it light up instead — the path
+ * would otherwise appear to break off.
  */
 function highlightPath(from: EntityId, to: EntityId): EntityId[] {
   const layers = view.value ? [view.value.id] : undefined
@@ -308,8 +296,6 @@ function highlightPath(from: EntityId, to: EntityId): EntityId[] {
   return path
 }
 
-// --- Взаимодействия --------------------------------------------------------
-
 const nodeElements = new Map<string, HTMLElement>()
 
 function payloadFor(id: string, event: MouseEvent): NodeEventPayload {
@@ -323,7 +309,7 @@ function payloadFor(id: string, event: MouseEvent): NodeEventPayload {
 
 function onNodeClick(id: string, event: MouseEvent): void {
   selectionState.toggle(id, event.ctrlKey || event.metaKey)
-  // Групповому узлу окно подробностей не полагается: у группы нет сущности.
+  // A group node gets no details window: a group has no entity behind it.
   if (graph.value.entities.has(id)) openDetail(id)
   emit('node-click', payloadFor(id, event))
 }
@@ -347,7 +333,7 @@ function onEdgeClick(id: string, event: MouseEvent): void {
   emit('edge-click', { id, event })
 }
 
-/** Кнопка на самом узле: прячет и возвращает его поддерево. */
+/** The button on a node itself: folds its subtree away and back. */
 function onToggleSubtree(id: EntityId): void {
   const entity = graph.value.entities.get(id)
   const collapsedNow = collapseState.toggleSubtree(id)
@@ -361,14 +347,12 @@ function onPaneClick(event: MouseEvent): void {
   emit('pane-click', event)
 }
 
-/** Перетаскивание мышью — высший приоритет позиции, релэйаут его не сбросит. */
+/** A dragged position outranks everything; a relayout will not reset it. */
 function onNodeDragStop(event: NodeDragEvent): void {
   for (const node of event.nodes) {
     layoutState.setManualPosition(node.id, { x: node.position.x, y: node.position.y })
   }
 }
-
-// --- Клавиатура ------------------------------------------------------------
 
 const ARROW_VECTORS: Readonly<Record<ArrowDirection, XY>> = {
   up: { x: 0, y: -1 },
@@ -378,11 +362,11 @@ const ARROW_VECTORS: Readonly<Record<ArrowDirection, XY>> = {
 }
 
 /**
- * Переход к соседу по стрелке.
+ * Moves to a neighbour with the arrow keys.
  *
- * Из всех соседей по схлопнутому графу берётся тот, чьё направление ближе всего
- * к направлению стрелки, и только в пределах полукруга — иначе «вверх» уводило
- * бы к узлу, лежащему сбоку или вовсе снизу.
+ * Of all neighbours in the collapsed graph it picks the one whose direction is
+ * closest to the arrow's, and only within a half-circle — otherwise "up" could
+ * take you to a node that sits to the side, or below.
  */
 function onArrowNavigate(id: string, direction: ArrowDirection): void {
   const origin = layoutState.positionOf(id)
@@ -404,7 +388,7 @@ function onArrowNavigate(id: string, direction: ArrowDirection): void {
     const length = Math.hypot(dx, dy)
     if (length === 0) continue
 
-    // Косинус угла между направлением стрелки и направлением на соседа.
+    // Cosine of the angle between the arrow direction and the neighbour.
     const alignment = (dx * vector.x + dy * vector.y) / length
     if (alignment <= 0.35) continue
 
@@ -419,21 +403,19 @@ function onArrowNavigate(id: string, direction: ArrowDirection): void {
 
 function onRootKeydown(event: KeyboardEvent): void {
   if (event.key !== 'Escape') return
-  // Escape закрывает верхнее окно, а не сбрасывает выделение: окна — то, что
-  // перекрывает карту, и убрать их пользователь хочет в первую очередь. По
-  // одному за нажатие: закрыть всё разом слишком грубо.
+  // Escape closes the topmost window rather than clearing the selection: the
+  // windows are what covers the map, so they are what the user wants gone first.
+  // One per press — closing them all at once is too blunt.
   const topmost = openDetails.value.at(-1)
   if (topmost !== undefined) closeDetail(topmost)
 }
 
-// --- Окна подробностей -----------------------------------------------------
-
 /**
- * Раскрытые списки в панели фильтров.
+ * Which filter lists are expanded.
  *
- * Состояние компонента, а не `localStorage`: пакет не пишет в хранилище
- * браузера. Наружу уходит через `v-model:openFilterGroups` — сохранять его между
- * сессиями решает приложение.
+ * Component state, not `localStorage`: the package never writes to browser
+ * storage. It leaves through `v-model:openFilterGroups` — persisting it across
+ * sessions is the application's decision.
  */
 const openFilterGroups = defineModel<string[] | undefined>('openFilterGroups', {
   default: undefined,
@@ -443,13 +425,13 @@ const maxDetailWindows = computed(() => Math.max(0, props.maxDetailsWindows ?? 2
 
 const windowsLayer = ref<HTMLElement>()
 
-/** Высота, занятая своими окнами потребителя у верхней кромки их слоя. */
+/** Height taken by the consumer's own windows at the top of their layer, in px. */
 const customWindowsHeight = ref(0)
 
 /**
- * Своё окно считается «занимающим место сверху», если его верх не дальше этой
- * полосы от кромки слоя. Перетащенное на середину полотна окно отжимать окна
- * подробностей не должно.
+ * A custom window counts as occupying the top only while its own top edge is
+ * within this band of the layer edge, in px. One dragged to the middle of the
+ * canvas must not keep pushing the details windows down.
  */
 const TOP_BAND_PX = 24
 
@@ -472,20 +454,21 @@ function measureCustomWindows(): void {
   customWindowsHeight.value = occupied
 }
 
-// Замер перед открытием окна и при старте: именно в этот момент нужно знать,
-// сколько места сверху уже занято.
+// Measured at start-up and before a window opens: that is when the space
+// already taken up top has to be known.
 onMounted(measureCustomWindows)
 watch(openDetails, () => void nextTick(measureCustomWindows))
 
 /**
- * Отступы окон сверху.
+ * Top offsets for the floating windows.
  *
- * `--vnm-windows-top` опускает окна под тулбар, если в его правом слоте что-то
- * есть: слева стоят контролы карты, их прижатое вправо окно и так не перекрывает,
- * а кнопки приложения из `#toolbar-right` накрыло бы, и нажать их стало бы нельзя.
+ * `--vnm-windows-top` drops the windows below the toolbar when its right slot has
+ * anything in it: the map's own controls sit on the left, which a right-aligned
+ * window already clears, but application buttons from `#toolbar-right` would be
+ * covered and become unclickable.
  *
- * `--vnm-details-top` дополнительно опускает окна подробностей под свои окна
- * потребителя — чтобы новое окно не закрывало, например, историю.
+ * `--vnm-details-top` drops the details windows further, below the consumer's own
+ * windows, so a newly opened one does not cover, say, a history strip.
  */
 const canvasStyle = computed<Record<string, string> | undefined>(() => {
   const style: Record<string, string> = {}
@@ -503,11 +486,11 @@ const canvasStyle = computed<Record<string, string> | undefined>(() => {
 })
 
 /**
- * Открывает окно для сущности.
+ * Opens a window for an entity.
  *
- * Уже открытое окно не дублируется, а поднимается наверх. При достижении лимита
- * закрывается самое старое: молча игнорировать клик хуже — пользователь решит,
- * что карта не отвечает.
+ * An already open window is raised rather than duplicated. Once the limit is
+ * reached the oldest one closes: silently ignoring the click would be worse, as
+ * the user would read it as the map not responding.
  */
 function openDetail(id: EntityId): void {
   if (!props.showDetailsPanel || maxDetailWindows.value === 0) return
@@ -523,26 +506,24 @@ function closeDetail(id: EntityId): void {
   openDetails.value = openDetails.value.filter((candidate) => candidate !== id)
 }
 
-/** Сущности открытых окон. Исчезнувшие из данных отпадают сами. */
+/** Entities of the open windows; ones that leave the data drop out by themselves. */
 const detailWindows = computed(() =>
   openDetails.value
     .map((id) => graph.value.entities.get(id))
     .filter((entity): entity is NetworkEntity<E> => entity !== undefined),
 )
 
-// --- Подсветка выделения и «заражение» -------------------------------------
-
-/** Скрытый узел адресуется на того, кто его прячет: группу или родителя. */
+/** A hidden node resolves to whatever hides it: a group or a collapsed parent. */
 const resolveVisual = (id: EntityId): string => collapseState.collapsed.value.groupOf.get(id) ?? id
 
-/** Слои текущего вида: обходы должны считаться по тем же связям, что видны. */
+/** Layers of the current view: traversals must follow the links on screen. */
 const activeLayers = computed(() => (view.value ? [view.value.id] : undefined))
 
 /**
- * Узлы, остающиеся яркими при выделении: сам выбранный узел и его связи.
+ * Nodes that stay lit while something is selected: the selection and its links.
  *
- * Пока ничего не выбрано, набор пуст и никто не затемняется — режим включается
- * самим фактом выделения.
+ * With nothing selected the set is empty and nothing is dimmed — the mode is
+ * switched on by the act of selecting.
  */
 const selectionFocusIds = computed<ReadonlySet<string>>(() => {
   const depth = props.neighborHighlightDepth ?? 1
@@ -560,7 +541,7 @@ const selectionFocusIds = computed<ReadonlySet<string>>(() => {
 
 const selectionFocusActive = computed(() => selectionFocusIds.value.size > 0)
 
-/** Помеченные сущности плюс всё, что они захватывают. */
+/** The marked entities plus everything they capture. */
 const infectedIds = computed<ReadonlySet<EntityId>>(() => {
   const marked = props.infected
   if (!marked || marked.length === 0) return new Set()
@@ -594,11 +575,11 @@ const infectionSourceIds = computed<ReadonlySet<string>>(() => {
 })
 
 /**
- * Заражённое ребро — то, у которого заражены оба конца.
+ * An edge counts as infected only when both of its ends are.
  *
- * Ребро с одним заражённым концом означает, что распространение туда не дошло
- * (направление или слой не позволили), и красить его нельзя: это ровно та связь,
- * по которой захват **не** прошёл.
+ * One infected end means the spread did not reach across it — direction or layer
+ * did not allow it — so colouring it would mark the very link the capture did
+ * **not** travel along.
  */
 const infectedEdgeIds = computed<ReadonlySet<string>>(() => {
   const edges = new Set<string>()
@@ -612,7 +593,7 @@ const infectedEdgeIds = computed<ReadonlySet<string>>(() => {
   return edges
 })
 
-/** Наведённый маркер в терминах узлов схлопнутого графа. */
+/** The hovered marker's members, mapped onto collapsed-graph node ids. */
 const markerFocusIds = computed<ReadonlySet<string>>(() => {
   if (markerState.hoveredMarker.value === undefined) return new Set()
   const focus = new Set<string>()
@@ -623,10 +604,10 @@ const markerFocusIds = computed<ReadonlySet<string>>(() => {
 const markerFocusActive = computed(() => markerState.hoveredMarker.value !== undefined)
 
 const dimmedNode = (id: string): boolean => {
-  // Порядок приоритетов: наведение на маркер — самое свежее и самое короткое
-  // действие пользователя, поэтому пока курсор на кружке, показываем именно
-  // принадлежность. Затем поиск: пока фильтр активен, он решает, что видно.
-  // Выделение — в последнюю очередь, оно живёт дольше всех.
+  // Priority order. Hovering a dot is the most recent and shortest-lived action,
+  // so while the pointer rests on one, membership is what gets shown. Then
+  // search: while a filter is active it decides what is visible. Selection comes
+  // last, since it outlives both.
   if (markerFocusActive.value) return !markerFocusIds.value.has(id)
   if (filterState.active.value) return !filterState.matchedIds.value.has(id)
   if (selectionFocusActive.value) return !selectionFocusIds.value.has(id)
@@ -648,8 +629,7 @@ const dimmedEdgeIds = computed<ReadonlySet<string>>(() => {
   if (filterState.active.value) {
     const matched = filterState.matchedIds.value
     for (const link of links) {
-      // Связь гаснет только вместе с обоими концами: если хоть один найден,
-      // связь остаётся заметной.
+      // A link dims only when both ends do: one matching end keeps it visible.
       if (!matched.has(link.source) && !matched.has(link.target)) edges.add(link.id)
     }
     return edges
@@ -665,16 +645,14 @@ const dimmedEdgeIds = computed<ReadonlySet<string>>(() => {
   return edges
 })
 
-// --- Контекст для узлов и рёбер -------------------------------------------
-
 const context: MapContext = {
   t: (key, params) => t.value(key, params),
   graph,
   showSublabels,
   simplified,
-  // Точный тип слотов из `defineSlots` сужает `useSlots()` до `NetworkMapSlots`,
-  // а поиск по произвольному имени требует индексируемого объекта. Расширение
-  // до `Record` — единственное место, где это нужно.
+  // Cast: `defineSlots` narrows `useSlots()` to `NetworkMapSlots`, while lookup by
+  // an arbitrary name needs an indexable object. This is the only place that
+  // widening to `Record` is required.
   slot: (name) => (slots as Record<string, Slot | undefined>)[name],
   statusColorOf: (status) => (status ? props.themeConfig?.statusColors?.[status] : undefined),
   iconFor: (kind) => props.themeConfig?.kindIcons?.[kind],
@@ -711,8 +689,6 @@ const context: MapContext = {
 
 provideMapContext(context)
 
-// --- Публичный API ---------------------------------------------------------
-
 const isEmpty = computed(() => nodes.value.every((node) => node.hidden === true))
 
 async function fitView(): Promise<void> {
@@ -746,8 +722,8 @@ defineExpose({
   <div :class="['vnm-root', `vnm-theme-${theme}`]" @keydown="onRootKeydown">
     <div class="vnm-body">
       <div class="vnm-canvas" role="application" :aria-label="t('canvas.label')" :style="canvasStyle">
-        <!-- Тулбар висит над полотном и своего фона не имеет: фон есть только у
-             самих контролов. Так карта не теряет вертикального места. -->
+        <!-- The toolbar floats over the canvas with no background of its own;
+             only the controls carry one, so the map loses no vertical space. -->
         <div v-if="showToolbar" class="vnm-toolbar">
           <div class="vnm-toolbar__group">
             <slot name="toolbar-left" />
@@ -769,7 +745,7 @@ defineExpose({
               />
             </div>
 
-            <!-- Один вид переключать не нужно, и место в тулбаре не бесконечное. -->
+            <!-- Nothing to switch with a single view, and toolbar space is finite. -->
             <ViewSwitcher
               v-if="views && views.length > 1"
               :model-value="viewId"
@@ -815,9 +791,9 @@ defineExpose({
           <slot name="empty">{{ t('canvas.empty') }}</slot>
         </div>
 
-        <!-- Окно само достаёт слоты `details` и `details-header` из контекста
-             карты: пробрасывать их вручную пришлось бы с `v-if` на каждый, чтобы
-             не забить дефолтную реализацию пустым слотом. -->
+        <!-- The window pulls the `details` and `details-header` slots out of the
+             map context itself: forwarding them by hand would need a `v-if` on
+             each, or an empty slot would shadow the default rendering. -->
         <DetailsPanel
           v-for="(entity, index) in detailWindows"
           :key="entity.id"
@@ -827,9 +803,8 @@ defineExpose({
           @close="closeDetail(entity.id)"
         />
 
-        <!-- Свои окна потребителя: поверх окон подробностей. Обёртка не
-             перехватывает указатель, чтобы полотно оставалось перетаскиваемым
-             в промежутках между окнами. -->
+        <!-- Consumer windows, above the details windows. The wrapper does not
+             capture the pointer, so the canvas stays draggable between them. -->
         <div v-if="slots.windows" ref="windowsLayer" class="vnm-windows">
           <slot name="windows" />
         </div>
@@ -839,15 +814,16 @@ defineExpose({
 </template>
 
 <style>
-/* Токены и темы подтягиваются здесь, а не импортом из JS.
+/* Tokens and themes are pulled in here rather than imported from JS.
  *
- * Причина: `import './style.css'` внутри опубликованного ESM-модуля ломает
- * загрузку пакета в чистом Node (SSR без бандлера). А `@import` в CSS Vite
- * инлайнит на сборке, поэтому токены попадают в `dist/style.css` — без него
- * потребитель получил бы компоненты, у которых все var(--vnm-*) не определены.
+ * Reason: an `import './style.css'` inside a published ESM module breaks loading
+ * the package in plain Node (SSR without a bundler). A CSS `@import`, by
+ * contrast, is inlined by Vite at build time, so the tokens end up in
+ * `dist/style.css` — without it a consumer would get components whose every
+ * var(--vnm-*) is undefined.
  *
- * Импорт живёт именно в этом компоненте: он рендерит `.vnm-root`, а токены
- * объявлены ровно на этом классе. */
+ * It lives in this component specifically: it renders `.vnm-root`, and the
+ * tokens are declared on exactly that class. */
 @import '../theme/index.css';
 
 .vnm-root {
@@ -861,16 +837,16 @@ defineExpose({
   font-family: var(--vnm-font);
   font-size: var(--vnm-font-size);
   line-height: var(--vnm-line-height);
-  /* Полосы прокрутки у карты не появляются никогда: всё, что лежит поверх
-     полотна — тулбар, панель фильтров, окно подробностей — позиционировано
-     абсолютно и в момент раскрытия может выйти за границы. Без обрезки это
-     давало бы кратковременный скролл у карты и у страницы. */
+  /* The map never shows scrollbars: everything above the canvas — toolbar,
+     filter panel, details window — is absolutely positioned and may briefly
+     exceed the bounds while opening. Without clipping that would flash a
+     scrollbar on both the map and the page. */
   overflow: hidden;
 }
 
-/* Тулбар лежит поверх полотна и своего фона не имеет: фон только у контролов.
-   `pointer-events` возвращаются самим контролам, чтобы полотно можно было тянуть
-   в промежутках между ними. */
+/* The toolbar sits over the canvas with no background of its own; only the
+   controls have one. `pointer-events` are handed back to the controls so the
+   canvas can still be dragged in the gaps between them. */
 .vnm-toolbar {
   position: absolute;
   z-index: 10;
@@ -899,7 +875,7 @@ defineExpose({
   justify-content: flex-end;
 }
 
-/* Поле поиска — единственный контрол с фиксированной шириной по макету. */
+/* The search field is the only control with a fixed width in the design. */
 .vnm-toolbar__search {
   display: flex;
   width: 350px;
@@ -923,7 +899,7 @@ defineExpose({
   min-width: 0;
   overflow: hidden;
   background-color: var(--vnm-bg);
-  /* Точечная сетка полотна: своим фоном, без пакета @vue-flow/background. */
+  /* Canvas dot grid drawn as a background, avoiding @vue-flow/background. */
   background-image: radial-gradient(var(--vnm-canvas-dot) var(--vnm-canvas-dot-size), transparent 0);
   background-size: var(--vnm-canvas-grid) var(--vnm-canvas-grid);
 }
@@ -938,13 +914,13 @@ defineExpose({
   pointer-events: none;
 }
 
-/* Слой своих окон потребителя. Сам слой прозрачен для указателя, окна внутри —
-   нет: иначе он накрыл бы полотно целиком. */
+/* Layer for the consumer's windows. The layer itself is transparent to the
+   pointer while the windows inside are not, or it would cover the whole canvas. */
 .vnm-windows {
   position: absolute;
   z-index: 40;
-  /* Слой начинается там же, где окна подробностей: свои окна потребителя тоже
-     не должны накрывать кнопки в тулбаре. */
+  /* Starts where the details windows do: consumer windows must not cover the
+     toolbar buttons either. */
   inset: var(--vnm-windows-top) 0 0 0;
   pointer-events: none;
 }
@@ -953,9 +929,7 @@ defineExpose({
   pointer-events: auto;
 }
 
-/* Стили окон живут в MapWindow.vue и DetailsPanel.vue — там же, где разметка. */
-
-/* VueFlow рисует свои узлы в обёртке — снимаем её собственные рамки. */
+/* VueFlow wraps every node in an element of its own; strip its borders. */
 .vnm-canvas .vue-flow__node {
   border: 0;
   background: transparent;

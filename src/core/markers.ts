@@ -4,19 +4,24 @@ import type { ConnectionMarkerOptions, MarkerAnchor, NodeMarkerDef } from '../ty
 import { neighbors } from './traverse'
 
 /**
- * Маркеры принадлежности по связям графа.
+ * Builds membership markers out of the graph's own connections.
  *
- * Для каждого опорного узла получается маркер, который есть у всех, кто с ним
- * связан. Поэтому у рабочей станции оказывается сразу два кружка: один за
- * роутером, к которому она подключена физически, второй за координатором VPN, с
- * которым её соединяет оверлей. Принадлежность к одному не отменяет другой.
+ * Each anchor yields one marker, carried by everything connected to it. That is
+ * why a workstation ends up with two dots: one for the router it is physically
+ * plugged into, one for the VPN coordinator the overlay joins it to. Belonging
+ * to one does not cancel the other.
  *
- * По умолчанию учитываются связи всех слоёв, а не только текущего вида: смысл
- * кружков — показать полную картину принадлежности, не переключая вид.
+ * Membership is computed through `members` — one traversal per anchor per graph
+ * change. A `match` predicate cannot do this job: it runs per entity, so the
+ * traversal would repeat entities × markers times.
  *
- * Состав считается через `members`, то есть один обход на опорный узел за смену
- * графа. Предикат `match` для этого не годится: он вызывается на каждую
- * сущность, и обход пришлось бы повторять сущности × маркеры раз.
+ * @example
+ * ```ts
+ * const markers = connectionMarkers([
+ *   { id: 'router-1', label: 'Office A' },
+ *   { id: 'vpn-coordinator', label: 'VPN' },
+ * ])
+ * ```
  */
 export function connectionMarkers(
   anchors: readonly MarkerAnchor[],
@@ -42,19 +47,20 @@ function membersOf(
   layers: readonly string[] | undefined,
   includeAnchor: boolean,
 ): Set<EntityId> {
-  // `neighbors` возвращает новое множество, поэтому его можно дополнять.
+  // `neighbors` hands back a fresh set, so adding the anchor is safe here.
   const members = neighbors(graph, anchorId, depth, layers)
   if (includeAnchor && graph.entities.has(anchorId)) members.add(anchorId)
   return members
 }
 
 /**
- * Опорные узлы по степени связности: самые «центральные» узлы графа.
+ * Picks the most connected nodes as anchors, skipping isolated ones.
  *
- * Удобно, когда хабы заранее не известны: карта активов приходит из
- * инвентаризации, и какой узел окажется центром, видно только из данных.
- * Порядок детерминирован — при равной степени раньше идёт тот, кто раньше во
- * входных данных.
+ * Useful when the hubs are not known up front: an asset map arrives from
+ * inventory, and which node turns out to be central is visible only from the
+ * data. Deterministic — nodes of equal degree keep their input order.
+ *
+ * @param count - how many anchors to return; `0` or less yields an empty list.
  */
 export function topAnchors<E, L>(
   graph: NetworkGraph<E, L>,
@@ -76,8 +82,8 @@ export function topAnchors<E, L>(
     if (degree > 0) scored.push({ id: entity.id, label: entity.label, degree })
   }
 
-  // Сортировка стабильна в современных движках, поэтому при равной степени
-  // порядок остаётся входным.
+  // Array#sort is stable per spec, which is what keeps equal degrees in input
+  // order.
   scored.sort((a, b) => b.degree - a.degree)
 
   return scored.slice(0, Math.max(0, count)).map(({ id, label }) => ({ id, label }))

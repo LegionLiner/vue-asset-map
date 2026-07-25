@@ -1,9 +1,9 @@
 /*
- * Единая точка входа для стилей пакета.
+ * Single entry point for the package styles.
  *
- * Потребитель подключает её сам: `import 'vue-asset-map/style.css'`. Пакет не
- * импортирует CSS из JS, чтобы модуль оставался загружаемым в чистом Node (SSR
- * без бандлера) и чтобы порядок каскада оставался под контролем приложения.
+ * Imported by the consumer: `import 'vue-asset-map/style.css'`. The package never
+ * imports CSS from JS, so the module stays loadable in plain Node (SSR without a
+ * bundler) and the cascade order remains the application's to control.
  */
 @import './tokens.css';
 @import './light.css';
