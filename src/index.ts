@@ -7,6 +7,27 @@
 
 export * from './core/index'
 
+// Раскладки: `manual` и `radial` встроены, `dagre` — отдельным подпутём
+// `network-map/layout-dagre`, чтобы опциональная зависимость не попадала в
+// основной бандл.
+export {
+  applyPinned,
+  builtinLayoutEngines,
+  isLayoutAborted,
+  LayoutAbortedError,
+  manualLayout,
+  radialLayout,
+  resolveLayoutEngine,
+  throwIfAborted,
+} from './layout/index'
+export type {
+  LayoutEngine,
+  LayoutGraph,
+  LayoutNode,
+  ManualLayoutOptions,
+  RadialLayoutOptions,
+} from './layout/index'
+
 export type {
   LocaleKey,
   LocaleMessages,
