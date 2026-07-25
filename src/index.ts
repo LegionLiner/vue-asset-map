@@ -34,6 +34,8 @@ export { default as NetworkMap } from './components/NetworkMap.vue'
 export { default as BaseNode } from './components/nodes/BaseNode.vue'
 export { default as GroupNode } from './components/nodes/GroupNode.vue'
 export { default as NetworkEdge } from './components/edges/NetworkEdge.vue'
+export { default as MiniMap } from './components/MiniMap.vue'
+export type { MiniMapNode } from './components/MiniMap.vue'
 export { default as DetailsPanel } from './components/panel/DetailsPanel.vue'
 export { default as DetailsSection } from './components/panel/DetailsSection.vue'
 // Контролы работают и вне карты: локаль они берут из контекста, а при его

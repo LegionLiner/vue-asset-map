@@ -1,42 +1,42 @@
-import { computed, ref, watch, type ComputedRef, type Ref } from 'vue'
+import { computed, type ComputedRef, type Ref } from 'vue'
 import type { ResolvedTheme, ThemeMode } from '../types/theme'
 
 /**
  * Сводит `theme` к `light` или `dark`.
  *
- * `auto` читает системную настройку **один раз** при инициализации и больше за
- * ней не следит: в продукте есть явный переключатель, и он обязан побеждать
- * систему. Если бы `auto` подписывался на `prefers-color-scheme`, смена системной
- * темы перебила бы выбор пользователя.
+ * `auto` читает системную настройку **один раз** и дальше за ней не следит: в
+ * продукте есть явный переключатель, и он обязан побеждать систему. Если бы
+ * `auto` подписывался на `prefers-color-scheme`, смена системной темы перебила бы
+ * выбор пользователя.
+ *
+ * Чтение ленивое и запоминается: у карты с `theme: 'light'` обращения к
+ * `matchMedia` не будет вовсе, а возврат к `auto` отдаст то же значение, что было
+ * прочитано при инициализации — никаких скрытых перечитываний.
  *
  * Обращение к `window` спрятано внутрь функции и защищено проверкой: на верхнем
- * уровне модуля его быть не может — пакет должен импортироваться в SSR.
+ * уровне модуля его быть не может, пакет должен импортироваться в SSR.
  */
 export function resolveTheme(
   mode: Ref<ThemeMode | undefined> | ComputedRef<ThemeMode | undefined>,
 ): ComputedRef<ResolvedTheme> {
-  const systemTheme = ref<ResolvedTheme>('light')
-  let systemRead = false
+  let cached: ResolvedTheme | undefined
 
-  const readSystemTheme = (): ResolvedTheme => {
-    if (systemRead) return systemTheme.value
-    systemRead = true
+  const systemTheme = (): ResolvedTheme => {
+    if (cached !== undefined) return cached
 
-    if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
-      systemTheme.value = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-    }
-    return systemTheme.value
+    cached =
+      typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+        ? window.matchMedia('(prefers-color-scheme: dark)').matches
+          ? 'dark'
+          : 'light'
+        : // SSR или окружение без matchMedia: светлая тема как нейтральный дефолт.
+          'light'
+
+    return cached
   }
-
-  // Явно заданная тема сбрасывает «прочитано»: если потребитель вернётся к
-  // `auto`, систему надо перечитать заново, а не отдать значение годичной давности.
-  watch(mode, (next) => {
-    if (next !== 'auto') systemRead = false
-  })
 
   return computed<ResolvedTheme>(() => {
     const value = mode.value ?? 'light'
-    if (value === 'auto') return readSystemTheme()
-    return value
+    return value === 'auto' ? systemTheme() : value
   })
 }

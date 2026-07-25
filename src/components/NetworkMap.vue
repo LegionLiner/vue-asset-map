@@ -25,6 +25,7 @@ import DetailsPanel from './panel/DetailsPanel.vue'
 import SearchInput from './controls/SearchInput.vue'
 import ViewSwitcher from './controls/ViewSwitcher.vue'
 import FilterMenu from './controls/FilterMenu.vue'
+import MiniMap, { type MiniMapNode } from './MiniMap.vue'
 import { buildEdgeTypes, buildNodeTypes } from '../registry/nodeRegistry'
 import { createTranslator, resolveLocale } from '../locale/index'
 import { findPaths } from '../core/traverse'
@@ -165,7 +166,33 @@ const { nodes, edges } = useFlowElements({
 
 // --- VueFlow ---------------------------------------------------------------
 
-const { fitView: flowFitView, setViewport, setCenter, viewport: flowViewport } = useVueFlow()
+const {
+  fitView: flowFitView,
+  setViewport,
+  setCenter,
+  viewport: flowViewport,
+  dimensions: canvasSize,
+} = useVueFlow()
+
+/** Узлы для обзорной карты: только видимые, с уже вычисленными позициями. */
+const minimapNodes = computed<MiniMapNode[]>(() =>
+  nodes.value
+    .filter((node) => node.hidden !== true)
+    .map((node) => ({
+      id: node.id,
+      x: node.position.x,
+      y: node.position.y,
+      width: NODE_SIZE.width,
+      height: NODE_SIZE.height,
+      matched: filterState.matchedIds.value.has(node.id),
+      selected: selectionState.isSelected(node.id),
+    })),
+)
+
+/** Клик по обзорной карте: центрируем полотно на выбранной точке. */
+function focusPoint(point: XY): void {
+  void setCenter(point.x, point.y, { zoom: flowViewport.value.zoom, duration: 200 })
+}
 
 const simplified = computed(() => flowViewport.value.zoom < props.lodThreshold)
 
@@ -478,6 +505,14 @@ defineExpose({
           :default-viewport="viewport"
           @node-drag-stop="onNodeDragStop"
           @pane-click="onPaneClick"
+        />
+
+        <MiniMap
+          v-if="showMinimap"
+          :nodes="minimapNodes"
+          :viewport="{ x: flowViewport.x, y: flowViewport.y, zoom: flowViewport.zoom }"
+          :canvas="{ width: canvasSize.width, height: canvasSize.height }"
+          @move="focusPoint"
         />
 
         <div v-if="loading" class="vnm-overlay" role="status">
