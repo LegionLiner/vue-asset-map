@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, useTemplateRef } from 'vue'
-import { NetworkMap, type FilterState, type NetworkMapExposed, type ThemeMode } from 'network-map'
+import { MapWindow, NetworkMap, type FilterState, type NetworkMapExposed, type ThemeMode } from 'network-map'
 import {
   entities as fixtureEntities,
   filterGroups,
@@ -11,7 +11,16 @@ import {
   type DemoEntity,
   type DemoLink,
 } from '@fixtures/infra'
-import { CloudIcon, ContainerIcon, RouterIcon, ServerIcon, VpsIcon, WorkstationIcon } from './icons'
+import {
+  CloudIcon,
+  ContainerIcon,
+  IconFastRewind,
+  IconStepRewind,
+  RouterIcon,
+  ServerIcon,
+  VpsIcon,
+  WorkstationIcon,
+} from './icons'
 
 /**
  * Демо реального кейса: два вида одной инфраструктуры, встроенные контролы,
@@ -26,6 +35,19 @@ const selection = ref<string[]>([])
 const expanded = ref(new Set<string>())
 const collapsedNodes = ref(new Set<string>())
 const filters = ref<FilterState>({ query: '', kinds: [], statuses: [] })
+/** Открытые окна подробностей: их может быть несколько сразу. */
+const openDetails = ref<string[]>([])
+
+/**
+ * Режим «заражения».
+ *
+ * Помечаем координатор VPN: карта сама посчитает, что он захватывает. Глубина
+ * ограничена двумя шагами — иначе в демо краснеет весь связный компонент и
+ * смотреть не на что.
+ */
+const infectedSource = 'vps-tailscale'
+const infectionOn = ref(false)
+const infected = computed(() => (infectionOn.value ? [infectedSource] : []))
 /** Раскрытые списки фильтров: библиотека отдаёт их наружу, храним у себя. */
 const openFilterGroups = ref<string[] | undefined>(undefined)
 
@@ -150,6 +172,18 @@ function metaRows(meta: AssetMeta | undefined): { key: string; label: string; va
 function neighborsOf(id: string): DemoLink[] {
   return links.value.filter((link) => link.source === id || link.target === id)
 }
+
+// --- Демо-окно «История» ---------------------------------------------------
+
+const historyStep = ref('сейчас')
+
+/** Кнопки плеера. Зеркальные варианты — тот же путь, развёрнутый через CSS. */
+const historyControls = [
+  { id: 'fast-back', icon: IconFastRewind, label: 'В начало', step: '−1 час', mirrored: false },
+  { id: 'back', icon: IconStepRewind, label: 'Шаг назад', step: '−5 минут', mirrored: false },
+  { id: 'forward', icon: IconStepRewind, label: 'Шаг вперёд', step: '+5 минут', mirrored: true },
+  { id: 'fast-forward', icon: IconFastRewind, label: 'В конец', step: 'сейчас', mirrored: true },
+]
 </script>
 
 <template>
@@ -159,6 +193,14 @@ function neighborsOf(id: string): DemoLink[] {
 
       <button type="button" @click="theme = theme === 'dark' ? 'light' : 'dark'">
         Тема: {{ theme === 'dark' ? 'тёмная' : 'светлая' }}
+      </button>
+
+      <button
+        type="button"
+        :class="{ 'pg-bar__button--on': infectionOn }"
+        @click="infectionOn = !infectionOn"
+      >
+        Заражение: {{ infectionOn ? 'вкл' : 'выкл' }}
       </button>
 
       <button type="button" :disabled="!canTracePath" @click="tracePath">Показать путь</button>
@@ -181,6 +223,7 @@ function neighborsOf(id: string): DemoLink[] {
       v-model:collapsed-nodes="collapsedNodes"
       v-model:filters="filters"
       v-model:open-filter-groups="openFilterGroups"
+      v-model:open-details="openDetails"
       class="pg-map"
       :entities="entities"
       :links="links"
@@ -188,11 +231,41 @@ function neighborsOf(id: string): DemoLink[] {
       :theme="theme"
       :theme-config="{ statusColors, kindIcons }"
       :filter-options="{ groups: filterGroups }"
+      :max-details-windows="3"
+      :infected="infected"
+      :infection-options="{ maxDepth: 2 }"
       show-minimap
     >
       <!-- Правый слот шапки карты: место для действий приложения. -->
       <template #toolbar-right>
         <button type="button" class="pg-add" @click="openAdd">Добавить</button>
+      </template>
+
+      <!--
+        Своё окно поверх окон подробностей. Собрано из <MapWindow>: шапка,
+        перетаскивание и токены темы приходят из библиотеки, содержимое — наше.
+        `header-only` — окно без тела, `closable: false` — закрыть его нельзя.
+      -->
+      <template #windows>
+        <MapWindow class="pg-history" header-only drag-handle :closable="false" :collapsible="false">
+          <template #header>
+            <span class="pg-history__controls">
+              <button
+                v-for="control in historyControls"
+                :key="control.id"
+                type="button"
+                class="pg-history__button"
+                :class="{ 'pg-history__button--mirrored': control.mirrored }"
+                :aria-label="control.label"
+                :title="control.label"
+                @click="historyStep = control.step"
+              >
+                <component :is="control.icon" />
+              </button>
+            </span>
+            <span class="pg-history__label">{{ historyStep }}</span>
+          </template>
+        </MapWindow>
       </template>
 
       <!-- Панель подробностей: библиотека даёт окно, шапку, кнопки и табы;

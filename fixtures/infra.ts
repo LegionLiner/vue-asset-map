@@ -68,7 +68,7 @@ export const entities: DemoEntity[] = [
   entity('vps-tailscale', KIND_VPS, 'Tailscale VPS', {
     status: 'online',
     sublabels: ['46.8.158.127', '100.64.0.2'],
-    badges: [{ id: 'vpn', color: 'var(--vnm-accent)', tooltip: 'Координатор VPN' }],
+    badges: [{ id: 'vpn' }],
     meta: {
       subnet: 'vpn',
       assetType: 'vm',

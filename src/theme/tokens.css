@@ -38,6 +38,12 @@
   --vnm-edge-width: 1px;
   --vnm-edge-width-active: 2px;
 
+  /* Режим «заражения»: помеченные сущности и всё, что они захватывают. */
+  --vnm-infected-bg: #f9eeee;
+  --vnm-infected-border: #cb5555;
+  --vnm-infected-fg: #cb5555;
+  --vnm-infected-edge: #cb5555;
+
   /* Состояния узлов. Ключи — значения `entity.status` у потребителя. */
   --vnm-status-online: #5fab6b;
   --vnm-status-offline: #d05353;
@@ -51,7 +57,7 @@
   /* Блок подписей — плашка фиксированного размера: при смене вида подписи
      появляются и исчезают, и «дышащая» высота дёргала бы всю раскладку. */
   --vnm-node-label-width: 127.5px;
-  --vnm-node-label-height: 42px;
+  --vnm-node-label-height: auto;
   --vnm-node-label-padding: 3px 4.5px;
   --vnm-node-label-radius: 4.5px;
   /* 16 + 13 + 13 = 42: имя и два адреса ровно укладываются в высоту плашки. */

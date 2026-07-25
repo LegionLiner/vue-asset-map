@@ -14,6 +14,16 @@ export interface NetworkMapLayoutSpec {
   options?: unknown
 }
 
+/** Как считать распространение «заражения» от помеченных сущностей. */
+export interface InfectionOptions {
+  /** Дефолт `downstream`: по направлению связей. */
+  direction?: 'downstream' | 'upstream' | 'both'
+  /** Ограничить распространение числом шагов. Дефолт — без ограничения. */
+  maxDepth?: number
+  /** Считать только по этим слоям связей. Дефолт — по слоям текущего вида. */
+  layers?: string[]
+}
+
 export interface Viewport extends XY {
   zoom: number
 }
@@ -39,6 +49,30 @@ export interface NetworkMapProps<E = unknown, L = unknown> {
   showToolbar?: boolean
   showDetailsPanel?: boolean
   showMinimap?: boolean
+
+  /**
+   * Сколько окон подробностей можно держать открытыми одновременно. Дефолт 1.
+   *
+   * При достижении лимита самое старое окно закрывается. `0` полностью
+   * отключает окна, не убирая остальной интерфейс.
+   */
+  maxDetailsWindows?: number
+
+  /**
+   * На сколько шагов подсвечивать связи выделенного узла. Дефолт 1.
+   *
+   * Всё, что дальше, затемняется. `0` выключает подсветку по выделению.
+   */
+  neighborHighlightDepth?: number
+
+  /**
+   * Помеченные «заражёнными» сущности.
+   *
+   * Карта показывает не только их, но и всё, что они захватывают: набор считается
+   * через `blastRadius`, поэтому распространение видно целиком.
+   */
+  infected?: EntityId[]
+  infectionOptions?: InfectionOptions
 
   /** Рендерить только видимые элементы полотна. Дефолт true. */
   onlyRenderVisibleElements?: boolean
@@ -125,6 +159,13 @@ export type NetworkMapSlots<E = unknown, L = unknown> = {
   'toolbar-right'?(props: EmptySlotProps): unknown
   empty?(props: EmptySlotProps): unknown
   loading?(props: EmptySlotProps): unknown
+  /**
+   * Свои плавающие окна поверх полотна.
+   *
+   * Рендерится выше окон подробностей. Собирайте окна из экспортируемого
+   * `<MapWindow>` — тогда они получат ту же шапку, перетаскивание и токены темы.
+   */
+  windows?(props: EmptySlotProps): unknown
   details?(props: DetailsSlotProps<E>): unknown
   'details-header'?(props: DetailsHeaderSlotProps<E>): unknown
   'edge-label'?(props: EdgeLabelSlotProps<L>): unknown

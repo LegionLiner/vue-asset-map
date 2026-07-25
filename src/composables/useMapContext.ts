@@ -49,6 +49,13 @@ export interface MapContext {
   isDimmed: (id: string) => boolean
   isHighlighted: (id: string) => boolean
   isEdgeHighlighted: (edgeId: string) => boolean
+  isEdgeDimmed: (edgeId: string) => boolean
+
+  /** Узел попал в зону распространения «заражения». */
+  isInfected: (id: string) => boolean
+  /** Узел помечен заражённым руками, а не захвачен распространением. */
+  isInfectionSource: (id: string) => boolean
+  isEdgeInfected: (edgeId: string) => boolean
 
   onNodeClick: (id: string, event: MouseEvent) => void
   onNodeDoubleClick: (id: string, event: MouseEvent) => void

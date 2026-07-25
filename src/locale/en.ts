@@ -33,6 +33,11 @@ export const en: LocaleMessages = {
   'details.collapseWindow': 'Collapse window',
   'details.expandWindow': 'Expand window',
 
+  'window.close': 'Close window',
+  'window.collapse': 'Collapse window',
+  'window.expand': 'Expand window',
+  'window.drag': 'Drag window',
+
   'group.label': '{bucket}',
   'group.expand': 'Expand group',
   'group.collapse': 'Collapse group',

@@ -61,6 +61,8 @@ const classes = computed(() => [
     'vnm-node--dimmed': map.isDimmed(props.id),
     'vnm-node--highlighted': map.isHighlighted(props.id),
     'vnm-node--simplified': map.simplified.value,
+    'vnm-node--infected': map.isInfected(props.id),
+    'vnm-node--infection-source': map.isInfectionSource(props.id),
   },
 ])
 
@@ -241,6 +243,24 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
 
 .vnm-node--dimmed {
   opacity: var(--vnm-dimmed-opacity);
+}
+
+/* Заражение: заливка, обводка и иконка круга плюс плашка подписей. Ставится
+   после состояний выделения намеренно — захват важнее того, что узел выбран. */
+.vnm-node--infected .vnm-node__circle {
+  border-color: var(--vnm-infected-border);
+  background: var(--vnm-infected-bg);
+  color: var(--vnm-infected-fg);
+}
+
+.vnm-node--infected .vnm-node__info {
+  border-color: var(--vnm-infected-border);
+  background: var(--vnm-infected-bg);
+}
+
+/* Помеченный руками источник заражения выделен толще, чем захваченные им. */
+.vnm-node--infection-source .vnm-node__circle {
+  border-width: 2px;
 }
 
 .vnm-node__circle {

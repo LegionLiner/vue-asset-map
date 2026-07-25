@@ -35,6 +35,11 @@ export interface LocaleMessages {
   'details.collapseWindow': string
   'details.expandWindow': string
 
+  'window.close': string
+  'window.collapse': string
+  'window.expand': string
+  'window.drag': string
+
   'group.label': string
   'group.expand': string
   'group.collapse': string

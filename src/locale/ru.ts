@@ -33,6 +33,11 @@ export const ru: LocaleMessages = {
   'details.collapseWindow': 'Свернуть окно',
   'details.expandWindow': 'Развернуть окно',
 
+  'window.close': 'Закрыть окно',
+  'window.collapse': 'Свернуть окно',
+  'window.expand': 'Развернуть окно',
+  'window.drag': 'Перетащить окно',
+
   'group.label': '{bucket}',
   'group.expand': 'Раскрыть группу',
   'group.collapse': 'Свернуть группу',

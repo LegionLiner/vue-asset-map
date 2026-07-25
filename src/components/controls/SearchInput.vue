@@ -99,11 +99,6 @@ const summary = computed(() => {
   outline: none;
 }
 
-.vnm-search__input:focus-visible {
-  outline: 2px solid var(--vnm-focus-ring);
-  outline-offset: 2px;
-}
-
 .vnm-search__icon {
   flex-shrink: 0;
   width: 20px;

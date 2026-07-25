@@ -28,7 +28,7 @@ import FilterMenu from './controls/FilterMenu.vue'
 import MiniMap, { type MiniMapNode } from './MiniMap.vue'
 import { buildEdgeTypes, buildNodeTypes } from '../registry/nodeRegistry'
 import { createTranslator, resolveLocale } from '../locale/index'
-import { findPaths } from '../core/traverse'
+import { blastRadius, findPaths, neighbors } from '../core/traverse'
 import { resolveTheme } from '../composables/useTheme'
 
 const props = withDefaults(defineProps<NetworkMapProps<E, L>>(), {
@@ -75,6 +75,8 @@ const filters = defineModel<FilterState>('filters', {
   default: (): FilterState => ({ query: '', kinds: [], statuses: [] }),
 })
 const viewport = defineModel<Viewport>('viewport', { default: () => ({ x: 0, y: 0, zoom: 1 }) })
+/** Сущности, для которых открыты окна подробностей. Последняя — сверху. */
+const openDetails = defineModel<EntityId[]>('openDetails', { default: () => [] })
 /** Узлы, чьи потомки скрыты кнопкой на самом узле. */
 const collapsedNodes = defineModel<Set<EntityId>>('collapsedNodes', {
   default: () => new Set<EntityId>(),
@@ -314,6 +316,8 @@ function payloadFor(id: string, event: MouseEvent): NodeEventPayload {
 
 function onNodeClick(id: string, event: MouseEvent): void {
   selectionState.toggle(id, event.ctrlKey || event.metaKey)
+  // Групповому узлу окно подробностей не полагается: у группы нет сущности.
+  if (graph.value.entities.has(id)) openDetail(id)
   emit('node-click', payloadFor(id, event))
 }
 
@@ -408,15 +412,14 @@ function onArrowNavigate(id: string, direction: ArrowDirection): void {
 
 function onRootKeydown(event: KeyboardEvent): void {
   if (event.key !== 'Escape') return
-  // Escape закрывает панель, а не сбрасывает выделение: панель — то, что
-  // перекрывает карту, и убрать её пользователь хочет в первую очередь.
-  if (panelClosed.value) return
-  closePanel()
+  // Escape закрывает верхнее окно, а не сбрасывает выделение: окна — то, что
+  // перекрывает карту, и убрать их пользователь хочет в первую очередь. По
+  // одному за нажатие: закрыть всё разом слишком грубо.
+  const topmost = openDetails.value.at(-1)
+  if (topmost !== undefined) closeDetail(topmost)
 }
 
-// --- Панель подробностей ---------------------------------------------------
-
-const panelClosed = ref(false)
+// --- Окна подробностей -----------------------------------------------------
 
 /**
  * Раскрытые списки в панели фильтров.
@@ -429,23 +432,147 @@ const openFilterGroups = defineModel<string[] | undefined>('openFilterGroups', {
   default: undefined,
 })
 
-function closePanel(): void {
-  panelClosed.value = true
+const maxDetailWindows = computed(() => Math.max(0, props.maxDetailsWindows ?? 1))
+
+/**
+ * Открывает окно для сущности.
+ *
+ * Уже открытое окно не дублируется, а поднимается наверх. При достижении лимита
+ * закрывается самое старое: молча игнорировать клик хуже — пользователь решит,
+ * что карта не отвечает.
+ */
+function openDetail(id: EntityId): void {
+  if (!props.showDetailsPanel || maxDetailWindows.value === 0) return
+
+  const rest = openDetails.value.filter((candidate) => candidate !== id)
+  const next = [...rest, id]
+  openDetails.value =
+    next.length > maxDetailWindows.value ? next.slice(next.length - maxDetailWindows.value) : next
 }
 
-watch(
-  () => selectionState.primaryId.value,
-  (id) => {
-    // Новый выбор всегда открывает панель заново: закрытие относится к
-    // конкретному узлу, а не к режиму работы карты.
-    if (id !== undefined) panelClosed.value = false
-  },
+function closeDetail(id: EntityId): void {
+  if (!openDetails.value.includes(id)) return
+  openDetails.value = openDetails.value.filter((candidate) => candidate !== id)
+}
+
+/** Сущности открытых окон. Исчезнувшие из данных отпадают сами. */
+const detailWindows = computed(() =>
+  openDetails.value
+    .map((id) => graph.value.entities.get(id))
+    .filter((entity): entity is NetworkEntity<E> => entity !== undefined),
 )
 
-const detailsEntity = computed(() => {
-  const id = selectionState.primaryId.value
-  if (id === undefined) return undefined
-  return graph.value.entities.get(id)
+// --- Подсветка выделения и «заражение» -------------------------------------
+
+/** Скрытый узел адресуется на того, кто его прячет: группу или родителя. */
+const resolveVisual = (id: EntityId): string => collapseState.collapsed.value.groupOf.get(id) ?? id
+
+/** Слои текущего вида: обходы должны считаться по тем же связям, что видны. */
+const activeLayers = computed(() => (view.value ? [view.value.id] : undefined))
+
+/**
+ * Узлы, остающиеся яркими при выделении: сам выбранный узел и его связи.
+ *
+ * Пока ничего не выбрано, набор пуст и никто не затемняется — режим включается
+ * самим фактом выделения.
+ */
+const selectionFocusIds = computed<ReadonlySet<string>>(() => {
+  const depth = props.neighborHighlightDepth ?? 1
+  if (depth <= 0 || selection.value.length === 0) return new Set()
+
+  const focus = new Set<string>()
+  for (const id of selection.value) {
+    focus.add(resolveVisual(id))
+    for (const neighbor of neighbors(graph.value, id, depth, activeLayers.value)) {
+      focus.add(resolveVisual(neighbor))
+    }
+  }
+  return focus
+})
+
+const selectionFocusActive = computed(() => selectionFocusIds.value.size > 0)
+
+/** Помеченные сущности плюс всё, что они захватывают. */
+const infectedIds = computed<ReadonlySet<EntityId>>(() => {
+  const marked = props.infected
+  if (!marked || marked.length === 0) return new Set()
+
+  const options = props.infectionOptions
+  const layers = options?.layers ?? activeLayers.value
+  const spread = new Set<EntityId>()
+
+  for (const id of marked) {
+    for (const affected of blastRadius(graph.value, id, {
+      direction: options?.direction ?? 'downstream',
+      ...(options?.maxDepth !== undefined ? { maxDepth: options.maxDepth } : {}),
+      ...(layers ? { layers } : {}),
+    })) {
+      spread.add(affected)
+    }
+  }
+  return spread
+})
+
+const infectedVisualIds = computed<ReadonlySet<string>>(() => {
+  const visual = new Set<string>()
+  for (const id of infectedIds.value) visual.add(resolveVisual(id))
+  return visual
+})
+
+const infectionSourceIds = computed<ReadonlySet<string>>(() => {
+  const sources = new Set<string>()
+  for (const id of props.infected ?? []) sources.add(resolveVisual(id))
+  return sources
+})
+
+/**
+ * Заражённое ребро — то, у которого заражены оба конца.
+ *
+ * Ребро с одним заражённым концом означает, что распространение туда не дошло
+ * (направление или слой не позволили), и красить его нельзя: это ровно та связь,
+ * по которой захват **не** прошёл.
+ */
+const infectedEdgeIds = computed<ReadonlySet<string>>(() => {
+  const edges = new Set<string>()
+  if (infectedVisualIds.value.size === 0) return edges
+
+  for (const link of collapseState.collapsed.value.links) {
+    if (infectedVisualIds.value.has(link.source) && infectedVisualIds.value.has(link.target)) {
+      edges.add(link.id)
+    }
+  }
+  return edges
+})
+
+const dimmedNode = (id: string): boolean => {
+  // Поиск главнее выделения: пока фильтр активен, он и решает, что видно.
+  if (filterState.active.value) return !filterState.matchedIds.value.has(id)
+  if (selectionFocusActive.value) return !selectionFocusIds.value.has(id)
+  return false
+}
+
+const dimmedEdgeIds = computed<ReadonlySet<string>>(() => {
+  const edges = new Set<string>()
+  const links = collapseState.collapsed.value.links
+
+  if (filterState.active.value) {
+    const matched = filterState.matchedIds.value
+    for (const link of links) {
+      // Связь гаснет только вместе с обоими концами: если хоть один найден,
+      // связь остаётся заметной.
+      if (!matched.has(link.source) && !matched.has(link.target)) edges.add(link.id)
+    }
+    return edges
+  }
+
+  if (selectionFocusActive.value) {
+    for (const link of links) {
+      const inside = selectionFocusIds.value.has(link.source) && selectionFocusIds.value.has(link.target)
+      if (!inside) edges.add(link.id)
+    }
+  }
+
+  return edges
 })
 
 // --- Контекст для узлов и рёбер -------------------------------------------
@@ -469,9 +596,13 @@ const context: MapContext = {
   onToggleSubtree,
   isSelected: (id) => selectionState.isSelected(id),
   isMatched: (id) => filterState.matchedIds.value.has(id),
-  isDimmed: (id) => filterState.active.value && !filterState.matchedIds.value.has(id),
+  isDimmed: dimmedNode,
   isHighlighted: (id) => highlightedNodeIds.value.has(id),
   isEdgeHighlighted: (edgeId) => highlightedEdgeIds.value.has(edgeId),
+  isEdgeDimmed: (edgeId) => dimmedEdgeIds.value.has(edgeId),
+  isInfected: (id) => infectedVisualIds.value.has(id),
+  isInfectionSource: (id) => infectionSourceIds.value.has(id),
+  isEdgeInfected: (edgeId) => infectedEdgeIds.value.has(edgeId),
   onNodeClick,
   onNodeDoubleClick,
   onNodeContextMenu,
@@ -594,10 +725,20 @@ defineExpose({
              карты: пробрасывать их вручную пришлось бы с `v-if` на каждый, чтобы
              не забить дефолтную реализацию пустым слотом. -->
         <DetailsPanel
-          v-if="showDetailsPanel && detailsEntity && !panelClosed"
-          :entity="detailsEntity"
-          @close="closePanel"
+          v-for="(entity, index) in detailWindows"
+          :key="entity.id"
+          :entity="entity"
+          :offset="{ x: index * -24, y: index * 24 }"
+          :style="{ zIndex: 20 + index }"
+          @close="closeDetail(entity.id)"
         />
+
+        <!-- Свои окна потребителя: поверх окон подробностей. Обёртка не
+             перехватывает указатель, чтобы полотно оставалось перетаскиваемым
+             в промежутках между окнами. -->
+        <div v-if="slots.windows" class="vnm-windows">
+          <slot name="windows" />
+        </div>
       </div>
     </div>
   </div>
@@ -703,7 +844,20 @@ defineExpose({
   pointer-events: none;
 }
 
-/* Стили панели живут в DetailsPanel.vue — там же, где её разметка. */
+/* Слой своих окон потребителя. Сам слой прозрачен для указателя, окна внутри —
+   нет: иначе он накрыл бы полотно целиком. */
+.vnm-windows {
+  position: absolute;
+  z-index: 40;
+  inset: 0;
+  pointer-events: none;
+}
+
+.vnm-windows > * {
+  pointer-events: auto;
+}
+
+/* Стили окон живут в MapWindow.vue и DetailsPanel.vue — там же, где разметка. */
 
 /* VueFlow рисует свои узлы в обёртке — снимаем её собственные рамки. */
 .vnm-canvas .vue-flow__node {

@@ -35,6 +35,8 @@ export { default as BaseNode } from './components/nodes/BaseNode.vue'
 export { default as GroupNode } from './components/nodes/GroupNode.vue'
 export { default as NetworkEdge } from './components/edges/NetworkEdge.vue'
 export { default as MiniMap } from './components/MiniMap.vue'
+// Каркас плавающего окна: из него собираются свои окна для слота `#windows`.
+export { default as MapWindow } from './components/MapWindow.vue'
 export type { MiniMapNode } from './components/MiniMap.vue'
 export { default as DetailsPanel } from './components/panel/DetailsPanel.vue'
 export { default as DetailsSection } from './components/panel/DetailsSection.vue'
@@ -84,6 +86,7 @@ export type {
   EdgeLabelSlotProps,
   EmptySlotProps,
   FocusOptions,
+  InfectionOptions,
   NetworkMapExposed,
   NetworkMapLayoutSpec,
   NetworkMapModels,

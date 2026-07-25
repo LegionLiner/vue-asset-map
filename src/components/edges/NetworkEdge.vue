@@ -49,13 +49,10 @@ const count = computed(() => props.data?.count ?? 1)
 
 const highlighted = computed(() => map.isEdgeHighlighted(props.id))
 
-const dimmed = computed(() => {
-  const current = link.value
-  if (!current) return false
-  // Ребро гаснет вместе с обоими своими концами: если хоть один конец в
-  // результатах поиска, связь остаётся заметной.
-  return map.isDimmed(current.source) && map.isDimmed(current.target)
-})
+// Гашение ребра считает карта: правило зависит от режима (поиск или выделение),
+// а ребро о режимах знать не должно.
+const dimmed = computed(() => map.isEdgeDimmed(props.id))
+const infected = computed(() => map.isEdgeInfected(props.id))
 
 const classes = computed(() => [
   'vnm-edge',
@@ -64,6 +61,7 @@ const classes = computed(() => [
     'vnm-edge--highlighted': highlighted.value,
     'vnm-edge--dimmed': dimmed.value,
     'vnm-edge--aggregated': aggregated.value,
+    'vnm-edge--infected': infected.value,
   },
 ])
 
@@ -126,6 +124,15 @@ const labelText = computed(() => {
 .vnm-edge--dimmed {
   stroke: var(--vnm-edge-dimmed);
   opacity: var(--vnm-dimmed-opacity);
+}
+
+/* Заражённая связь важнее и гашения, и подсветки пути: по ней прошёл захват. */
+.vnm-edge--infected,
+.vnm-edge--infected.vnm-edge--dimmed,
+.vnm-edge--infected.vnm-edge--highlighted {
+  stroke: var(--vnm-infected-edge);
+  stroke-width: var(--vnm-edge-width-active);
+  opacity: 1;
 }
 
 .vnm-edge__label {

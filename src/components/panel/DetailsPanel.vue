@@ -1,32 +1,28 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import DetailsSection from './DetailsSection.vue'
+import MapWindow from '../MapWindow.vue'
 import { useMapContext } from '../../composables/useMapContext'
-import { useDraggableWindow } from '../../composables/useDraggableWindow'
 import { incidentLinks, otherEnd } from '../../core/graph'
-import { IconClose, IconCollapseWindow } from '../icons/index'
-import type { NetworkEntity } from '../../types/entity'
+import type { NetworkEntity, XY } from '../../types/entity'
 
 /**
- * Подробности о сущности — плавающее перетаскиваемое окно.
+ * Подробности о сущности в плавающем окне.
  *
- * Окно, а не приклеенный сайдбар: карту читают по путям между узлами, и панель,
- * съедающая правую треть полотна, обрезает как раз то, что рассматривают. Окно
- * можно отодвинуть или сжать до шапки, не теряя выбранный узел.
- *
- * Пакет даёт только каркас: шапку с кнопками, имя, тип и табы. Содержимое — за
- * слотом `#details`; встроенный плоский список полей из `meta` существует как
- * fallback для демо, а не как «правильный» вид панели: пакет не знает ни имён
- * полей потребителя, ни того, какие из них важны.
+ * Каркас окна — `<MapWindow>`; здесь только содержимое. Пакет наполняет его
+ * по минимуму: имя, тип, табы и плоский список полей `meta` как fallback для
+ * демо. Настоящее содержимое приходит из слота `#details`: пакет не знает ни
+ * имён полей потребителя, ни того, какие из них важны.
  */
 const props = defineProps<{
   entity: NetworkEntity<unknown>
+  /** Сдвиг окна, чтобы несколько окон не ложились ровно друг на друга. */
+  offset?: XY
 }>()
 
 const emit = defineEmits<{ close: [] }>()
 
 const map = useMapContext()
-const { style, dragging, onPointerDown, reset } = useDraggableWindow()
 
 type TabId = 'overview' | 'links'
 
@@ -36,16 +32,13 @@ const tabs: readonly { id: TabId; labelKey: 'details.tab.overview' | 'details.ta
 ]
 
 const activeTab = ref<TabId>('overview')
-const collapsed = ref(false)
 
-// Смена узла возвращает окно в исходное состояние: таб «Связи» и сдвиг
-// относятся к предыдущему узлу, к новому они отношения не имеют.
+// Смена узла возвращает панель на первый таб: «Связи» предыдущего узла к новому
+// отношения не имеют.
 watch(
   () => props.entity.id,
   () => {
     activeTab.value = 'overview'
-    collapsed.value = false
-    reset()
   },
 )
 
@@ -77,217 +70,107 @@ const metaRows = computed(() => {
 
 const detailsSlot = computed(() => map.slot('details'))
 const headerSlot = computed(() => map.slot('details-header'))
-
-const collapseLabel = computed(() =>
-  collapsed.value ? map.t('details.expandWindow') : map.t('details.collapseWindow'),
-)
 </script>
 
 <template>
-  <aside
-    class="vnm-window"
-    :class="{ 'vnm-window--collapsed': collapsed, 'vnm-window--dragging': dragging }"
-    :style="style"
-    :aria-label="map.t('details.title')"
+  <MapWindow
+    class="vnm-details"
+    :offset="offset"
+    :title="entity.label"
+    :close-label="map.t('details.close')"
+    :collapse-label="map.t('details.collapseWindow')"
+    :expand-label="map.t('details.expandWindow')"
+    @close="emit('close')"
   >
-    <header class="vnm-window__header" @pointerdown="onPointerDown">
-      <button
-        type="button"
-        class="vnm-window__button"
-        :aria-label="map.t('details.close')"
-        @click="emit('close')"
-      >
-        <IconClose />
-      </button>
-
-      <span class="vnm-window__caption">{{ entity.label }}</span>
-
-      <button
-        type="button"
-        class="vnm-window__button"
-        :aria-label="collapseLabel"
-        :aria-expanded="!collapsed"
-        @click="collapsed = !collapsed"
-      >
-        <IconCollapseWindow :class="{ 'vnm-window__icon--flipped': collapsed }" />
-      </button>
-    </header>
-
-    <div v-if="!collapsed" class="vnm-window__body">
-      <div class="vnm-window__heading">
-        <component :is="headerSlot" v-if="headerSlot" :entity="entity" :close="() => emit('close')" />
-        <template v-else>
-          <span class="vnm-window__title">{{ entity.label }}</span>
-          <span class="vnm-window__subtitle">
-            <span class="vnm-window__kind">{{ entity.kind }}</span>
-            <template v-if="entity.status">
-              <span
-                class="vnm-window__status"
-                :style="statusColor ? { backgroundColor: statusColor } : undefined"
-              />
-              <span>{{ entity.status }}</span>
-            </template>
-          </span>
-        </template>
-      </div>
-
-      <div class="vnm-window__tabs" role="tablist" :aria-label="map.t('details.title')">
-        <button
-          v-for="tab in tabs"
-          :key="tab.id"
-          type="button"
-          role="tab"
-          class="vnm-window__tab"
-          :class="{ 'vnm-window__tab--active': activeTab === tab.id }"
-          :aria-selected="activeTab === tab.id"
-          @click="activeTab = tab.id"
-        >
-          {{ map.t(tab.labelKey) }}
-        </button>
-      </div>
-
-      <div class="vnm-window__content" role="tabpanel">
-        <component
-          :is="detailsSlot"
-          v-if="detailsSlot"
-          :entity="entity"
-          :close="() => emit('close')"
-          :tab="activeTab"
-        />
-
-        <!-- Fallback: ровно столько, чтобы демо было осмысленным. -->
-        <template v-else-if="activeTab === 'overview'">
-          <DetailsSection :title="map.t('details.id')">
-            <span class="vnm-field__key">{{ map.t('details.id') }}</span>
-            <span class="vnm-field__value">{{ entity.id }}</span>
-            <span class="vnm-field__key">{{ map.t('details.kind') }}</span>
-            <span class="vnm-field__value">{{ entity.kind }}</span>
-            <template v-if="entity.status">
-              <span class="vnm-field__key">{{ map.t('details.status') }}</span>
-              <span class="vnm-field__value">{{ entity.status }}</span>
-            </template>
-          </DetailsSection>
-
-          <DetailsSection v-if="entity.sublabels?.length" :title="map.t('details.addresses')">
-            <template v-for="sublabel in entity.sublabels" :key="sublabel">
-              <span class="vnm-field__key">—</span>
-              <span class="vnm-field__value">{{ sublabel }}</span>
-            </template>
-          </DetailsSection>
-
-          <DetailsSection :title="map.t('details.meta')" :empty="metaRows.length === 0">
-            <template #empty>{{ map.t('details.empty') }}</template>
-            <template v-for="row in metaRows" :key="row.key">
-              <span class="vnm-field__key">{{ row.key }}</span>
-              <span class="vnm-field__value">{{ row.value }}</span>
-            </template>
-          </DetailsSection>
-        </template>
-
-        <template v-else>
-          <DetailsSection :title="map.t('details.neighbors')" :empty="neighbors.length === 0">
-            <template #empty>{{ map.t('filter.empty') }}</template>
-            <template v-for="neighbor in neighbors" :key="neighbor.id">
-              <span class="vnm-field__key">{{ neighbor.layers }}</span>
-              <span class="vnm-field__value">{{ neighbor.label }}</span>
-            </template>
-          </DetailsSection>
-        </template>
-      </div>
+    <div class="vnm-window__heading">
+      <component :is="headerSlot" v-if="headerSlot" :entity="entity" :close="() => emit('close')" />
+      <template v-else>
+        <span class="vnm-window__title">{{ entity.label }}</span>
+        <span class="vnm-window__subtitle">
+          <span class="vnm-window__kind">{{ entity.kind }}</span>
+          <template v-if="entity.status">
+            <span
+              class="vnm-window__status"
+              :style="statusColor ? { backgroundColor: statusColor } : undefined"
+            />
+            <span>{{ entity.status }}</span>
+          </template>
+        </span>
+      </template>
     </div>
-  </aside>
+
+    <div class="vnm-window__tabs" role="tablist" :aria-label="map.t('details.title')">
+      <button
+        v-for="tab in tabs"
+        :key="tab.id"
+        type="button"
+        role="tab"
+        class="vnm-window__tab"
+        :class="{ 'vnm-window__tab--active': activeTab === tab.id }"
+        :aria-selected="activeTab === tab.id"
+        @click="activeTab = tab.id"
+      >
+        {{ map.t(tab.labelKey) }}
+      </button>
+    </div>
+
+    <div class="vnm-window__content" role="tabpanel">
+      <component
+        :is="detailsSlot"
+        v-if="detailsSlot"
+        :entity="entity"
+        :close="() => emit('close')"
+        :tab="activeTab"
+      />
+
+      <!-- Fallback: ровно столько, чтобы демо было осмысленным. -->
+      <template v-else-if="activeTab === 'overview'">
+        <DetailsSection :title="map.t('details.id')">
+          <span class="vnm-field__key">{{ map.t('details.id') }}</span>
+          <span class="vnm-field__value">{{ entity.id }}</span>
+          <span class="vnm-field__key">{{ map.t('details.kind') }}</span>
+          <span class="vnm-field__value">{{ entity.kind }}</span>
+          <template v-if="entity.status">
+            <span class="vnm-field__key">{{ map.t('details.status') }}</span>
+            <span class="vnm-field__value">{{ entity.status }}</span>
+          </template>
+        </DetailsSection>
+
+        <DetailsSection v-if="entity.sublabels?.length" :title="map.t('details.addresses')">
+          <template v-for="sublabel in entity.sublabels" :key="sublabel">
+            <span class="vnm-field__key">—</span>
+            <span class="vnm-field__value">{{ sublabel }}</span>
+          </template>
+        </DetailsSection>
+
+        <DetailsSection :title="map.t('details.meta')" :empty="metaRows.length === 0">
+          <template #empty>{{ map.t('details.empty') }}</template>
+          <template v-for="row in metaRows" :key="row.key">
+            <span class="vnm-field__key">{{ row.key }}</span>
+            <span class="vnm-field__value">{{ row.value }}</span>
+          </template>
+        </DetailsSection>
+      </template>
+
+      <template v-else>
+        <DetailsSection :title="map.t('details.neighbors')" :empty="neighbors.length === 0">
+          <template #empty>{{ map.t('filter.empty') }}</template>
+          <template v-for="neighbor in neighbors" :key="neighbor.id">
+            <span class="vnm-field__key">{{ neighbor.layers }}</span>
+            <span class="vnm-field__value">{{ neighbor.label }}</span>
+          </template>
+        </DetailsSection>
+      </template>
+    </div>
+  </MapWindow>
 </template>
 
 <style>
-.vnm-window {
-  position: absolute;
-  z-index: 20;
+/* Окно подробностей всегда прижато к правому верхнему углу полотна; дальше его
+   двигает пользователь. */
+.vnm-details {
   top: var(--vnm-space-4);
   right: var(--vnm-space-4);
-  display: flex;
-  flex-direction: column;
-  width: var(--vnm-window-width);
-  max-width: calc(100% - var(--vnm-space-5));
-  max-height: calc(100% - var(--vnm-space-5));
-  border-radius: var(--vnm-window-radius);
-  background: var(--vnm-surface);
-  box-shadow: var(--vnm-shadow-lg);
-  color: var(--vnm-fg);
-  font-family: var(--vnm-font);
-  font-size: var(--vnm-font-size);
-  line-height: var(--vnm-line-height);
-}
-
-.vnm-window__header {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--vnm-space-2);
-  height: var(--vnm-window-header-height);
-  padding: var(--vnm-space-1);
-  border-radius: var(--vnm-window-radius) var(--vnm-window-radius) 0 0;
-  background: var(--vnm-surface-sunken);
-  cursor: grab;
-  /* Иначе браузер начнёт своё «перетаскивание» и выделение текста в шапке. */
-  touch-action: none;
-  user-select: none;
-}
-
-.vnm-window--dragging .vnm-window__header {
-  cursor: grabbing;
-}
-
-/* Сжатое окно — только шапка: скругление снизу возвращается. */
-.vnm-window--collapsed .vnm-window__header {
-  border-radius: var(--vnm-window-radius);
-}
-
-.vnm-window__caption {
-  flex: 1 1 auto;
-  overflow: hidden;
-  color: var(--vnm-fg-subtle);
-  font-size: var(--vnm-font-size-sm);
-  text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.vnm-window__button {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  padding: 0;
-  border: 0;
-  border-radius: var(--vnm-radius-sm);
-  background: transparent;
-  color: var(--vnm-fg-muted);
-  cursor: pointer;
-}
-
-.vnm-window__button:hover {
-  color: var(--vnm-fg-subtle);
-}
-
-.vnm-window__button:focus-visible {
-  outline: 2px solid var(--vnm-focus-ring);
-  outline-offset: 1px;
-}
-
-.vnm-window__icon--flipped {
-  transform: rotate(180deg);
-}
-
-.vnm-window__body {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  gap: var(--vnm-space-4);
-  min-height: 0;
-  padding: var(--vnm-space-4);
 }
 
 .vnm-window__heading {

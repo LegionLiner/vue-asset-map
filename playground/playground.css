@@ -86,6 +86,60 @@ body {
   min-height: 0;
 }
 
+.pg-bar__button--on {
+  border-color: #cb5555;
+  background: #cb5555;
+  color: #fff;
+}
+
+/* Демо-окно «История»: собрано из <MapWindow>, позиционируется приложением. */
+.pg-history {
+  top: 12px;
+  right: 12px;
+}
+
+.pg-history__controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.pg-history__button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--vnm-fg-muted);
+  cursor: pointer;
+}
+
+.pg-history__button:hover {
+  background: var(--vnm-surface);
+  color: var(--vnm-fg-subtle);
+}
+
+.pg-history__button svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Зеркальная пара кнопок — тот же путь, развёрнутый по горизонтали. */
+.pg-history__button--mirrored svg {
+  transform: scaleX(-1);
+}
+
+.pg-history__label {
+  padding-left: 4px;
+  color: var(--vnm-fg-subtle);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
 /* Кнопка в правом слоте шапки карты. */
 .pg-add {
   padding: 8px 14px;

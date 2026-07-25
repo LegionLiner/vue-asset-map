@@ -31,6 +31,12 @@
   --vnm-edge-dimmed: #2b3550;
   --vnm-edge-label-bg: #1b2438;
 
+  /* Заражение: на тёмном фоне светлая заливка слепит, поэтому она темнее. */
+  --vnm-infected-bg: #3a2226;
+  --vnm-infected-border: #e57373;
+  --vnm-infected-fg: #e57373;
+  --vnm-infected-edge: #e57373;
+
   /* Состояния в тёмной теме светлее: на тёмном фоне насыщенный цвет глухой. */
   --vnm-status-online: #74c281;
   --vnm-status-offline: #e57373;

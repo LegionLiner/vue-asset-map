@@ -48,6 +48,9 @@ const classes = computed(() => [
     'vnm-node--matched': map.isMatched(props.id),
     'vnm-node--dimmed': map.isDimmed(props.id),
     'vnm-node--simplified': map.simplified.value,
+    // Группа считается заражённой, если захвачен хоть один её участник: иначе
+    // свёртка прятала бы факт заражения.
+    'vnm-node--infected': map.isInfected(props.id),
   },
 ])
 

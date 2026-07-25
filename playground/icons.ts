@@ -60,6 +60,38 @@ export const VpsIcon = icon(['M4 6h24v15H4z', 'M12 25h8', 'M16 21v4'])
 /** Рабочая станция. */
 export const WorkstationIcon = icon(['M6 6h20v14H6z', 'M11 26h10', 'M16 20v6'])
 
+/**
+ * Иконки плеера для демо-окна «История».
+ *
+ * Зеркальные варианты не дублируют путь, а разворачиваются через CSS
+ * (`transform: scaleX(-1)`) — в разметке окна.
+ */
+export const IconFastRewind: FunctionalComponent = () =>
+  h(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 19 11', fill: 'none', 'aria-hidden': 'true' },
+    [
+      h('path', {
+        fill: 'currentColor',
+        d: 'M7.2477 0.225169C8.3727 -0.41743 9.7722 0.395269 9.7722 1.69127L9.7722 3.79727L16.0227 0.226071C17.1477 -0.417428 18.5472 0.395271 18.5472 1.69127L18.5472 9.00017C18.5472 10.2962 17.1477 11.1089 16.0227 10.4654L9.7722 6.89507L9.7722 9.00107C9.7722 10.2971 8.3727 11.1098 7.2477 10.4663L0.850501 6.81137C-0.283499 6.16337 -0.283499 4.52897 0.850501 3.88097L7.2477 0.22607L7.2477 0.225169Z',
+      }),
+    ],
+  )
+
+export const IconStepRewind: FunctionalComponent = () =>
+  h(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 20 20', fill: 'none', 'aria-hidden': 'true' },
+    [
+      h('path', {
+        'fill-rule': 'evenodd',
+        'clip-rule': 'evenodd',
+        fill: 'currentColor',
+        d: 'M16.25 4.71323C16.25 3.52406 14.9758 2.77156 13.9342 3.34406L4.3175 8.63323C3.23833 9.22656 3.23833 10.7774 4.3175 11.3716L13.9333 16.6607C14.975 17.2332 16.2492 16.4799 16.2492 15.2916L16.25 4.71323Z',
+      }),
+    ],
+  )
+
 /** Контейнер. */
 export const ContainerIcon = icon([
   'M6 12l10-5 10 5v8l-10 5-10-5z',
