@@ -1,116 +1,116 @@
 /*
  * Design tokens of the map.
  *
- * Every value is declared on `.vnm-root`, the component's own root element, and
+ * Every value is declared on `.vam-root`, the component's own root element, and
  * never on `:root`: the package may not affect the page beyond its own bounds,
  * and two maps with different themes have to be able to coexist on one page.
  *
  * The base values here are the light theme. `dark.css` overrides them through
- * the `.vnm-theme-dark` class, which wins on specificity.
+ * the `.vam-theme-dark` class, which wins on specificity.
  */
-.vnm-root {
-  --vnm-bg: #f7f8fa;
-  --vnm-surface: #ffffff;
-  --vnm-surface-raised: #ffffff;
-  --vnm-surface-sunken: #edf0f5;
-  --vnm-fg: #1b2636;
-  --vnm-fg-subtle: #4d6d9a;
-  --vnm-fg-muted: #7c92b2;
-  --vnm-fg-inverted: #ffffff;
-  --vnm-border: #dfe5ee;
-  --vnm-border-strong: #7c92b2;
+.vam-root {
+  --vam-bg: #f7f8fa;
+  --vam-surface: #ffffff;
+  --vam-surface-raised: #ffffff;
+  --vam-surface-sunken: #edf0f5;
+  --vam-fg: #1b2636;
+  --vam-fg-subtle: #4d6d9a;
+  --vam-fg-muted: #7c92b2;
+  --vam-fg-inverted: #ffffff;
+  --vam-border: #dfe5ee;
+  --vam-border-strong: #7c92b2;
 
-  --vnm-accent: #4d6d9a;
-  --vnm-accent-fg: #ffffff;
-  --vnm-accent-soft: rgba(77, 109, 154, 0.1);
-  --vnm-focus-ring: #4d6d9a;
-  --vnm-selection: #4d6d9a;
-  --vnm-highlight: #d9822b;
-  --vnm-highlight-soft: rgba(217, 130, 43, 0.16);
+  --vam-accent: #4d6d9a;
+  --vam-accent-fg: #ffffff;
+  --vam-accent-soft: rgba(77, 109, 154, 0.1);
+  --vam-focus-ring: #4d6d9a;
+  --vam-selection: #4d6d9a;
+  --vam-highlight: #d9822b;
+  --vam-highlight-soft: rgba(217, 130, 43, 0.16);
 
-  --vnm-edge: #b9c5d6;
-  --vnm-edge-active: #5a5ee7;
-  --vnm-edge-dimmed: #e4e9f1;
-  --vnm-edge-label-bg: #ffffff;
-  --vnm-edge-width: 1px;
-  --vnm-edge-width-active: 2px;
+  --vam-edge: #b9c5d6;
+  --vam-edge-active: #5a5ee7;
+  --vam-edge-dimmed: #e4e9f1;
+  --vam-edge-label-bg: #ffffff;
+  --vam-edge-width: 1px;
+  --vam-edge-width-active: 2px;
 
   /*
    * The three-color palette is handed to markers in declaration order whenever a
    * marker sets no color of its own. The fourth is for infected nodes: their
    * dots take it whatever color the marker normally has.
    */
-  --vnm-marker-1: #7c92b2;
-  --vnm-marker-2: #5a5ee7;
-  --vnm-marker-3: #32aacb;
-  --vnm-marker-infected: #cb5555;
-  --vnm-marker-size: 11px;
-  --vnm-marker-dot-size: 7px;
-  --vnm-marker-gap: 2px;
-  --vnm-marker-offset: 4px;
-  --vnm-marker-bg: #ffffff;
+  --vam-marker-1: #7c92b2;
+  --vam-marker-2: #5a5ee7;
+  --vam-marker-3: #32aacb;
+  --vam-marker-infected: #cb5555;
+  --vam-marker-size: 11px;
+  --vam-marker-dot-size: 7px;
+  --vam-marker-gap: 2px;
+  --vam-marker-offset: 4px;
+  --vam-marker-bg: #ffffff;
 
   /* Infection mode: the marked entities and everything they capture. */
-  --vnm-infected-bg: #f9eeee;
-  --vnm-infected-border: #cb5555;
-  --vnm-infected-fg: #cb5555;
-  --vnm-infected-edge: #cb5555;
+  --vam-infected-bg: #f9eeee;
+  --vam-infected-border: #cb5555;
+  --vam-infected-fg: #cb5555;
+  --vam-infected-edge: #cb5555;
 
   /* Node states. The keys are the consumer's own `entity.status` values. */
-  --vnm-status-online: #5fab6b;
-  --vnm-status-offline: #d05353;
-  --vnm-status-warning: #d9822b;
-  --vnm-status-unknown: #b9c5d6;
+  --vam-status-online: #5fab6b;
+  --vam-status-offline: #d05353;
+  --vam-status-warning: #d9822b;
+  --vam-status-unknown: #b9c5d6;
 
-  --vnm-node-size: 36px;
-  --vnm-node-size-root: 60px;
-  --vnm-node-label-gap: 6px;
+  --vam-node-size: 36px;
+  --vam-node-size-root: 60px;
+  --vam-node-label-gap: 6px;
   /* The label plate has a fixed width: sublabels appear and disappear as views
      change, and a breathing size would jolt the whole layout. */
-  --vnm-node-label-width: 127.5px;
-  --vnm-node-label-height: auto;
-  --vnm-node-label-padding: 3px 4.5px;
-  --vnm-node-label-radius: 4.5px;
+  --vam-node-label-width: 127.5px;
+  --vam-node-label-height: auto;
+  --vam-node-label-padding: 3px 4.5px;
+  --vam-node-label-radius: 4.5px;
   /* 16 + 13 + 13 = 42: a label and two addresses fit the plate exactly. */
-  --vnm-node-sublabel-line: 13px;
-  --vnm-node-radius: 4px;
-  --vnm-node-toggle-size: 18px;
-  --vnm-node-status-size: 9px;
+  --vam-node-sublabel-line: 13px;
+  --vam-node-radius: 4px;
+  --vam-node-toggle-size: 18px;
+  --vam-node-status-size: 9px;
 
   /* External and overlay addresses are told apart by color alone. */
-  --vnm-node-label-color: #1b2636;
-  --vnm-node-sublabel-color: #7c92b2;
-  --vnm-node-overlay-color: #5a5ee7;
+  --vam-node-label-color: #1b2636;
+  --vam-node-sublabel-color: #7c92b2;
+  --vam-node-overlay-color: #5a5ee7;
 
-  --vnm-radius-sm: 4px;
-  --vnm-radius-md: 6px;
-  --vnm-radius-lg: 8px;
-  --vnm-space-1: 4px;
-  --vnm-space-2: 8px;
-  --vnm-space-3: 12px;
-  --vnm-space-4: 16px;
-  --vnm-space-5: 24px;
+  --vam-radius-sm: 4px;
+  --vam-radius-md: 6px;
+  --vam-radius-lg: 8px;
+  --vam-space-1: 4px;
+  --vam-space-2: 8px;
+  --vam-space-3: 12px;
+  --vam-space-4: 16px;
+  --vam-space-5: 24px;
 
   /* The font stack falls back to system faces: the package ships no font files. */
-  --vnm-font: 'Nunito Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --vnm-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  --vnm-font-size: 14px;
-  --vnm-font-size-sm: 12px;
-  --vnm-font-size-lg: 16px;
-  --vnm-line-height: 20px;
-  --vnm-line-height-sm: 16px;
-  --vnm-line-height-lg: 24px;
-  --vnm-font-weight-medium: 600;
-  --vnm-font-weight-bold: 700;
+  --vam-font: 'Nunito Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --vam-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --vam-font-size: 14px;
+  --vam-font-size-sm: 12px;
+  --vam-font-size-lg: 16px;
+  --vam-line-height: 20px;
+  --vam-line-height-sm: 16px;
+  --vam-line-height-lg: 24px;
+  --vam-font-weight-medium: 600;
+  --vam-font-weight-bold: 700;
 
-  --vnm-shadow-sm: 0 1px 2px rgba(27, 38, 54, 0.06);
-  --vnm-shadow-md: 0 2px 8px rgba(27, 38, 54, 0.1);
-  --vnm-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.16);
-  --vnm-toolbar-height: 36px;
+  --vam-shadow-sm: 0 1px 2px rgba(27, 38, 54, 0.06);
+  --vam-shadow-md: 0 2px 8px rgba(27, 38, 54, 0.1);
+  --vam-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.16);
+  --vam-toolbar-height: 36px;
 
-  --vnm-window-width: 480px;
-  --vnm-window-radius: 8px;
-  --vnm-window-header-height: 24px;
+  --vam-window-width: 480px;
+  --vam-window-radius: 8px;
+  --vam-window-header-height: 24px;
   /*
    * Top offset of the floating windows.
    *
@@ -118,30 +118,30 @@
    * has anything in it, the component overrides this token so windows start
    * below the toolbar instead of covering the application's buttons.
    */
-  --vnm-windows-top: var(--vnm-space-4);
+  --vam-windows-top: var(--vam-space-4);
   /*
    * Top offset of the details windows.
    *
-   * Matches `--vnm-windows-top` by default. When the consumer's own windows sit
+   * Matches `--vam-windows-top` by default. When the consumer's own windows sit
    * up there (a history strip, say), the component measures the height they take
    * and overrides this token so a details window opens below them, not over them.
    */
-  --vnm-details-top: var(--vnm-windows-top);
+  --vam-details-top: var(--vam-windows-top);
 
-  --vnm-filter-width: 304px;
-  --vnm-filter-height: 684px;
+  --vam-filter-width: 304px;
+  --vam-filter-height: 684px;
 
-  --vnm-canvas-dot: #dfe5ee;
-  --vnm-canvas-dot-size: 1px;
-  --vnm-canvas-grid: 20px;
+  --vam-canvas-dot: #dfe5ee;
+  --vam-canvas-dot-size: 1px;
+  --vam-canvas-grid: 20px;
 
   /* Animation; overridden by the prefers-reduced-motion block below. */
-  --vnm-transition: 120ms ease;
-  --vnm-dimmed-opacity: 0.3;
+  --vam-transition: 120ms ease;
+  --vam-dimmed-opacity: 0.3;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .vnm-root {
-    --vnm-transition: 0ms;
+  .vam-root {
+    --vam-transition: 0ms;
   }
 }

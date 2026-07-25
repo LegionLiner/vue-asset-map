@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { Handle, Position } from '@vue-flow/core'
 import { useMapContext, type ArrowDirection } from '../../composables/useMapContext'
-import type { NetworkNodeData } from '../../composables/useFlowElements'
+import type { AssetNodeData } from '../../composables/useFlowElements'
 import { IconExpand } from '../icons/index'
 
 /**
@@ -18,7 +18,7 @@ import { IconExpand } from '../icons/index'
  */
 const props = defineProps<{
   id: string
-  data?: NetworkNodeData
+  data?: AssetNodeData
 }>()
 
 const map = useMapContext()
@@ -48,7 +48,7 @@ const markers = computed(() => map.markersFor(props.id))
  * with the rest of the node's coloring.
  */
 function markerColor(marker: { color: string }): string {
-  return map.isInfected(props.id) ? 'var(--vnm-marker-infected)' : marker.color
+  return map.isInfected(props.id) ? 'var(--vam-marker-infected)' : marker.color
 }
 const icon = computed(() => (entity.value ? map.iconFor(entity.value.kind) : undefined))
 
@@ -63,17 +63,17 @@ const badgeSlot = computed(() => map.slot('node-badge'))
 const selected = computed(() => map.isSelected(props.id))
 
 const classes = computed(() => [
-  'vnm-node',
-  `vnm-node--kind-${entity.value?.kind ?? 'unknown'}`,
-  isRoot.value ? 'vnm-node--root' : 'vnm-node--child',
+  'vam-node',
+  `vam-node--kind-${entity.value?.kind ?? 'unknown'}`,
+  isRoot.value ? 'vam-node--root' : 'vam-node--child',
   {
-    'vnm-node--selected': selected.value,
-    'vnm-node--matched': map.isMatched(props.id),
-    'vnm-node--dimmed': map.isDimmed(props.id),
-    'vnm-node--highlighted': map.isHighlighted(props.id),
-    'vnm-node--simplified': map.simplified.value,
-    'vnm-node--infected': map.isInfected(props.id),
-    'vnm-node--infection-source': map.isInfectionSource(props.id),
+    'vam-node--selected': selected.value,
+    'vam-node--matched': map.isMatched(props.id),
+    'vam-node--dimmed': map.isDimmed(props.id),
+    'vam-node--highlighted': map.isHighlighted(props.id),
+    'vam-node--simplified': map.simplified.value,
+    'vam-node--infected': map.isInfected(props.id),
+    'vam-node--infection-source': map.isInfectionSource(props.id),
   },
 ])
 
@@ -132,10 +132,10 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
   >
     <!-- Handles sit at the centre of the circle: edges run centre to centre, or
          a radial layout would have every line leave from the same edge. -->
-    <Handle type="target" :position="Position.Top" class="vnm-node__handle" />
-    <Handle type="source" :position="Position.Bottom" class="vnm-node__handle" />
+    <Handle type="target" :position="Position.Top" class="vam-node__handle" />
+    <Handle type="source" :position="Position.Bottom" class="vam-node__handle" />
 
-    <div class="vnm-node__circle">
+    <div class="vam-node__circle">
       <component
         :is="kindSlot"
         v-if="kindSlot"
@@ -144,15 +144,15 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
         :simplified="map.simplified.value"
       />
       <template v-else>
-        <component :is="icon" v-if="icon" class="vnm-node__icon" />
-        <span v-else class="vnm-node__initials" aria-hidden="true">
+        <component :is="icon" v-if="icon" class="vam-node__icon" />
+        <span v-else class="vam-node__initials" aria-hidden="true">
           {{ (entity?.kind ?? '?').slice(0, 2) }}
         </span>
       </template>
 
       <span
         v-if="entity?.status"
-        class="vnm-node__status"
+        class="vam-node__status"
         :style="statusColor ? { backgroundColor: statusColor } : undefined"
         :title="map.t('node.status', { status: entity.status })"
       />
@@ -160,7 +160,7 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
       <button
         v-if="hasChildren"
         type="button"
-        class="vnm-node__toggle"
+        class="vam-node__toggle"
         :aria-label="toggleLabel"
         :aria-expanded="!subtreeCollapsed"
         :title="toggleLabel"
@@ -170,23 +170,23 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
       </button>
     </div>
 
-    <div v-if="!map.simplified.value" class="vnm-node__info">
-      <span class="vnm-node__label">{{ entity?.label ?? id }}</span>
+    <div v-if="!map.simplified.value" class="vam-node__info">
+      <span class="vam-node__label">{{ entity?.label ?? id }}</span>
       <span
         v-for="(sublabel, index) in sublabels"
         :key="sublabel"
-        :class="index === 0 ? 'vnm-node__sublabel' : 'vnm-node__sublabel-overlay'"
+        :class="index === 0 ? 'vam-node__sublabel' : 'vam-node__sublabel-overlay'"
       >
         {{ sublabel }}
       </span>
     </div>
 
-    <span v-if="markers.length > 0 && !map.simplified.value" class="vnm-node__markers">
+    <span v-if="markers.length > 0 && !map.simplified.value" class="vam-node__markers">
       <button
         v-for="marker in markers"
         :key="marker.id"
         type="button"
-        class="vnm-node__marker"
+        class="vam-node__marker"
         :aria-label="map.t('marker.membership', { label: marker.label })"
         :title="marker.label"
         @mouseenter="map.onMarkerEnter(marker.id)"
@@ -195,13 +195,13 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
         @blur="map.onMarkerLeave()"
         @click.stop
       >
-        <span class="vnm-node__marker-dot" :style="{ backgroundColor: markerColor(marker) }" />
+        <span class="vam-node__marker-dot" :style="{ backgroundColor: markerColor(marker) }" />
       </button>
     </span>
 
     <span
       v-if="!map.simplified.value && badges.length > 0"
-      class="vnm-node__badges"
+      class="vam-node__badges"
       :aria-label="map.t('node.badges', { count: badges.length })"
     >
       <template v-for="badge in badges" :key="badge.id">
@@ -215,7 +215,7 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
         />
         <span
           v-else
-          class="vnm-node__badge"
+          class="vam-node__badge"
           :style="badge.color ? { backgroundColor: badge.color } : undefined"
           :title="badge.tooltip"
         >
@@ -227,108 +227,108 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
 </template>
 
 <style>
-.vnm-node {
+.vam-node {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--vnm-node-label-gap);
-  width: var(--vnm-node-label-width);
-  color: var(--vnm-fg);
-  font-family: var(--vnm-font);
-  font-size: var(--vnm-font-size-sm);
-  line-height: var(--vnm-line-height-sm);
+  gap: var(--vam-node-label-gap);
+  width: var(--vam-node-label-width);
+  color: var(--vam-fg);
+  font-family: var(--vam-font);
+  font-size: var(--vam-font-size-sm);
+  line-height: var(--vam-line-height-sm);
   text-align: center;
   cursor: pointer;
-  transition: opacity var(--vnm-transition);
+  transition: opacity var(--vam-transition);
 }
 
 /* The circle and the label plate are outlined separately rather than as one
    rectangle around the node: there is empty space between them, and a shared
    frame would enclose that space too. */
-.vnm-node:focus-visible {
+.vam-node:focus-visible {
   outline: none;
 }
 
-.vnm-node:focus-visible .vnm-node__circle,
-.vnm-node:focus-visible .vnm-node__info {
-  outline: 2px solid var(--vnm-focus-ring);
+.vam-node:focus-visible .vam-node__circle,
+.vam-node:focus-visible .vam-node__info {
+  outline: 2px solid var(--vam-focus-ring);
   outline-offset: 2px;
 }
 
-.vnm-node--selected .vnm-node__circle,
-.vnm-node--selected .vnm-node__info {
-  border-color: var(--vnm-selection);
+.vam-node--selected .vam-node__circle,
+.vam-node--selected .vam-node__info {
+  border-color: var(--vam-selection);
 }
 
-.vnm-node--matched .vnm-node__circle,
-.vnm-node--matched .vnm-node__info {
-  border-color: var(--vnm-highlight);
+.vam-node--matched .vam-node__circle,
+.vam-node--matched .vam-node__info {
+  border-color: var(--vam-highlight);
 }
 
-.vnm-node--highlighted .vnm-node__circle,
-.vnm-node--highlighted .vnm-node__info {
-  border-color: var(--vnm-edge-active);
+.vam-node--highlighted .vam-node__circle,
+.vam-node--highlighted .vam-node__info {
+  border-color: var(--vam-edge-active);
 }
 
-.vnm-node--dimmed {
-  opacity: var(--vnm-dimmed-opacity);
+.vam-node--dimmed {
+  opacity: var(--vam-dimmed-opacity);
 }
 
 /* Placed after the selection states on purpose: being captured outranks being
    selected, so infection wins the cascade. */
-.vnm-node--infected .vnm-node__circle {
-  border-color: var(--vnm-infected-border);
-  background: var(--vnm-infected-bg);
-  color: var(--vnm-infected-fg);
+.vam-node--infected .vam-node__circle {
+  border-color: var(--vam-infected-border);
+  background: var(--vam-infected-bg);
+  color: var(--vam-infected-fg);
 }
 
-.vnm-node--infected .vnm-node__info {
-  border-color: var(--vnm-infected-border);
-  background: var(--vnm-infected-bg);
+.vam-node--infected .vam-node__info {
+  border-color: var(--vam-infected-border);
+  background: var(--vam-infected-bg);
 }
 
 /* A hand-marked source is drawn heavier than the nodes it captured. */
-.vnm-node--infection-source .vnm-node__circle {
+.vam-node--infection-source .vam-node__circle {
   border-width: 2px;
 }
 
-.vnm-node__circle {
+.vam-node__circle {
   position: relative;
   display: flex;
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  width: var(--vnm-node-size);
-  height: var(--vnm-node-size);
-  border: 1px solid var(--vnm-border);
+  width: var(--vam-node-size);
+  height: var(--vam-node-size);
+  border: 1px solid var(--vam-border);
   border-radius: 50%;
-  background: var(--vnm-surface);
-  box-shadow: var(--vnm-shadow-sm);
-  color: var(--vnm-fg-muted);
+  background: var(--vam-surface);
+  box-shadow: var(--vam-shadow-sm);
+  color: var(--vam-fg-muted);
 }
 
-.vnm-node--root .vnm-node__circle {
-  width: var(--vnm-node-size-root);
-  height: var(--vnm-node-size-root);
+.vam-node--root .vam-node__circle {
+  width: var(--vam-node-size-root);
+  height: var(--vam-node-size-root);
 }
 
-.vnm-node:hover .vnm-node__circle {
-  border-color: var(--vnm-border-strong);
+.vam-node:hover .vam-node__circle {
+  border-color: var(--vam-border-strong);
 }
 
-.vnm-node__icon {
+.vam-node__icon {
   width: 55%;
   height: 55%;
 }
 
-.vnm-node__initials {
-  font-size: var(--vnm-font-size-sm);
-  font-weight: var(--vnm-font-weight-bold);
+.vam-node__initials {
+  font-size: var(--vam-font-size-sm);
+  font-weight: var(--vam-font-weight-bold);
   text-transform: uppercase;
 }
 
-.vnm-node__handle {
+.vam-node__handle {
   top: 50%;
   left: 50%;
   width: 1px;
@@ -342,152 +342,152 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
   transform: translate(-50%, -50%);
 }
 
-.vnm-node__status {
+.vam-node__status {
   position: absolute;
   top: 0;
   right: 0;
   box-sizing: border-box;
-  width: var(--vnm-node-status-size);
-  height: var(--vnm-node-status-size);
-  border: 1px solid var(--vnm-surface);
+  width: var(--vam-node-status-size);
+  height: var(--vam-node-status-size);
+  border: 1px solid var(--vam-surface);
   border-radius: 50%;
-  background: var(--vnm-status-unknown);
+  background: var(--vam-status-unknown);
 }
 
-.vnm-node__toggle {
+.vam-node__toggle {
   position: absolute;
-  top: calc(var(--vnm-node-toggle-size) / -3);
-  right: calc(var(--vnm-node-toggle-size) / -3);
+  top: calc(var(--vam-node-toggle-size) / -3);
+  right: calc(var(--vam-node-toggle-size) / -3);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: var(--vnm-node-toggle-size);
-  height: var(--vnm-node-toggle-size);
+  width: var(--vam-node-toggle-size);
+  height: var(--vam-node-toggle-size);
   padding: 0;
-  border: 1px solid var(--vnm-border);
+  border: 1px solid var(--vam-border);
   border-radius: 50%;
-  background: var(--vnm-surface);
-  color: var(--vnm-fg-subtle);
+  background: var(--vam-surface);
+  color: var(--vam-fg-subtle);
   cursor: pointer;
 }
 
 /* On root nodes the status dot and the toggle must not overlap. */
-.vnm-node--root .vnm-node__status {
+.vam-node--root .vam-node__status {
   top: 2px;
   right: 2px;
 }
 
-.vnm-node__toggle:hover {
-  border-color: var(--vnm-border-strong);
-  background: var(--vnm-surface-sunken);
+.vam-node__toggle:hover {
+  border-color: var(--vam-border-strong);
+  background: var(--vam-surface-sunken);
 }
 
-.vnm-node__toggle:focus-visible {
-  outline: 2px solid var(--vnm-focus-ring);
+.vam-node__toggle:focus-visible {
+  outline: 2px solid var(--vam-focus-ring);
   outline-offset: 1px;
 }
 
-.vnm-node__info {
+.vam-node__info {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  width: var(--vnm-node-label-width);
-  height: var(--vnm-node-label-height);
-  padding: var(--vnm-node-label-padding);
+  width: var(--vam-node-label-width);
+  height: var(--vam-node-label-height);
+  padding: var(--vam-node-label-padding);
   /* Always present but transparent, so selecting a node cannot shift its
      contents by a pixel. */
   border: 1px solid transparent;
-  border-radius: var(--vnm-node-label-radius);
-  background: var(--vnm-surface);
+  border-radius: var(--vam-node-label-radius);
+  background: var(--vam-surface);
   overflow: hidden;
-  transition: border-color var(--vnm-transition);
+  transition: border-color var(--vam-transition);
 }
 
-.vnm-node__label {
+.vam-node__label {
   max-width: 100%;
   overflow: hidden;
-  color: var(--vnm-node-label-color);
+  color: var(--vam-node-label-color);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.vnm-node__sublabel,
-.vnm-node__sublabel-overlay {
+.vam-node__sublabel,
+.vam-node__sublabel-overlay {
   max-width: 100%;
   overflow: hidden;
-  line-height: var(--vnm-node-sublabel-line);
+  line-height: var(--vam-node-sublabel-line);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.vnm-node__sublabel {
-  color: var(--vnm-node-sublabel-color);
+.vam-node__sublabel {
+  color: var(--vam-node-sublabel-color);
 }
 
 /* The overlay address differs from the external one by color: in the logical
    view that is the only way to tell them apart at a glance. */
-.vnm-node__sublabel-overlay {
-  color: var(--vnm-node-overlay-color);
+.vam-node__sublabel-overlay {
+  color: var(--vam-node-overlay-color);
 }
 
-.vnm-node__markers {
+.vam-node__markers {
   display: flex;
   justify-content: center;
-  gap: var(--vnm-marker-gap);
+  gap: var(--vam-marker-gap);
   /* Spacing lives here rather than in the container's gap: the plate and the
      badges have their own distances, and one shared gap would break both. */
-  margin-top: calc(var(--vnm-marker-offset) - var(--vnm-node-label-gap));
+  margin-top: calc(var(--vam-marker-offset) - var(--vam-node-label-gap));
 }
 
-.vnm-node__marker {
+.vam-node__marker {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  width: var(--vnm-marker-size);
-  height: var(--vnm-marker-size);
+  width: var(--vam-marker-size);
+  height: var(--vam-marker-size);
   padding: 0;
   border: 0;
   border-radius: 50%;
   /* Opaque backing, so a dot reads both over the plate and over the canvas. */
-  background: var(--vnm-marker-bg);
+  background: var(--vam-marker-bg);
   cursor: pointer;
 }
 
-.vnm-node__marker:focus-visible {
-  outline: 2px solid var(--vnm-focus-ring);
+.vam-node__marker:focus-visible {
+  outline: 2px solid var(--vam-focus-ring);
   outline-offset: 1px;
 }
 
-.vnm-node__marker-dot {
-  width: var(--vnm-marker-dot-size);
-  height: var(--vnm-marker-dot-size);
+.vam-node__marker-dot {
+  width: var(--vam-marker-dot-size);
+  height: var(--vam-marker-dot-size);
   border-radius: 50%;
-  background: var(--vnm-marker-1);
+  background: var(--vam-marker-1);
 }
 
 /* Badges go under the plate, not inside it: inside there is room for exactly
    three lines. */
-.vnm-node__badges {
+.vam-node__badges {
   display: flex;
   justify-content: center;
-  gap: var(--vnm-space-1);
+  gap: var(--vam-space-1);
 }
 
-.vnm-node__badge {
-  padding: 0 var(--vnm-space-1);
-  border-radius: var(--vnm-radius-sm);
-  background: var(--vnm-accent-soft);
-  color: var(--vnm-fg-subtle);
-  font-size: var(--vnm-font-size-sm);
+.vam-node__badge {
+  padding: 0 var(--vam-space-1);
+  border-radius: var(--vam-radius-sm);
+  background: var(--vam-accent-soft);
+  color: var(--vam-fg-subtle);
+  font-size: var(--vam-font-size-sm);
   line-height: 14px;
 }
 
 /* LOD: below the zoom threshold only the circle with its icon remains. */
-.vnm-node--simplified {
+.vam-node--simplified {
   width: auto;
   gap: 0;
 }

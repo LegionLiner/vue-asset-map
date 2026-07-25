@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { buildGraph, connectionMarkers, topAnchors } from '../../src/core/index'
-import type { NetworkEntity } from '../../src/types/entity'
-import type { NetworkLink } from '../../src/types/link'
+import type { AssetEntity } from '../../src/types/entity'
+import type { AssetLink } from '../../src/types/link'
 import { entities, links } from '../../fixtures/infra'
 
 const graph = buildGraph(entities, links)
@@ -130,8 +130,8 @@ describe('topAnchors', () => {
         { id: 'a', kind: 'host', label: 'A' },
         { id: 'b', kind: 'host', label: 'B' },
         { id: 'alone', kind: 'host', label: 'Alone' },
-      ] satisfies NetworkEntity[],
-      [{ id: 'ab', source: 'a', target: 'b', layers: ['physical'] }] satisfies NetworkLink[],
+      ] satisfies AssetEntity[],
+      [{ id: 'ab', source: 'a', target: 'b', layers: ['physical'] }] satisfies AssetLink[],
     )
 
     expect(topAnchors(lonely, 5).map((anchor) => anchor.id)).toEqual(['a', 'b'])
@@ -156,11 +156,11 @@ describe('topAnchors', () => {
         { id: 'hub', kind: 'host', label: 'Hub' },
         { id: 'b', kind: 'host', label: 'B' },
         { id: 'c', kind: 'host', label: 'C' },
-      ] satisfies NetworkEntity[],
+      ] satisfies AssetEntity[],
       [
         { id: 'hb', source: 'hub', target: 'b', layers: ['physical'] },
         { id: 'hc', source: 'hub', target: 'c', layers: ['physical'] },
-      ] satisfies NetworkLink[],
+      ] satisfies AssetLink[],
     )
 
     expect(topAnchors(equal, 3).map((anchor) => anchor.id)).toEqual(['hub', 'b', 'c'])

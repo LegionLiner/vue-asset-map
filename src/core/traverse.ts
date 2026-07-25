@@ -1,5 +1,5 @@
 import type { EntityId } from '../types/entity'
-import type { NetworkGraph } from '../types/graph'
+import type { AssetGraph } from '../types/graph'
 import { matchesLayers, otherEnd } from './graph'
 
 /** Options of {@link findPaths}. */
@@ -46,7 +46,7 @@ const DEFAULT_MAX_PATHS = 10
  * from itself: callers want the neighbourhood, not its closure.
  */
 export function neighbors<E, L>(
-  graph: NetworkGraph<E, L>,
+  graph: AssetGraph<E, L>,
   id: EntityId,
   depth: number,
   layers?: readonly string[],
@@ -85,7 +85,7 @@ export function neighbors<E, L>(
  * is the order of the input links array.
  */
 export function findPaths<E, L>(
-  graph: NetworkGraph<E, L>,
+  graph: AssetGraph<E, L>,
   from: EntityId,
   to: EntityId,
   opts: FindPathsOptions = {},
@@ -140,7 +140,7 @@ export function findPaths<E, L>(
  * carries no claim about which end depends on which.
  */
 export function blastRadius<E, L>(
-  graph: NetworkGraph<E, L>,
+  graph: AssetGraph<E, L>,
   id: EntityId,
   opts: BlastRadiusOptions = {},
 ): Set<EntityId> {

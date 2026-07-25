@@ -6,7 +6,7 @@ import type { Translate } from '../types/locale'
 /**
  * Translator for the standalone controls.
  *
- * Controls normally sit in the `<NetworkMap>` toolbar and take the locale from
+ * Controls normally sit in the `<AssetMap>` toolbar and take the locale from
  * the map context, but they can also be placed on their own — in a page header,
  * for instance. With no context around they fall back to the built-in locale
  * instead of throwing: a control must not break just for being moved out.

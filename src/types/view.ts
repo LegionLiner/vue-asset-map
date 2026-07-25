@@ -1,16 +1,16 @@
-import type { NetworkEntity } from './entity'
-import type { NetworkLink } from './link'
+import type { AssetEntity } from './entity'
+import type { AssetLink } from './link'
 
 /**
  * A projection of the graph: which entities and links are on screen, and how
  * they are laid out. Views are data — the library ships none of its own.
  */
-export interface NetworkView {
+export interface AssetView {
   id: string
   label: string
   /** @default `link.layers.includes(view.id)` */
-  linkFilter?: (link: NetworkLink) => boolean
-  entityFilter?: (entity: NetworkEntity) => boolean
+  linkFilter?: (link: AssetLink) => boolean
+  entityFilter?: (entity: AssetEntity) => boolean
   /** Whether nodes show their `sublabels` in this view. */
   showSublabels?: boolean
   layout?: { engine: string; options?: unknown }

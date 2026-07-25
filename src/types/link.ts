@@ -5,7 +5,7 @@ import type { EntityId } from './entity'
  *
  * @typeParam M - shape of the consumer's own payload in `meta`.
  */
-export interface NetworkLink<M = unknown> {
+export interface AssetLink<M = unknown> {
   id: string
   source: EntityId
   target: EntityId

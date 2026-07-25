@@ -2,14 +2,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { nextTick, ref } from 'vue'
-import NetworkMap from '../../src/components/NetworkMap.vue'
+import AssetMap from '../../src/components/AssetMap.vue'
 import MiniMap from '../../src/components/MiniMap.vue'
 import { resolveTheme } from '../../src/composables/useTheme'
 import type { ThemeMode } from '../../src/types/theme'
 import { entities, links, statusColors, views } from '../../fixtures/infra'
 
 async function mountMap(props: Record<string, unknown> = {}) {
-  const wrapper = mount(NetworkMap, {
+  const wrapper = mount(AssetMap, {
     props: {
       entities,
       links,
@@ -48,18 +48,18 @@ afterEach(() => {
 describe('тема переключается классом', () => {
   it('light и dark ставят соответствующий класс', async () => {
     const light = await mountMap({ theme: 'light' })
-    expect(light.find('.vnm-root').classes()).toContain('vnm-theme-light')
-    expect(light.find('.vnm-root').classes()).not.toContain('vnm-theme-dark')
+    expect(light.find('.vam-root').classes()).toContain('vam-theme-light')
+    expect(light.find('.vam-root').classes()).not.toContain('vam-theme-dark')
     light.unmount()
 
     const dark = await mountMap({ theme: 'dark' })
-    expect(dark.find('.vnm-root').classes()).toContain('vnm-theme-dark')
+    expect(dark.find('.vam-root').classes()).toContain('vam-theme-dark')
     dark.unmount()
   })
 
   it('без темы карта светлая', async () => {
     const wrapper = await mountMap()
-    expect(wrapper.find('.vnm-root').classes()).toContain('vnm-theme-light')
+    expect(wrapper.find('.vam-root').classes()).toContain('vam-theme-light')
     wrapper.unmount()
   })
 
@@ -69,8 +69,8 @@ describe('тема переключается классом', () => {
     await wrapper.setProps({ theme: 'dark' })
     await nextTick()
 
-    expect(wrapper.find('.vnm-root').classes()).toContain('vnm-theme-dark')
-    expect(wrapper.find('.vnm-root').classes()).not.toContain('vnm-theme-light')
+    expect(wrapper.find('.vam-root').classes()).toContain('vam-theme-dark')
+    expect(wrapper.find('.vam-root').classes()).not.toContain('vam-theme-light')
 
     wrapper.unmount()
   })
@@ -157,7 +157,7 @@ describe('resolveTheme и режим auto', () => {
     stubPrefersDark(true)
     const wrapper = await mountMap({ theme: 'auto' })
 
-    expect(wrapper.find('.vnm-root').classes()).toContain('vnm-theme-dark')
+    expect(wrapper.find('.vam-root').classes()).toContain('vam-theme-dark')
     wrapper.unmount()
   })
 })
@@ -168,7 +168,7 @@ describe('LOD: упрощённый рендер на мелком масшта�
     await flushPromises()
     await nextTick()
 
-    const simplified = wrapper.findAll('.vnm-node--simplified')
+    const simplified = wrapper.findAll('.vam-node--simplified')
     expect(simplified.length).toBeGreaterThan(0)
 
     wrapper.unmount()
@@ -177,7 +177,7 @@ describe('LOD: упрощённый рендер на мелком масшта�
   it('при обычном масштабе упрощения нет', async () => {
     const wrapper = await mountMap({ viewport: { x: 0, y: 0, zoom: 1 } })
 
-    expect(wrapper.findAll('.vnm-node--simplified')).toHaveLength(0)
+    expect(wrapper.findAll('.vam-node--simplified')).toHaveLength(0)
     wrapper.unmount()
   })
 
@@ -186,7 +186,7 @@ describe('LOD: упрощённый рендер на мелком масшта�
     await flushPromises()
     await nextTick()
 
-    expect(wrapper.findAll('.vnm-node--simplified').length).toBeGreaterThan(0)
+    expect(wrapper.findAll('.vam-node--simplified').length).toBeGreaterThan(0)
     wrapper.unmount()
   })
 
@@ -199,9 +199,9 @@ describe('LOD: упрощённый рендер на мелком масшта�
     await nextTick()
 
     const node = wrapper.find('[aria-label^="Tailscale VPS"]')
-    expect(node.classes()).toContain('vnm-node--simplified')
-    expect(node.find('.vnm-node__sublabels').exists()).toBe(false)
-    expect(node.find('.vnm-node__badges').exists()).toBe(false)
+    expect(node.classes()).toContain('vam-node--simplified')
+    expect(node.find('.vam-node__sublabels').exists()).toBe(false)
+    expect(node.find('.vam-node__badges').exists()).toBe(false)
 
     wrapper.unmount()
   })
@@ -218,8 +218,8 @@ describe('обзорная карта', () => {
   it('рисует прямоугольник на каждый узел плюс рамку вьюпорта', () => {
     const wrapper = mount(MiniMap, { props: { nodes, viewport, canvas } })
 
-    expect(wrapper.findAll('.vnm-minimap__node')).toHaveLength(2)
-    expect(wrapper.find('.vnm-minimap__viewport').exists()).toBe(true)
+    expect(wrapper.findAll('.vam-minimap__node')).toHaveLength(2)
+    expect(wrapper.find('.vam-minimap__viewport').exists()).toBe(true)
 
     wrapper.unmount()
   })
@@ -242,8 +242,8 @@ describe('обзорная карта', () => {
       },
     })
 
-    expect(wrapper.findAll('.vnm-minimap__node--matched')).toHaveLength(1)
-    expect(wrapper.findAll('.vnm-minimap__node--selected')).toHaveLength(1)
+    expect(wrapper.findAll('.vam-minimap__node--matched')).toHaveLength(1)
+    expect(wrapper.findAll('.vam-minimap__node--selected')).toHaveLength(1)
 
     wrapper.unmount()
   })
@@ -260,7 +260,7 @@ describe('обзорная карта', () => {
   it('нулевой zoom не даёт деления на ноль', () => {
     const wrapper = mount(MiniMap, { props: { nodes, viewport: { x: 0, y: 0, zoom: 0 }, canvas } })
 
-    const rect = wrapper.find('.vnm-minimap__viewport')
+    const rect = wrapper.find('.vam-minimap__viewport')
     expect(Number(rect.attributes('width'))).toBeGreaterThan(0)
 
     wrapper.unmount()
@@ -268,11 +268,11 @@ describe('обзорная карта', () => {
 
   it('showMinimap управляет её показом в карте', async () => {
     const without = await mountMap()
-    expect(without.find('.vnm-minimap').exists()).toBe(false)
+    expect(without.find('.vam-minimap').exists()).toBe(false)
     without.unmount()
 
     const withMinimap = await mountMap({ showMinimap: true })
-    expect(withMinimap.find('.vnm-minimap').exists()).toBe(true)
+    expect(withMinimap.find('.vam-minimap').exists()).toBe(true)
     withMinimap.unmount()
   })
 })

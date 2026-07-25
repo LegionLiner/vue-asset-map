@@ -1,11 +1,11 @@
 import { computed, type ComputedRef, type Ref } from 'vue'
 import { projectGraph, resolveView } from '../core/project'
-import type { NetworkGraph } from '../types/graph'
-import type { NetworkView, ProjectionResult } from '../types/view'
+import type { AssetGraph } from '../types/graph'
+import type { AssetView, ProjectionResult } from '../types/view'
 
 /** Return value of {@link useViewProjection}. */
 export interface UseViewProjectionReturn {
-  view: ComputedRef<NetworkView | undefined>
+  view: ComputedRef<AssetView | undefined>
   projection: ComputedRef<ProjectionResult>
   showSublabels: ComputedRef<boolean>
 }
@@ -18,8 +18,8 @@ export interface UseViewProjectionReturn {
  * then falls back to the first view so the map is never left empty.
  */
 export function useViewProjection<E, L>(
-  graph: Ref<NetworkGraph<E, L>> | ComputedRef<NetworkGraph<E, L>>,
-  views: Ref<NetworkView[] | undefined>,
+  graph: Ref<AssetGraph<E, L>> | ComputedRef<AssetGraph<E, L>>,
+  views: Ref<AssetView[] | undefined>,
   viewId: Ref<string | undefined>,
 ): UseViewProjectionReturn {
   const view = computed(() => resolveView(views.value, viewId.value))

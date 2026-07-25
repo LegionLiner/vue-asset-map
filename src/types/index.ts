@@ -1,7 +1,7 @@
-export type { Badge, EntityId, NetworkEntity, XY } from './entity'
-export type { NetworkLink } from './link'
-export type { NetworkView, ProjectionResult } from './view'
-export type { GraphIssue, GraphIssueCode, NetworkGraph } from './graph'
+export type { Badge, EntityId, AssetEntity, XY } from './entity'
+export type { AssetLink } from './link'
+export type { AssetView, ProjectionResult } from './view'
+export type { GraphIssue, GraphIssueCode, AssetGraph } from './graph'
 export type { AggregatedLink, CollapsedGroup, CollapsedLink, CollapseResult, CollapseRule } from './collapse'
 export type {
   FacetCounts,

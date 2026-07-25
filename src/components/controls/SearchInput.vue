@@ -32,26 +32,26 @@ const summary = computed(() => {
 </script>
 
 <template>
-  <div class="vnm-search">
-    <IconSearch class="vnm-search__icon" />
+  <div class="vam-search">
+    <IconSearch class="vam-search__icon" />
 
     <input
       v-model="model"
       type="search"
-      class="vnm-search__input"
+      class="vam-search__input"
       :aria-label="t('search.label')"
       :placeholder="t('search.placeholder')"
     />
 
     <!-- Live region: keyboard users hear the result without leaving the field. -->
-    <span v-if="summary" class="vnm-search__summary" role="status" aria-live="polite">
+    <span v-if="summary" class="vam-search__summary" role="status" aria-live="polite">
       {{ summary }}
     </span>
 
     <button
       v-if="hasQuery"
       type="button"
-      class="vnm-search__clear"
+      class="vam-search__clear"
       :aria-label="t('search.clear')"
       @click="model = ''"
     >
@@ -61,50 +61,50 @@ const summary = computed(() => {
 </template>
 
 <style>
-.vnm-search {
+.vam-search {
   display: flex;
   flex: 1 1 auto;
   align-items: center;
-  gap: var(--vnm-space-2);
+  gap: var(--vam-space-2);
   align-self: stretch;
   padding: 6px 10px;
   min-width: 0;
 }
 
-.vnm-search__input {
+.vam-search__input {
   flex: 1 1 auto;
   width: 100%;
   min-width: 0;
   padding: 0;
   border: 0;
   background: transparent;
-  color: var(--vnm-fg);
-  font-family: var(--vnm-font);
-  font-size: var(--vnm-font-size);
-  line-height: var(--vnm-line-height-sm);
+  color: var(--vam-fg);
+  font-family: var(--vam-font);
+  font-size: var(--vam-font-size);
+  line-height: var(--vam-line-height-sm);
 }
 
-.vnm-search__input::placeholder {
-  color: var(--vnm-fg-subtle);
+.vam-search__input::placeholder {
+  color: var(--vam-fg-subtle);
 }
 
 /* The native type="search" clear button is replaced by our own. */
-.vnm-search__input::-webkit-search-cancel-button {
+.vam-search__input::-webkit-search-cancel-button {
   display: none;
 }
 
-.vnm-search__input:focus {
+.vam-search__input:focus {
   outline: none;
 }
 
-.vnm-search__icon {
+.vam-search__icon {
   flex-shrink: 0;
   width: 20px;
   height: 20px;
-  color: var(--vnm-fg-muted);
+  color: var(--vam-fg-muted);
 }
 
-.vnm-search__clear {
+.vam-search__clear {
   display: flex;
   flex-shrink: 0;
   align-items: center;
@@ -113,26 +113,26 @@ const summary = computed(() => {
   height: 20px;
   padding: 0;
   border: 0;
-  border-radius: var(--vnm-radius-sm);
+  border-radius: var(--vam-radius-sm);
   background: transparent;
-  color: var(--vnm-fg-muted);
-  font-size: var(--vnm-font-size-lg);
+  color: var(--vam-fg-muted);
+  font-size: var(--vam-font-size-lg);
   line-height: 1;
   cursor: pointer;
 }
 
-.vnm-search__clear:hover {
-  color: var(--vnm-fg-subtle);
+.vam-search__clear:hover {
+  color: var(--vam-fg-subtle);
 }
 
-.vnm-search__clear:focus-visible {
-  outline: 2px solid var(--vnm-focus-ring);
+.vam-search__clear:focus-visible {
+  outline: 2px solid var(--vam-focus-ring);
   outline-offset: 1px;
 }
 
-.vnm-search__summary {
-  color: var(--vnm-fg-muted);
-  font-size: var(--vnm-font-size-sm);
+.vam-search__summary {
+  color: var(--vam-fg-muted);
+  font-size: var(--vam-font-size-sm);
   white-space: nowrap;
 }
 </style>

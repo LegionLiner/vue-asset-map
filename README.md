@@ -53,22 +53,22 @@ import 'vue-asset-map/style.css'
 ```vue
 <script setup lang="ts">
 import { ref } from 'vue'
-import { NetworkMap, type NetworkEntity, type NetworkLink, type NetworkView } from 'vue-asset-map'
+import { AssetMap, type AssetEntity, type AssetLink, type AssetView } from 'vue-asset-map'
 import '@vue-flow/core/dist/style.css'
 import 'vue-asset-map/style.css'
 
-const entities: NetworkEntity[] = [
+const entities: AssetEntity[] = [
   { id: 'internet', kind: 'cloud', label: 'Интернет', status: 'online' },
   { id: 'router', kind: 'router', label: 'Keenetic 1', sublabels: ['pteam.keenetic.pro'] },
   { id: 'host', kind: 'workstation', label: 'Dmitry', sublabels: ['10.38.24.72'], parentId: 'router' },
 ]
 
-const links: NetworkLink[] = [
+const links: AssetLink[] = [
   { id: 'l1', source: 'internet', target: 'router', layers: ['physical'] },
   { id: 'l2', source: 'router', target: 'host', layers: ['physical'] },
 ]
 
-const views: NetworkView[] = [{ id: 'physical', label: 'Физическая топология' }]
+const views: AssetView[] = [{ id: 'physical', label: 'Физическая топология' }]
 
 const selection = ref<string[]>([])
 </script>
@@ -76,7 +76,7 @@ const selection = ref<string[]>([])
 <template>
   <!-- Карта занимает весь размер контейнера: задайте ему высоту. -->
   <div style="height: 600px">
-    <NetworkMap v-model:selection="selection" :entities="entities" :links="links" :views="views" />
+    <AssetMap v-model:selection="selection" :entities="entities" :links="links" :views="views" />
   </div>
 </template>
 ```
@@ -87,9 +87,9 @@ const selection = ref<string[]>([])
 
 | Prop                        | Тип                               | Дефолт               | Описание                                                               |
 | --------------------------- | --------------------------------- | -------------------- | ---------------------------------------------------------------------- |
-| `entities`                  | `NetworkEntity<E>[]`              | —                    | Узлы графа. Только чтение: пакет их не мутирует.                       |
-| `links`                     | `NetworkLink<L>[]`                | —                    | Связи. Только чтение.                                                  |
-| `views`                     | `NetworkView[]`                   | `undefined`          | Проекции графа. Без них видно весь граф целиком.                       |
+| `entities`                  | `AssetEntity<E>[]`              | —                    | Узлы графа. Только чтение: пакет их не мутирует.                       |
+| `links`                     | `AssetLink<L>[]`                | —                    | Связи. Только чтение.                                                  |
+| `views`                     | `AssetView[]`                   | `undefined`          | Проекции графа. Без них видно весь граф целиком.                       |
 | `nodeTypes`                 | `Record<string, Component>`       | `{}`                 | Реестр компонентов узлов: `kind` → компонент. Мержится с дефолтным.    |
 | `edgeTypes`                 | `Record<string, Component>`       | `{}`                 | Реестр компонентов рёбер: `link.kind` → компонент.                     |
 | `layout`                    | `{ engine, options? }`            | `undefined`          | Раскладка. Сильнее, чем `view.layout`. Без обоих — `manual`.           |
@@ -112,11 +112,11 @@ const selection = ref<string[]>([])
 | `searchDebounce`            | `number`                          | `200`                | Задержка применения поискового запроса, мс.                            |
 | `loading`                   | `boolean`                         | `false`              | Показать индикатор поверх полотна.                                     |
 
-Дженерики `NetworkMapProps<E, L>` задают тип ваших `meta`:
+Дженерики `AssetMapProps<E, L>` задают тип ваших `meta`:
 
 ```vue
-<NetworkMap :entities="entities" :links="links" />
-<!-- entities: NetworkEntity<AssetMeta>[] → в слотах и событиях meta уже типизирован -->
+<AssetMap :entities="entities" :links="links" />
+<!-- entities: AssetEntity<AssetMeta>[] → в слотах и событиях meta уже типизирован -->
 ```
 
 ## Двусторонние привязки
@@ -179,12 +179,12 @@ const selection = ref<string[]>([])
 какие ваши поля важны.
 
 ```vue
-<NetworkMap :entities="entities" :links="links">
+<AssetMap :entities="entities" :links="links">
   <template #details="{ entity, tab, close }">
     <MyAssetCard v-if="tab === 'overview'" :asset="entity.meta" @close="close" />
     <MyAssetLinks v-else :id="entity.id" />
   </template>
-</NetworkMap>
+</AssetMap>
 ```
 
 ## Императивный API
@@ -192,9 +192,9 @@ const selection = ref<string[]>([])
 ```vue
 <script setup lang="ts">
 import { useTemplateRef } from 'vue'
-import { NetworkMap, type NetworkMapExposed } from 'vue-asset-map'
+import { AssetMap, type AssetMapExposed } from 'vue-asset-map'
 
-const map = useTemplateRef<NetworkMapExposed>('map')
+const map = useTemplateRef<AssetMapExposed>('map')
 
 async function showPath() {
   const path = map.value?.highlightPath('ws-artjom', 'vps-nginx')
@@ -203,7 +203,7 @@ async function showPath() {
 </script>
 
 <template>
-  <NetworkMap ref="map" :entities="entities" :links="links" />
+  <AssetMap ref="map" :entities="entities" :links="links" />
 </template>
 ```
 
@@ -221,13 +221,13 @@ async function showPath() {
 Два способа. Слот — когда нужно поменять вид одного-двух типов:
 
 ```vue
-<NetworkMap :entities="entities" :links="links">
+<AssetMap :entities="entities" :links="links">
   <template #node-router="{ entity, simplified }">
     <div class="my-router" :class="{ 'my-router--small': simplified }">
       {{ entity?.label }}
     </div>
   </template>
-</NetworkMap>
+</AssetMap>
 ```
 
 Реестр компонентов — когда узел сложный и живёт своим файлом:
@@ -240,7 +240,7 @@ const nodeTypes = { router: RouterNode }
 </script>
 
 <template>
-  <NetworkMap :node-types="nodeTypes" :entities="entities" :links="links" />
+  <AssetMap :node-types="nodeTypes" :entities="entities" :links="links" />
 </template>
 ```
 
@@ -250,9 +250,9 @@ const nodeTypes = { router: RouterNode }
 ```vue
 <script setup lang="ts">
 import { Handle, Position } from '@vue-flow/core'
-import { useMapContext, type NetworkNodeData } from 'vue-asset-map'
+import { useMapContext, type AssetNodeData } from 'vue-asset-map'
 
-const props = defineProps<{ id: string; data?: NetworkNodeData }>()
+const props = defineProps<{ id: string; data?: AssetNodeData }>()
 const map = useMapContext()
 </script>
 
@@ -282,7 +282,7 @@ const map = useMapContext()
 свернуть до шапки:
 
 ```vue
-<NetworkMap v-model:open-details="openDetails" :max-details-windows="3" :entities="entities" :links="links" />
+<AssetMap v-model:open-details="openDetails" :max-details-windows="3" :entities="entities" :links="links" />
 ```
 
 При достижении лимита закрывается самое старое окно. Уже открытое окно повторным
@@ -297,7 +297,7 @@ const map = useMapContext()
 кладите в слот `#windows` — он рендерится поверх окон подробностей:
 
 ```vue
-<NetworkMap :entities="entities" :links="links">
+<AssetMap :entities="entities" :links="links">
   <template #windows>
     <!-- Окно из одной шапки, которое нельзя закрыть: история событий. -->
     <MapWindow class="my-history" header-only drag-handle :closable="false" :collapsible="false">
@@ -308,7 +308,7 @@ const map = useMapContext()
       </template>
     </MapWindow>
   </template>
-</NetworkMap>
+</AssetMap>
 ```
 
 ```css
@@ -346,7 +346,7 @@ const map = useMapContext()
 набор считается через `blastRadius`, поэтому распространение видно целиком:
 
 ```vue
-<NetworkMap
+<AssetMap
   :infected="['vps-tailscale']"
   :infection-options="{ direction: 'downstream', maxDepth: 2 }"
   :entities="entities"
@@ -354,8 +354,8 @@ const map = useMapContext()
 />
 ```
 
-Захваченные узлы получают класс `vnm-node--infected` (помеченные вручную — ещё и
-`vnm-node--infection-source`), связи внутри захвата — `vnm-edge--infected`.
+Захваченные узлы получают класс `vam-node--infected` (помеченные вручную — ещё и
+`vam-node--infection-source`), связи внутри захвата — `vam-edge--infected`.
 Красится связь только когда заражены **оба** её конца: ребро с одним заражённым
 концом — это ровно та связь, по которой захват не прошёл.
 
@@ -363,10 +363,10 @@ const map = useMapContext()
 
 | Токен                   | Назначение                      |
 | ----------------------- | ------------------------------- |
-| `--vnm-infected-bg`     | Заливка круга и плашки подписей |
-| `--vnm-infected-border` | Обводка круга и плашки          |
-| `--vnm-infected-fg`     | Цвет иконки                     |
-| `--vnm-infected-edge`   | Цвет заражённых связей          |
+| `--vam-infected-bg`     | Заливка круга и плашки подписей |
+| `--vam-infected-border` | Обводка круга и плашки          |
+| `--vam-infected-fg`     | Цвет иконки                     |
+| `--vam-infected-edge`   | Цвет заражённых связей          |
 
 ## Маркеры принадлежности
 
@@ -422,7 +422,7 @@ const markers: NodeMarkerDef[] = [
 каждую сущность.
 
 ```vue
-<NetworkMap :markers="markers" :marker-hover-delay="500" :entities="entities" :links="links" />
+<AssetMap :markers="markers" :marker-hover-delay="500" :entities="entities" :links="links" />
 ```
 
 Наведение на кружок подсвечивает всех, у кого он есть, и затемняет остальных.
@@ -439,13 +439,13 @@ const markers: NodeMarkerDef[] = [
 
 | Токен                   | Назначение                       |
 | ----------------------- | -------------------------------- |
-| `--vnm-marker-1..3`     | Палитра обычных маркеров         |
-| `--vnm-marker-infected` | Цвет маркеров заражённого узла   |
-| `--vnm-marker-size`     | Диаметр кружка                   |
-| `--vnm-marker-dot-size` | Диаметр заполнения внутри кружка |
-| `--vnm-marker-gap`      | Расстояние между кружками        |
-| `--vnm-marker-offset`   | Отступ от плашки подписей        |
-| `--vnm-marker-bg`       | Фон кружка под заполнением       |
+| `--vam-marker-1..3`     | Палитра обычных маркеров         |
+| `--vam-marker-infected` | Цвет маркеров заражённого узла   |
+| `--vam-marker-size`     | Диаметр кружка                   |
+| `--vam-marker-dot-size` | Диаметр заполнения внутри кружка |
+| `--vam-marker-gap`      | Расстояние между кружками        |
+| `--vam-marker-offset`   | Отступ от плашки подписей        |
+| `--vam-marker-bg`       | Фон кружка под заполнением       |
 
 Приоритет затемнения, когда несколько режимов активны сразу: наведение на маркер
 → поиск → выделение. Наведение самое короткое и самое свежее действие, поэтому
@@ -453,19 +453,19 @@ const markers: NodeMarkerDef[] = [
 
 ## Темизация
 
-Все цвета, отступы, радиусы и шрифты — CSS custom properties на корневом элементе `.vnm-root`. В компонентах нет ни
+Все цвета, отступы, радиусы и шрифты — CSS custom properties на корневом элементе `.vam-root`. В компонентах нет ни
 одного литерального цвета, и это проверяется тестом.
 
-Тёмная тема включается **классом** `.vnm-theme-dark`, а не `@media (prefers-color-scheme)`: явный переключатель в
+Тёмная тема включается **классом** `.vam-theme-dark`, а не `@media (prefers-color-scheme)`: явный переключатель в
 продукте должен побеждать системную настройку.
 
 Переопределяйте токены на своём контейнере:
 
 ```css
-.my-app .vnm-root {
-  --vnm-accent: #7c3aed;
-  --vnm-node-radius: 4px;
-  --vnm-font: 'Inter', sans-serif;
+.my-app .vam-root {
+  --vam-accent: #7c3aed;
+  --vam-node-radius: 4px;
+  --vam-font: 'Inter', sans-serif;
 }
 ```
 
@@ -473,54 +473,54 @@ const markers: NodeMarkerDef[] = [
 
 | Токен                       | Назначение                                 |
 | --------------------------- | ------------------------------------------ |
-| `--vnm-bg`                  | Фон полотна                                |
-| `--vnm-surface`             | Фон контролов, окна, кругов узлов          |
-| `--vnm-surface-sunken`      | Шапка окна подробностей, вдавленные плашки |
-| `--vnm-fg`                  | Основной текст                             |
-| `--vnm-fg-subtle`           | Заголовки фильтров, подписи контролов      |
-| `--vnm-fg-muted`            | Второстепенный текст, иконки               |
-| `--vnm-border`              | Границы                                    |
-| `--vnm-accent`              | Акцент, рамка выделенного узла, чекбоксы   |
-| `--vnm-accent-soft`         | Фон активного режима в переключателе видов |
-| `--vnm-edge`                | Обычные рёбра                              |
-| `--vnm-edge-active`         | Пунктирные и подсвеченные рёбра            |
-| `--vnm-status-online`       | Индикатор состояния                        |
-| `--vnm-status-offline`      | Индикатор состояния                        |
-| `--vnm-status-warning`      | Индикатор состояния                        |
-| `--vnm-node-size`           | Диаметр круга дочернего узла               |
-| `--vnm-node-size-root`      | Диаметр круга корневого узла               |
-| `--vnm-node-label-gap`      | Отступ от круга до подписи                 |
-| `--vnm-node-label-width`    | Ширина блока подписей                      |
-| `--vnm-node-label-color`    | Цвет имени узла                            |
-| `--vnm-node-sublabel-color` | Цвет внешнего адреса                       |
-| `--vnm-node-overlay-color`  | Цвет оверлейного адреса                    |
-| `--vnm-node-radius`         | Радиус рамки выделения вокруг узла         |
-| `--vnm-node-toggle-size`    | Размер кнопки свёртки поддерева            |
-| `--vnm-node-status-size`    | Размер индикатора состояния                |
-| `--vnm-window-width`        | Ширина окна подробностей                   |
-| `--vnm-filter-width`        | Ширина панели фильтров                     |
-| `--vnm-font`                | Шрифт                                      |
+| `--vam-bg`                  | Фон полотна                                |
+| `--vam-surface`             | Фон контролов, окна, кругов узлов          |
+| `--vam-surface-sunken`      | Шапка окна подробностей, вдавленные плашки |
+| `--vam-fg`                  | Основной текст                             |
+| `--vam-fg-subtle`           | Заголовки фильтров, подписи контролов      |
+| `--vam-fg-muted`            | Второстепенный текст, иконки               |
+| `--vam-border`              | Границы                                    |
+| `--vam-accent`              | Акцент, рамка выделенного узла, чекбоксы   |
+| `--vam-accent-soft`         | Фон активного режима в переключателе видов |
+| `--vam-edge`                | Обычные рёбра                              |
+| `--vam-edge-active`         | Пунктирные и подсвеченные рёбра            |
+| `--vam-status-online`       | Индикатор состояния                        |
+| `--vam-status-offline`      | Индикатор состояния                        |
+| `--vam-status-warning`      | Индикатор состояния                        |
+| `--vam-node-size`           | Диаметр круга дочернего узла               |
+| `--vam-node-size-root`      | Диаметр круга корневого узла               |
+| `--vam-node-label-gap`      | Отступ от круга до подписи                 |
+| `--vam-node-label-width`    | Ширина блока подписей                      |
+| `--vam-node-label-color`    | Цвет имени узла                            |
+| `--vam-node-sublabel-color` | Цвет внешнего адреса                       |
+| `--vam-node-overlay-color`  | Цвет оверлейного адреса                    |
+| `--vam-node-radius`         | Радиус рамки выделения вокруг узла         |
+| `--vam-node-toggle-size`    | Размер кнопки свёртки поддерева            |
+| `--vam-node-status-size`    | Размер индикатора состояния                |
+| `--vam-window-width`        | Ширина окна подробностей                   |
+| `--vam-filter-width`        | Ширина панели фильтров                     |
+| `--vam-font`                | Шрифт                                      |
 
 ### Как выглядит узел по умолчанию
 
 Круг с иконкой плюс блок подписей под ним. Корневые сущности (`parentId` пуст)
-рисуются кругом `--vnm-node-size-root`, остальные — `--vnm-node-size`; уровень
+рисуются кругом `--vam-node-size-root`, остальные — `--vam-node-size`; уровень
 читается по размеру, а не по отдельному полю в данных.
 
 Подписи берутся из `label` и `sublabels`: первая строка — имя, вторая считается
 внешним адресом, остальные — оверлейными, и цвета у них разные
-(`--vnm-node-sublabel-color` против `--vnm-node-overlay-color`). Так в
+(`--vam-node-sublabel-color` против `--vam-node-overlay-color`). Так в
 VPN-оверлее внешний и внутренний адрес различаются с одного взгляда.
 
 Индикатор состояния — круг в правом верхнем углу, цвет берётся из
 `themeConfig.statusColors`. Иконка — из `themeConfig.kindIcons`; в её SVG
 используйте `currentColor`, иначе она не отреагирует на смену темы.
 
-Выделенный узел получает рамку `--vnm-accent` вокруг круга и подписи целиком.
+Выделенный узел получает рамку `--vam-accent` вокруг круга и подписи целиком.
 
 ### Свёртка поддерева кнопкой на узле
 
-У узла с потомками в правом верхнем углу есть кнопка `--vnm-node-toggle-size`:
+У узла с потомками в правом верхнем углу есть кнопка `--vam-node-toggle-size`:
 она прячет всё поддерево внутрь узла и возвращает обратно. Рёбра спрятанных
 потомков переносятся на сам узел и схлопываются в `AggregatedLink` — связь не
 теряется, только перестаёт быть детализированной.
@@ -532,12 +532,12 @@ VPN-оверлее внешний и внутренний адрес разли�
 Значения `status` — ваши. Сопоставьте их цветам через `themeConfig`:
 
 ```vue
-<NetworkMap
+<AssetMap
   :theme-config="{
     statusColors: {
-      online: 'var(--vnm-status-online)',
-      offline: 'var(--vnm-status-offline)',
-      degraded: 'var(--vnm-status-warning)',
+      online: 'var(--vam-status-online)',
+      offline: 'var(--vam-status-offline)',
+      degraded: 'var(--vam-status-warning)',
     },
   }"
   :entities="entities"
@@ -550,7 +550,7 @@ VPN-оверлее внешний и внутренний адрес разли�
 Встроены `manual` (сетка с сохранением закреплённых позиций) и `radial` (кольца по расстоянию от корня).
 
 ```vue
-<NetworkMap
+<AssetMap
   :layout="{ engine: 'radial', options: { rootId: 'internet' } }"
   :entities="entities"
   :links="links"
@@ -606,7 +606,7 @@ export const circleLayout: LayoutEngine<{ radius?: number }> = {
 группировки настраиваются:
 
 ```vue
-<NetworkMap
+<AssetMap
   :collapse="{
     threshold: 20,
     groupBy: (entity) => entity.meta?.cluster ?? entity.kind,
@@ -638,7 +638,7 @@ export const circleLayout: LayoutEngine<{ radius?: number }> = {
 | `10.38.24.7*`   | `.7` и `.70`–`.79`                |
 
 ```vue
-<NetworkMap
+<AssetMap
   :filter-options="{
     neighborDepth: 2,
     keepPathToRoot: true,
@@ -688,7 +688,7 @@ const filterGroups: FilterGroupDef[] = [
 ```
 
 ```vue
-<NetworkMap
+<AssetMap
   v-model:filters="filters"
   v-model:open-filter-groups="openFilterGroups"
   :filter-options="{ groups: filterGroups }"
@@ -710,9 +710,9 @@ const filterGroups: FilterGroupDef[] = [
 
 ```ts
 const openFilterGroups = ref<string[] | undefined>(
-  JSON.parse(localStorage.getItem('vnm:filters') ?? 'null') ?? undefined,
+  JSON.parse(localStorage.getItem('vam:filters') ?? 'null') ?? undefined,
 )
-watch(openFilterGroups, (value) => localStorage.setItem('vnm:filters', JSON.stringify(value)))
+watch(openFilterGroups, (value) => localStorage.setItem('vam:filters', JSON.stringify(value)))
 ```
 
 ## Ядро без Vue
@@ -745,7 +745,7 @@ const graph = buildGraph(entities, links, {
 - Видимый focus-ring на всех интерактивных элементах, не только `:hover`.
 - `role="application"` у полотна, `aria-label` у иконок и кнопок, `role="tablist"` у табов панели.
 - Счётчик результатов поиска — live-область, о результате сообщают, не уводя фокус из поля.
-- `--vnm-transition` обнуляется при `prefers-reduced-motion: reduce`.
+- `--vam-transition` обнуляется при `prefers-reduced-motion: reduce`.
 
 ## SSR
 

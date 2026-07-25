@@ -6,9 +6,9 @@
  */
 import type {
   FilterGroupDef,
-  NetworkEntity,
-  NetworkLink,
-  NetworkView,
+  AssetEntity,
+  AssetLink,
+  AssetView,
   NodeMarkerDef,
   MarkerAnchor,
 } from '../src/types/index'
@@ -33,8 +33,8 @@ export interface AssetMeta {
   severity?: 'critical' | 'high' | 'medium' | 'low'
 }
 
-export type DemoEntity = NetworkEntity<AssetMeta>
-export type DemoLink = NetworkLink<{ bandwidth?: string; protocol?: string }>
+export type DemoEntity = AssetEntity<AssetMeta>
+export type DemoLink = AssetLink<{ bandwidth?: string; protocol?: string }>
 
 /** Слои связей. Значения совпадают с id видов — это и есть дефолт проекции. */
 export const LAYER_PHYSICAL = 'physical'
@@ -343,7 +343,7 @@ export const links: DemoLink[] = [
   link('o-artjom-dmitry', 'ws-artjom', 'ws-dmitry', [LAYER_LOGICAL], { kind: 'dashed' }),
 ]
 
-export const views: NetworkView[] = [
+export const views: AssetView[] = [
   {
     id: LAYER_PHYSICAL,
     label: 'Физическая топология',
@@ -429,9 +429,9 @@ export const markerAnchors: MarkerAnchor[] = [
 export const nodeMarkers: NodeMarkerDef[] = connectionMarkers(markerAnchors)
 
 export const statusColors: Record<string, string> = {
-  online: 'var(--vnm-status-online)',
-  offline: 'var(--vnm-status-offline)',
-  degraded: 'var(--vnm-status-warning)',
+  online: 'var(--vam-status-online)',
+  offline: 'var(--vam-status-offline)',
+  degraded: 'var(--vam-status-warning)',
 }
 
 /** Синтетический граф для бенчмарка: `nodes` узлов и примерно `edges` рёбер. */

@@ -45,10 +45,10 @@ export type { CidrRange } from './ip'
 // Types come from their own modules rather than the `types/index` barrel: the
 // barrel pulls in `types/theme`, which references Vue's `Component`. Even in a
 // type-only import that would make "core without Vue" a matter of trust.
-export type { Badge, EntityId, NetworkEntity, XY } from '../types/entity'
-export type { NetworkLink } from '../types/link'
-export type { NetworkView, ProjectionResult } from '../types/view'
-export type { GraphIssue, GraphIssueCode, NetworkGraph } from '../types/graph'
+export type { Badge, EntityId, AssetEntity, XY } from '../types/entity'
+export type { AssetLink } from '../types/link'
+export type { AssetView, ProjectionResult } from '../types/view'
+export type { GraphIssue, GraphIssueCode, AssetGraph } from '../types/graph'
 export type {
   AggregatedLink,
   CollapsedGroup,

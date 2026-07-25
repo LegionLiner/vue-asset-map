@@ -1,8 +1,8 @@
 import { computed, type ComputedRef, type Ref } from 'vue'
 import { MarkerType, type Edge, type Node } from '@vue-flow/core'
 import type { Component } from 'vue'
-import type { EntityId, NetworkEntity, XY } from '../types/entity'
-import type { NetworkGraph } from '../types/graph'
+import type { EntityId, AssetEntity, XY } from '../types/entity'
+import type { AssetGraph } from '../types/graph'
 import type { CollapsedGroup, CollapseResult, CollapsedLink } from '../types/collapse'
 import { isAggregatedLink } from '../core/collapse'
 import { edgeTypeFor, nodeTypeFor, NODE_TYPE_GROUP } from '../registry/nodeRegistry'
@@ -10,7 +10,7 @@ import { edgeTypeFor, nodeTypeFor, NODE_TYPE_GROUP } from '../registry/nodeRegis
 /** `node.data` of a node backed by a real entity. */
 export interface EntityNodeData<E = unknown> {
   variant: 'entity'
-  entity: NetworkEntity<E>
+  entity: AssetEntity<E>
 }
 
 /** `node.data` of a synthetic node standing in for a collapsed group. */
@@ -20,10 +20,10 @@ export interface GroupNodeData {
 }
 
 /** `node.data` of any node on the map; discriminated by `variant`. */
-export type NetworkNodeData<E = unknown> = EntityNodeData<E> | GroupNodeData
+export type AssetNodeData<E = unknown> = EntityNodeData<E> | GroupNodeData
 
 /** `edge.data` of every edge on the map. */
-export interface NetworkEdgeData {
+export interface AssetEdgeData {
   link: CollapsedLink<unknown>
   aggregated: boolean
   /** Number of original links behind this edge; `1` unless `aggregated`. */
@@ -32,7 +32,7 @@ export interface NetworkEdgeData {
 
 /** Parameters of {@link useFlowElements}. */
 export interface UseFlowElementsParams<E, L> {
-  graph: ComputedRef<NetworkGraph<E, L>>
+  graph: ComputedRef<AssetGraph<E, L>>
   collapsed: ComputedRef<CollapseResult<unknown>>
   positionOf: (id: string) => XY | undefined
   /** Survivors of the filter; `undefined` means no filter is active. */
@@ -123,7 +123,7 @@ export function useFlowElements<E, L>(params: UseFlowElementsParams<E, L>): UseF
           link,
           aggregated,
           count: aggregated ? link.count : 1,
-        } satisfies NetworkEdgeData,
+        } satisfies AssetEdgeData,
         // Edge clicks are handled by the edge component itself.
         selectable: false,
         focusable: false,
@@ -147,7 +147,7 @@ function buildNode(
   id: string,
   type: string,
   position: XY,
-  data: NetworkNodeData | undefined,
+  data: AssetNodeData | undefined,
   draggable: boolean,
   visible: boolean,
 ): Node {

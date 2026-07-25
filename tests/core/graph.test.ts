@@ -10,18 +10,18 @@ import {
   parentIdOf,
 } from '../../src/core/index'
 import type { GraphIssue } from '../../src/types/graph'
-import type { NetworkEntity } from '../../src/types/entity'
-import type { NetworkLink } from '../../src/types/link'
+import type { AssetEntity } from '../../src/types/entity'
+import type { AssetLink } from '../../src/types/link'
 import { entities, links } from '../../fixtures/infra'
 
-const e = (id: string, extra: Partial<NetworkEntity> = {}): NetworkEntity => ({
+const e = (id: string, extra: Partial<AssetEntity> = {}): AssetEntity => ({
   id,
   kind: 'host',
   label: id,
   ...extra,
 })
 
-const l = (id: string, source: string, target: string, extra: Partial<NetworkLink> = {}): NetworkLink => ({
+const l = (id: string, source: string, target: string, extra: Partial<AssetLink> = {}): AssetLink => ({
   id,
   source,
   target,

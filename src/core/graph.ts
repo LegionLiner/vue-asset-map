@@ -1,6 +1,6 @@
-import type { EntityId, NetworkEntity } from '../types/entity'
-import type { NetworkLink } from '../types/link'
-import type { GraphIssue, NetworkGraph } from '../types/graph'
+import type { EntityId, AssetEntity } from '../types/entity'
+import type { AssetLink } from '../types/link'
+import type { GraphIssue, AssetGraph } from '../types/graph'
 
 /** Options of {@link buildGraph}. */
 export interface BuildGraphOptions {
@@ -21,13 +21,13 @@ export interface BuildGraphOptions {
  *  - cycle in the hierarchy — the parent link is cut at the node that closed it.
  */
 export function buildGraph<E = unknown, L = unknown>(
-  entities: readonly NetworkEntity<E>[],
-  links: readonly NetworkLink<L>[],
+  entities: readonly AssetEntity<E>[],
+  links: readonly AssetLink<L>[],
   options: BuildGraphOptions = {},
-): NetworkGraph<E, L> {
+): AssetGraph<E, L> {
   const { onIssue } = options
 
-  const entityMap = new Map<EntityId, NetworkEntity<E>>()
+  const entityMap = new Map<EntityId, AssetEntity<E>>()
   for (const entity of entities) {
     if (entityMap.has(entity.id)) {
       onIssue?.({ code: 'duplicate-entity', id: entity.id, detail: 'first occurrence wins' })
@@ -36,7 +36,7 @@ export function buildGraph<E = unknown, L = unknown>(
     entityMap.set(entity.id, entity)
   }
 
-  const linkMap = new Map<string, NetworkLink<L>>()
+  const linkMap = new Map<string, AssetLink<L>>()
   const adjacency = new Map<EntityId, EntityId[]>()
   const outgoing = new Map<EntityId, string[]>()
   const incoming = new Map<EntityId, string[]>()
@@ -93,7 +93,7 @@ interface Hierarchy {
 }
 
 function buildHierarchy<E>(
-  entityMap: ReadonlyMap<EntityId, NetworkEntity<E>>,
+  entityMap: ReadonlyMap<EntityId, AssetEntity<E>>,
   onIssue: BuildGraphOptions['onIssue'],
 ): Hierarchy {
   const parentOf = new Map<EntityId, EntityId | null>()
@@ -149,12 +149,12 @@ function buildHierarchy<E>(
 }
 
 /** Effective parent of a node: `null` for a root and for any repaired hierarchy. */
-export function parentIdOf<E, L>(graph: NetworkGraph<E, L>, id: EntityId): EntityId | null {
+export function parentIdOf<E, L>(graph: AssetGraph<E, L>, id: EntityId): EntityId | null {
   return graph.parentOf.get(id) ?? null
 }
 
 /** Ancestors from the direct parent up to the root. Cycle-safe. */
-export function ancestorsOf<E, L>(graph: NetworkGraph<E, L>, id: EntityId): EntityId[] {
+export function ancestorsOf<E, L>(graph: AssetGraph<E, L>, id: EntityId): EntityId[] {
   const chain: EntityId[] = []
   const seen = new Set<EntityId>([id])
   let cursor = parentIdOf(graph, id)
@@ -167,7 +167,7 @@ export function ancestorsOf<E, L>(graph: NetworkGraph<E, L>, id: EntityId): Enti
 }
 
 /** Descendants in depth-first order, excluding the node itself. Cycle-safe. */
-export function descendantsOf<E, L>(graph: NetworkGraph<E, L>, id: EntityId): EntityId[] {
+export function descendantsOf<E, L>(graph: AssetGraph<E, L>, id: EntityId): EntityId[] {
   const out: EntityId[] = []
   const seen = new Set<EntityId>([id])
   const stack: EntityId[] = [id]
@@ -190,12 +190,12 @@ export function descendantsOf<E, L>(graph: NetworkGraph<E, L>, id: EntityId): En
 
 /** Links incident to a node, optionally restricted to the given layers. */
 export function incidentLinks<E, L>(
-  graph: NetworkGraph<E, L>,
+  graph: AssetGraph<E, L>,
   id: EntityId,
   layers?: readonly string[],
-): NetworkLink<L>[] {
+): AssetLink<L>[] {
   const ids = graph.adjacency.get(id) ?? []
-  const out: NetworkLink<L>[] = []
+  const out: AssetLink<L>[] = []
   for (const linkId of ids) {
     const link = graph.links.get(linkId)
     if (!link) continue
@@ -206,17 +206,17 @@ export function incidentLinks<E, L>(
 }
 
 /** Whether a link sits on any of `layers`. Empty `layers` matches every link. */
-export function matchesLayers(link: NetworkLink, layers: readonly string[]): boolean {
+export function matchesLayers(link: AssetLink, layers: readonly string[]): boolean {
   if (layers.length === 0) return true
   return link.layers.some((layer) => layers.includes(layer))
 }
 
 /** The far end of a link relative to `id`; a self-loop returns `id` itself. */
-export function otherEnd(link: NetworkLink, id: EntityId): EntityId {
+export function otherEnd(link: AssetLink, id: EntityId): EntityId {
   return link.source === id ? link.target : link.source
 }
 
 /** Graph with no entities and no links; useful as an initial value. */
-export function emptyGraph<E = unknown, L = unknown>(): NetworkGraph<E, L> {
+export function emptyGraph<E = unknown, L = unknown>(): AssetGraph<E, L> {
   return buildGraph<E, L>([], [])
 }

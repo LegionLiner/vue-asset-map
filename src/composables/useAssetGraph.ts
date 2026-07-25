@@ -1,12 +1,12 @@
 import { computed, markRaw, type ComputedRef, type Ref } from 'vue'
 import { buildGraph } from '../core/graph'
-import type { NetworkEntity } from '../types/entity'
-import type { NetworkLink } from '../types/link'
-import type { GraphIssue, NetworkGraph } from '../types/graph'
+import type { AssetEntity } from '../types/entity'
+import type { AssetLink } from '../types/link'
+import type { GraphIssue, AssetGraph } from '../types/graph'
 
-/** Return value of {@link useNetworkGraph}. */
-export interface UseNetworkGraphReturn<E, L> {
-  graph: ComputedRef<NetworkGraph<E, L>>
+/** Return value of {@link useAssetGraph}. */
+export interface UseAssetGraphReturn<E, L> {
+  graph: ComputedRef<AssetGraph<E, L>>
   /** Everything the builder dropped or repaired in the current input. */
   issues: ComputedRef<readonly GraphIssue[]>
 }
@@ -23,10 +23,10 @@ export interface UseNetworkGraphReturn<E, L> {
  * Reactivity is not wanted there — the details panel only reads it. It marks
  * `meta` specifically, never the entity: the rest belongs to the consumer.
  */
-export function useNetworkGraph<E, L>(
-  entities: Ref<NetworkEntity<E>[]>,
-  links: Ref<NetworkLink<L>[]>,
-): UseNetworkGraphReturn<E, L> {
+export function useAssetGraph<E, L>(
+  entities: Ref<AssetEntity<E>[]>,
+  links: Ref<AssetLink<L>[]>,
+): UseAssetGraphReturn<E, L> {
   const built = computed(() => {
     const collected: GraphIssue[] = []
     const graph = buildGraph<E, L>(entities.value, links.value, {

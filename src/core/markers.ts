@@ -1,5 +1,5 @@
 import type { EntityId } from '../types/entity'
-import type { NetworkGraph } from '../types/graph'
+import type { AssetGraph } from '../types/graph'
 import type { ConnectionMarkerOptions, MarkerAnchor, NodeMarkerDef } from '../types/marker'
 import { neighbors } from './traverse'
 
@@ -32,7 +32,7 @@ export function connectionMarkers(
   return anchors.map((anchor) => {
     const def: NodeMarkerDef = {
       id: anchor.id,
-      members: (graph: NetworkGraph) => membersOf(graph, anchor.id, depth, layers, includeAnchor),
+      members: (graph: AssetGraph) => membersOf(graph, anchor.id, depth, layers, includeAnchor),
     }
     if (anchor.label !== undefined) def.label = anchor.label
     if (anchor.color !== undefined) def.color = anchor.color
@@ -41,7 +41,7 @@ export function connectionMarkers(
 }
 
 function membersOf(
-  graph: NetworkGraph,
+  graph: AssetGraph,
   anchorId: EntityId,
   depth: number,
   layers: readonly string[] | undefined,
@@ -63,7 +63,7 @@ function membersOf(
  * @param count - how many anchors to return; `0` or less yields an empty list.
  */
 export function topAnchors<E, L>(
-  graph: NetworkGraph<E, L>,
+  graph: AssetGraph<E, L>,
   count: number,
   layers?: readonly string[],
 ): MarkerAnchor[] {

@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { BaseEdge, EdgeLabelRenderer, getBezierPath, Position } from '@vue-flow/core'
 import { useMapContext } from '../../composables/useMapContext'
-import type { NetworkEdgeData } from '../../composables/useFlowElements'
+import type { AssetEdgeData } from '../../composables/useFlowElements'
 
 /**
  * The default map edge.
@@ -26,7 +26,7 @@ const props = defineProps<{
   sourcePosition?: Position
   targetPosition?: Position
   markerEnd?: string
-  data?: NetworkEdgeData
+  data?: AssetEdgeData
 }>()
 
 const map = useMapContext()
@@ -55,13 +55,13 @@ const dimmed = computed(() => map.isEdgeDimmed(props.id))
 const infected = computed(() => map.isEdgeInfected(props.id))
 
 const classes = computed(() => [
-  'vnm-edge',
-  `vnm-edge--kind-${link.value?.kind ?? 'default'}`,
+  'vam-edge',
+  `vam-edge--kind-${link.value?.kind ?? 'default'}`,
   {
-    'vnm-edge--highlighted': highlighted.value,
-    'vnm-edge--dimmed': dimmed.value,
-    'vnm-edge--aggregated': aggregated.value,
-    'vnm-edge--infected': infected.value,
+    'vam-edge--highlighted': highlighted.value,
+    'vam-edge--dimmed': dimmed.value,
+    'vam-edge--aggregated': aggregated.value,
+    'vam-edge--infected': infected.value,
   },
 ])
 
@@ -81,8 +81,8 @@ const labelText = computed(() => {
 
   <EdgeLabelRenderer v-if="labelText !== undefined || labelSlot">
     <div
-      class="vnm-edge__label"
-      :class="{ 'vnm-edge__label--dimmed': dimmed }"
+      class="vam-edge__label"
+      :class="{ 'vam-edge__label--dimmed': dimmed }"
       :style="{ transform: `translate(-50%, -50%) translate(${path.labelX}px, ${path.labelY}px)` }"
       @click="map.onEdgeClick(id, $event)"
     >
@@ -93,64 +93,64 @@ const labelText = computed(() => {
 </template>
 
 <style>
-.vnm-edge {
-  stroke: var(--vnm-edge);
-  stroke-width: var(--vnm-edge-width);
+.vam-edge {
+  stroke: var(--vam-edge);
+  stroke-width: var(--vam-edge-width);
   fill: none;
   transition:
-    stroke var(--vnm-transition),
-    stroke-width var(--vnm-transition),
-    opacity var(--vnm-transition);
+    stroke var(--vam-transition),
+    stroke-width var(--vam-transition),
+    opacity var(--vam-transition);
 }
 
-.vnm-edge--kind-dashed {
-  stroke: var(--vnm-edge-active);
+.vam-edge--kind-dashed {
+  stroke: var(--vam-edge-active);
   stroke-dasharray: 6 4;
 }
 
-.vnm-edge--kind-dotted {
+.vam-edge--kind-dotted {
   stroke-dasharray: 2 3;
 }
 
-.vnm-edge--aggregated {
-  stroke-width: var(--vnm-edge-width-active);
+.vam-edge--aggregated {
+  stroke-width: var(--vam-edge-width-active);
 }
 
-.vnm-edge--highlighted {
-  stroke: var(--vnm-edge-active);
-  stroke-width: var(--vnm-edge-width-active);
+.vam-edge--highlighted {
+  stroke: var(--vam-edge-active);
+  stroke-width: var(--vam-edge-width-active);
 }
 
-.vnm-edge--dimmed {
-  stroke: var(--vnm-edge-dimmed);
-  opacity: var(--vnm-dimmed-opacity);
+.vam-edge--dimmed {
+  stroke: var(--vam-edge-dimmed);
+  opacity: var(--vam-dimmed-opacity);
 }
 
 /* An infected link outranks both dimming and path highlighting: capture
    travelled along it. */
-.vnm-edge--infected,
-.vnm-edge--infected.vnm-edge--dimmed,
-.vnm-edge--infected.vnm-edge--highlighted {
-  stroke: var(--vnm-infected-edge);
-  stroke-width: var(--vnm-edge-width-active);
+.vam-edge--infected,
+.vam-edge--infected.vam-edge--dimmed,
+.vam-edge--infected.vam-edge--highlighted {
+  stroke: var(--vam-infected-edge);
+  stroke-width: var(--vam-edge-width-active);
   opacity: 1;
 }
 
-.vnm-edge__label {
+.vam-edge__label {
   position: absolute;
-  padding: 0 var(--vnm-space-1);
-  border: 1px solid var(--vnm-border);
-  border-radius: var(--vnm-radius-sm);
-  background: var(--vnm-edge-label-bg);
-  color: var(--vnm-fg-muted);
-  font-family: var(--vnm-font);
-  font-size: var(--vnm-font-size-sm);
+  padding: 0 var(--vam-space-1);
+  border: 1px solid var(--vam-border);
+  border-radius: var(--vam-radius-sm);
+  background: var(--vam-edge-label-bg);
+  color: var(--vam-fg-muted);
+  font-family: var(--vam-font);
+  font-size: var(--vam-font-size-sm);
   line-height: 16px;
   pointer-events: all;
   cursor: pointer;
 }
 
-.vnm-edge__label--dimmed {
-  opacity: var(--vnm-dimmed-opacity);
+.vam-edge__label--dimmed {
+  opacity: var(--vam-dimmed-opacity);
 }
 </style>

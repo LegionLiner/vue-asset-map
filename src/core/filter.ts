@@ -1,5 +1,5 @@
-import type { EntityId, NetworkEntity } from '../types/entity'
-import type { NetworkGraph } from '../types/graph'
+import type { EntityId, AssetEntity } from '../types/entity'
+import type { AssetGraph } from '../types/graph'
 import type { FacetCounts, FilterGroupDef, FilterOptions, FilterResult, FilterState } from '../types/filter'
 import { ancestorsOf, matchesLayers, otherEnd } from './graph'
 import { isIPv4Wildcard, matchesCidr, matchesWildcard, parseCidr } from './ip'
@@ -31,7 +31,7 @@ export function selectedGroupCount(state: FilterState): number {
 }
 
 /** Values an entity carries in a group; falls back to its `kind`. */
-export function groupValuesOf(group: FilterGroupDef, entity: NetworkEntity): readonly string[] {
+export function groupValuesOf(group: FilterGroupDef, entity: AssetEntity): readonly string[] {
   return group.valuesOf ? group.valuesOf(entity) : [entity.kind]
 }
 
@@ -40,7 +40,7 @@ export function groupValuesOf(group: FilterGroupDef, entity: NetworkEntity): rea
  * both), while groups combine with AND, like the rest of the facets.
  */
 function matchesGroups(
-  entity: NetworkEntity,
+  entity: AssetEntity,
   state: FilterState,
   groups: readonly FilterGroupDef[] | undefined,
 ): boolean {
@@ -58,7 +58,7 @@ function matchesGroups(
 }
 
 /** Default searchable fields: the label plus every sublabel. */
-export function defaultSearchFields(entity: NetworkEntity): string[] {
+export function defaultSearchFields(entity: AssetEntity): string[] {
   return entity.sublabels ? [entity.label, ...entity.sublabels] : [entity.label]
 }
 
@@ -95,7 +95,7 @@ export function matchesQuery(fields: readonly string[], query: string): boolean 
  * (unless `keepPathToRoot` is off), so the tree does not fall apart into islands.
  */
 export function applyFilters<E, L>(
-  graph: NetworkGraph<E, L>,
+  graph: AssetGraph<E, L>,
   state: FilterState,
   options: FilterOptions = {},
 ): FilterResult {
@@ -145,7 +145,7 @@ export function applyFilters<E, L>(
 }
 
 function expandByNeighbors<E, L>(
-  graph: NetworkGraph<E, L>,
+  graph: AssetGraph<E, L>,
   visibleIds: Set<EntityId>,
   seeds: ReadonlySet<EntityId>,
   depth: number,
@@ -184,7 +184,7 @@ function expandByNeighbors<E, L>(
  * filter list does not jump around as the selection changes.
  */
 export function facetCounts<E, L>(
-  graph: NetworkGraph<E, L>,
+  graph: AssetGraph<E, L>,
   restrictTo?: ReadonlySet<EntityId>,
   groups?: readonly FilterGroupDef[],
 ): FacetCounts {

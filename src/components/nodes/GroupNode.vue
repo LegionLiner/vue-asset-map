@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { Handle, Position } from '@vue-flow/core'
 import { useMapContext } from '../../composables/useMapContext'
-import type { NetworkNodeData } from '../../composables/useFlowElements'
+import type { AssetNodeData } from '../../composables/useFlowElements'
 
 /**
  * A collapsed group of same-kind nodes.
@@ -13,7 +13,7 @@ import type { NetworkNodeData } from '../../composables/useFlowElements'
  */
 const props = defineProps<{
   id: string
-  data?: NetworkNodeData
+  data?: AssetNodeData
 }>()
 
 const map = useMapContext()
@@ -42,16 +42,16 @@ const ariaLabel = computed(
 )
 
 const classes = computed(() => [
-  'vnm-node',
-  'vnm-node--child',
-  'vnm-group',
+  'vam-node',
+  'vam-node--child',
+  'vam-group',
   {
-    'vnm-node--matched': map.isMatched(props.id),
-    'vnm-node--dimmed': map.isDimmed(props.id),
-    'vnm-node--simplified': map.simplified.value,
+    'vam-node--matched': map.isMatched(props.id),
+    'vam-node--dimmed': map.isDimmed(props.id),
+    'vam-node--simplified': map.simplified.value,
     // A group counts as infected when any single member is captured, otherwise
     // collapsing would conceal the infection.
-    'vnm-node--infected': map.isInfected(props.id),
+    'vam-node--infected': map.isInfected(props.id),
   },
 ])
 
@@ -76,27 +76,27 @@ function onKeydown(event: KeyboardEvent): void {
     @click="onActivate"
     @keydown="onKeydown"
   >
-    <Handle type="target" :position="Position.Top" class="vnm-node__handle" />
-    <Handle type="source" :position="Position.Bottom" class="vnm-node__handle" />
+    <Handle type="target" :position="Position.Top" class="vam-node__handle" />
+    <Handle type="source" :position="Position.Bottom" class="vam-node__handle" />
 
-    <div class="vnm-node__circle vnm-group__circle">
-      <span class="vnm-group__count">{{ memberCount }}</span>
+    <div class="vam-node__circle vam-group__circle">
+      <span class="vam-group__count">{{ memberCount }}</span>
 
-      <span v-if="memberStatuses.length > 0" class="vnm-group__statuses">
+      <span v-if="memberStatuses.length > 0" class="vam-group__statuses">
         <span
           v-for="entry in memberStatuses"
           :key="entry.status"
-          class="vnm-group__status"
+          class="vam-group__status"
           :style="entry.color ? { backgroundColor: entry.color } : undefined"
           :title="map.t('node.status', { status: entry.status })"
         />
       </span>
     </div>
 
-    <div v-if="!map.simplified.value" class="vnm-node__info">
-      <span class="vnm-node__label">{{ label }}</span>
-      <span class="vnm-node__sublabel">{{ map.t('group.members', { count: memberCount }) }}</span>
-      <span v-if="internalLinkCount > 0" class="vnm-node__sublabel">
+    <div v-if="!map.simplified.value" class="vam-node__info">
+      <span class="vam-node__label">{{ label }}</span>
+      <span class="vam-node__sublabel">{{ map.t('group.members', { count: memberCount }) }}</span>
+      <span v-if="internalLinkCount > 0" class="vam-node__sublabel">
         {{ map.t('group.internalLinks', { count: internalLinkCount }) }}
       </span>
     </div>
@@ -105,22 +105,22 @@ function onKeydown(event: KeyboardEvent): void {
 
 <style>
 /* Dashed frame plus a "stack" behind the circle, so the node reads as "many". */
-.vnm-group__circle {
+.vam-group__circle {
   border-style: dashed;
-  background: var(--vnm-surface-sunken);
+  background: var(--vam-surface-sunken);
   box-shadow:
-    var(--vnm-shadow-sm),
-    3px 3px 0 -1px var(--vnm-surface),
-    4px 4px 0 -1px var(--vnm-border);
-  color: var(--vnm-fg-subtle);
+    var(--vam-shadow-sm),
+    3px 3px 0 -1px var(--vam-surface),
+    4px 4px 0 -1px var(--vam-border);
+  color: var(--vam-fg-subtle);
 }
 
-.vnm-group__count {
-  font-size: var(--vnm-font-size);
-  font-weight: var(--vnm-font-weight-bold);
+.vam-group__count {
+  font-size: var(--vam-font-size);
+  font-weight: var(--vam-font-weight-bold);
 }
 
-.vnm-group__statuses {
+.vam-group__statuses {
   position: absolute;
   top: -2px;
   right: -2px;
@@ -128,12 +128,12 @@ function onKeydown(event: KeyboardEvent): void {
   gap: 1px;
 }
 
-.vnm-group__status {
+.vam-group__status {
   box-sizing: border-box;
   width: 7px;
   height: 7px;
-  border: 1px solid var(--vnm-surface);
+  border: 1px solid var(--vam-surface);
   border-radius: 50%;
-  background: var(--vnm-status-unknown);
+  background: var(--vam-status-unknown);
 }
 </style>

@@ -1,6 +1,6 @@
 import { inject, provide, type Component, type ComputedRef, type InjectionKey, type Slot } from 'vue'
-import type { EntityId, NetworkEntity } from '../types/entity'
-import type { NetworkGraph } from '../types/graph'
+import type { EntityId, AssetEntity } from '../types/entity'
+import type { AssetGraph } from '../types/graph'
 import type { CollapsedGroup } from '../types/collapse'
 import type { Translate } from '../types/locale'
 import type { ResolvedNodeMarker } from '../types/marker'
@@ -18,7 +18,7 @@ export type ArrowDirection = 'up' | 'down' | 'left' | 'right'
  */
 export interface MapContext {
   t: Translate
-  graph: ComputedRef<NetworkGraph<unknown, unknown>>
+  graph: ComputedRef<AssetGraph<unknown, unknown>>
 
   /** Whether sublabels are shown under the label in the current view. */
   showSublabels: ComputedRef<boolean>
@@ -28,8 +28,8 @@ export interface MapContext {
   /**
    * Looks up a map slot by name.
    *
-   * A function rather than the slots object itself: `NetworkMap` describes its
-   * slots with an exact type (`NetworkMapSlots`), which is incompatible with
+   * A function rather than the slots object itself: `AssetMap` describes its
+   * slots with an exact type (`AssetMapSlots`), which is incompatible with
    * Vue's internal `Slots`. Lookup by name is all nodes, edges and the panel need.
    */
   slot: (name: string) => Slot | undefined
@@ -37,7 +37,7 @@ export interface MapContext {
   statusColorOf: (status: string | undefined) => string | undefined
   iconFor: (kind: string) => Component | undefined
   groupById: (groupId: string) => CollapsedGroup | undefined
-  entityById: (id: EntityId) => NetworkEntity<unknown> | undefined
+  entityById: (id: EntityId) => AssetEntity<unknown> | undefined
 
   /** Root entities are drawn larger than children. */
   isRootNode: (id: string) => boolean
@@ -76,9 +76,9 @@ export interface MapContext {
   registerNodeElement: (id: string, element: HTMLElement | undefined) => void
 }
 
-export const MAP_CONTEXT_KEY: InjectionKey<MapContext> = Symbol('vnm-map-context')
+export const MAP_CONTEXT_KEY: InjectionKey<MapContext> = Symbol('vam-map-context')
 
-/** Publishes the context; called by `<NetworkMap>` and nothing else. */
+/** Publishes the context; called by `<AssetMap>` and nothing else. */
 export function provideMapContext(context: MapContext): void {
   provide(MAP_CONTEXT_KEY, context)
 }
@@ -86,14 +86,14 @@ export function provideMapContext(context: MapContext): void {
 /**
  * Reads the map context inside a node or an edge.
  *
- * Throws a legible error when the component is rendered outside `<NetworkMap>`;
+ * Throws a legible error when the component is rendered outside `<AssetMap>`;
  * without it a consumer would get `undefined is not a function` somewhere deep
  * inside the render of their custom node.
  */
 export function useMapContext(): MapContext {
   const context = inject(MAP_CONTEXT_KEY, undefined)
   if (!context) {
-    throw new Error('[vue-asset-map] Node and edge components must be rendered inside <NetworkMap>')
+    throw new Error('[vue-asset-map] Node and edge components must be rendered inside <AssetMap>')
   }
   return context
 }

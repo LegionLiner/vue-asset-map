@@ -14,53 +14,53 @@ defineProps<{
 </script>
 
 <template>
-  <section class="vnm-section">
-    <h4 class="vnm-section__title">{{ title }}</h4>
-    <div v-if="empty" class="vnm-section__empty">
+  <section class="vam-section">
+    <h4 class="vam-section__title">{{ title }}</h4>
+    <div v-if="empty" class="vam-section__empty">
       <slot name="empty" />
     </div>
-    <div v-else class="vnm-section__body">
+    <div v-else class="vam-section__body">
       <slot />
     </div>
   </section>
 </template>
 
 <style>
-.vnm-section {
+.vam-section {
   display: flex;
   flex-direction: column;
-  gap: var(--vnm-space-2);
+  gap: var(--vam-space-2);
 }
 
-.vnm-section__title {
+.vam-section__title {
   margin: 0;
-  color: var(--vnm-fg-muted);
-  font-size: var(--vnm-font-size-sm);
-  font-weight: var(--vnm-font-weight-bold);
+  color: var(--vam-fg-muted);
+  font-size: var(--vam-font-size-sm);
+  font-weight: var(--vam-font-weight-bold);
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
-.vnm-section__body {
+.vam-section__body {
   display: grid;
   grid-template-columns: minmax(0, 40%) minmax(0, 1fr);
-  gap: var(--vnm-space-1) var(--vnm-space-3);
-  font-size: var(--vnm-font-size);
+  gap: var(--vam-space-1) var(--vam-space-3);
+  font-size: var(--vam-font-size);
 }
 
-.vnm-section__empty {
-  color: var(--vnm-fg-muted);
-  font-size: var(--vnm-font-size-sm);
+.vam-section__empty {
+  color: var(--vam-fg-muted);
+  font-size: var(--vam-font-size-sm);
 }
 
-.vnm-field__key {
+.vam-field__key {
   overflow: hidden;
-  color: var(--vnm-fg-muted);
+  color: var(--vam-fg-muted);
   text-overflow: ellipsis;
 }
 
-.vnm-field__value {
+.vam-field__value {
   overflow-wrap: anywhere;
-  font-family: var(--vnm-font-mono);
+  font-family: var(--vam-font-mono);
 }
 </style>

@@ -1,26 +1,26 @@
 import { describe, expect, it } from 'vitest'
 import { buildGraph, defaultLinkFilter, projectGraph, resolveView } from '../../src/core/index'
-import type { NetworkEntity } from '../../src/types/entity'
-import type { NetworkLink } from '../../src/types/link'
-import type { NetworkView } from '../../src/types/view'
+import type { AssetEntity } from '../../src/types/entity'
+import type { AssetLink } from '../../src/types/link'
+import type { AssetView } from '../../src/types/view'
 import { entities, links, views } from '../../fixtures/infra'
 
-const e = (id: string, extra: Partial<NetworkEntity> = {}): NetworkEntity => ({
+const e = (id: string, extra: Partial<AssetEntity> = {}): AssetEntity => ({
   id,
   kind: 'host',
   label: id,
   ...extra,
 })
 
-const l = (id: string, source: string, target: string, layers: string[]): NetworkLink => ({
+const l = (id: string, source: string, target: string, layers: string[]): AssetLink => ({
   id,
   source,
   target,
   layers,
 })
 
-const physical: NetworkView = { id: 'physical', label: 'Физическая' }
-const logical: NetworkView = { id: 'logical', label: 'Логическая' }
+const physical: AssetView = { id: 'physical', label: 'Физическая' }
+const logical: AssetView = { id: 'logical', label: 'Логическая' }
 
 describe('projectGraph', () => {
   it('без вида показывает всё', () => {

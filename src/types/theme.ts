@@ -11,7 +11,7 @@ export type ResolvedTheme = 'light' | 'dark'
  * package ships no status names and no kind list of its own.
  */
 export interface ThemeConfig {
-  /** Entity `status` → CSS color or a `var(--vnm-*)` reference. */
+  /** Entity `status` → CSS color or a `var(--vam-*)` reference. */
   statusColors?: Record<string, string>
   /** Entity `kind` → icon component. */
   kindIcons?: Record<string, Component>

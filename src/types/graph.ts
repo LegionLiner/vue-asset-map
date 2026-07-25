@@ -1,5 +1,5 @@
-import type { EntityId, NetworkEntity } from './entity'
-import type { NetworkLink } from './link'
+import type { EntityId, AssetEntity } from './entity'
+import type { AssetLink } from './link'
 
 /**
  * Indexed, repaired view of the input data. Built once per change of the
@@ -9,9 +9,9 @@ import type { NetworkLink } from './link'
  * @typeParam E - payload type of `entity.meta`.
  * @typeParam L - payload type of `link.meta`.
  */
-export interface NetworkGraph<E = unknown, L = unknown> {
-  entities: ReadonlyMap<EntityId, NetworkEntity<E>>
-  links: ReadonlyMap<string, NetworkLink<L>>
+export interface AssetGraph<E = unknown, L = unknown> {
+  entities: ReadonlyMap<EntityId, AssetEntity<E>>
+  links: ReadonlyMap<string, AssetLink<L>>
   /**
    * Entity id → ids of incident links.
    *

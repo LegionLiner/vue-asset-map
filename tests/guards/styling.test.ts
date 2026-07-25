@@ -53,17 +53,17 @@ describe('в .vue-файлах нет литеральных цветов', () =
       // на токен темы — своих цветов у иконок быть не может.
       for (const match of content.matchAll(/(?:stroke|fill):\s*'([^']+)'/g)) {
         const value = match[1] ?? ''
-        if (value === 'none' || value === 'currentColor' || value.startsWith('var(--vnm-')) continue
+        if (value === 'none' || value === 'currentColor' || value.startsWith('var(--vam-')) continue
         expect.fail(`${path}: иконка задаёт свой цвет → ${value}`)
       }
     }
   })
 
-  it('цвета берутся из токенов через var(--vnm-*)', () => {
+  it('цвета берутся из токенов через var(--vam-*)', () => {
     // Обратная проверка: без неё предыдущий тест был бы зелёным просто потому,
     // что в компонентах вообще нет работы с цветом.
     const all = vueSources.map((file) => file.content).join('\n')
-    expect(all).toContain('var(--vnm-')
+    expect(all).toContain('var(--vam-')
   })
 
   it('разрешённые ключевые слова используются, а не запрещены заодно', () => {
@@ -71,7 +71,7 @@ describe('в .vue-файлах нет литеральных цветов', () =
     expect(ALLOWED_COLOR_KEYWORDS.some((keyword) => all.includes(keyword))).toBe(true)
   })
 
-  it('все объявляемые классы имеют префикс vnm-', () => {
+  it('все объявляемые классы имеют префикс vam-', () => {
     const classPattern = /^\s*\.([a-zA-Z][\w-]*)/gm
 
     for (const { path, content } of vueSources) {
@@ -83,9 +83,9 @@ describe('в .vue-файлах нет литеральных цветов', () =
         for (const match of stripComments(block).matchAll(classPattern)) {
           const className = match[1] ?? ''
           // `vue-flow__*` — классы самого VueFlow: мы их переопределяем внутри
-          // своего `.vnm-canvas`, а не объявляем как свои.
-          if (className.startsWith('vnm-') || className.startsWith('vue-flow__')) continue
-          expect.fail(`${path}: класс без префикса vnm- → .${className}`)
+          // своего `.vam-canvas`, а не объявляем как свои.
+          if (className.startsWith('vam-') || className.startsWith('vue-flow__')) continue
+          expect.fail(`${path}: класс без префикса vam- → .${className}`)
         }
       }
     }
@@ -106,7 +106,7 @@ describe('в .vue-файлах нет литеральных цветов', () =
   })
 })
 
-describe('токены темы объявлены только на .vnm-root', () => {
+describe('токены темы объявлены только на .vam-root', () => {
   it('CSS пакета прочитан', () => {
     expect(themeSources.length).toBe(4)
   })
@@ -123,17 +123,17 @@ describe('токены темы объявлены только на .vnm-root',
     // Комментарии выкидываем: в них `prefers-color-scheme` как раз и объясняет,
     // почему media-запрос здесь не используется.
     const dark = stripComments(fileNamed(themeSources, 'dark.css').content)
-    expect(dark).toContain('.vnm-root.vnm-theme-dark')
+    expect(dark).toContain('.vam-root.vam-theme-dark')
     expect(dark).not.toContain('prefers-color-scheme')
   })
 
   it('светлая тема объявлена явным классом', () => {
-    expect(fileNamed(themeSources, 'light.css').content).toContain('.vnm-root.vnm-theme-light')
+    expect(fileNamed(themeSources, 'light.css').content).toContain('.vam-root.vam-theme-light')
   })
 
   it('каждый токен светлой темы имеет пару в тёмной', () => {
     const tokenNames = (source: string): Set<string> =>
-      new Set([...source.matchAll(/(--vnm-[\w-]+)\s*:/g)].map((match) => match[1] ?? ''))
+      new Set([...source.matchAll(/(--vam-[\w-]+)\s*:/g)].map((match) => match[1] ?? ''))
 
     const light = tokenNames(fileNamed(themeSources, 'light.css').content)
     const dark = tokenNames(fileNamed(themeSources, 'dark.css').content)

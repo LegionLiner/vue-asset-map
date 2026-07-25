@@ -99,123 +99,123 @@ defineExpose({
 
 <template>
   <aside
-    class="vnm-window"
+    class="vam-window"
     :class="{
-      'vnm-window--collapsed': collapsed,
-      'vnm-window--dragging': dragging,
-      'vnm-window--header-only': headerOnly,
+      'vam-window--collapsed': collapsed,
+      'vam-window--dragging': dragging,
+      'vam-window--header-only': headerOnly,
     }"
     :style="style"
   >
-    <header class="vnm-window__header" @pointerdown="onPointerDown">
-      <span v-if="dragHandle" class="vnm-window__grip" :aria-label="t('window.drag')" role="img">
+    <header class="vam-window__header" @pointerdown="onPointerDown">
+      <span v-if="dragHandle" class="vam-window__grip" :aria-label="t('window.drag')" role="img">
         <IconDragHandle />
       </span>
 
       <button
         v-if="closable"
         type="button"
-        class="vnm-window__button"
+        class="vam-window__button"
         :aria-label="closeLabel ?? t('window.close')"
         @click="emit('close')"
       >
         <IconClose />
       </button>
 
-      <div class="vnm-window__caption">
+      <div class="vam-window__caption">
         <slot name="header" :collapsed="collapsed">{{ title }}</slot>
       </div>
 
       <button
         v-if="collapsible"
         type="button"
-        class="vnm-window__button"
+        class="vam-window__button"
         :aria-label="collapseLabel"
         :aria-expanded="!collapsed"
         @click="toggleCollapsed"
       >
-        <IconCollapseWindow :class="{ 'vnm-window__icon--flipped': collapsed }" />
+        <IconCollapseWindow :class="{ 'vam-window__icon--flipped': collapsed }" />
       </button>
     </header>
 
-    <div v-if="hasBody" class="vnm-window__body">
+    <div v-if="hasBody" class="vam-window__body">
       <slot :collapsed="collapsed" />
     </div>
   </aside>
 </template>
 
 <style>
-.vnm-window {
+.vam-window {
   position: absolute;
   z-index: 20;
   display: flex;
   flex-direction: column;
-  width: var(--vnm-window-width);
-  max-width: calc(100% - var(--vnm-space-5));
-  max-height: calc(100% - var(--vnm-space-5));
-  border-radius: var(--vnm-window-radius);
-  background: var(--vnm-surface);
-  box-shadow: var(--vnm-shadow-lg);
-  color: var(--vnm-fg);
-  font-family: var(--vnm-font);
-  font-size: var(--vnm-font-size);
-  line-height: var(--vnm-line-height);
+  width: var(--vam-window-width);
+  max-width: calc(100% - var(--vam-space-5));
+  max-height: calc(100% - var(--vam-space-5));
+  border-radius: var(--vam-window-radius);
+  background: var(--vam-surface);
+  box-shadow: var(--vam-shadow-lg);
+  color: var(--vam-fg);
+  font-family: var(--vam-font);
+  font-size: var(--vam-font-size);
+  line-height: var(--vam-line-height);
 }
 
 /* A bar-only window is sized by its content, not by the shared width token. */
-.vnm-window--header-only {
+.vam-window--header-only {
   width: auto;
 }
 
-.vnm-window__header {
+.vam-window__header {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: var(--vnm-space-2);
-  min-height: var(--vnm-window-header-height);
-  padding: var(--vnm-space-1);
-  border-radius: var(--vnm-window-radius) var(--vnm-window-radius) 0 0;
-  background: var(--vnm-surface-sunken);
+  gap: var(--vam-space-2);
+  min-height: var(--vam-window-header-height);
+  padding: var(--vam-space-1);
+  border-radius: var(--vam-window-radius) var(--vam-window-radius) 0 0;
+  background: var(--vam-surface-sunken);
   cursor: grab;
   /* Otherwise the browser starts its own drag and selects text in the bar. */
   touch-action: none;
   user-select: none;
 }
 
-.vnm-window--dragging .vnm-window__header {
+.vam-window--dragging .vam-window__header {
   cursor: grabbing;
 }
 
 /* Collapsed and bar-only windows are just the bar, so the bottom corners get
    their radius back. */
-.vnm-window--collapsed .vnm-window__header,
-.vnm-window--header-only .vnm-window__header {
-  border-radius: var(--vnm-window-radius);
+.vam-window--collapsed .vam-window__header,
+.vam-window--header-only .vam-window__header {
+  border-radius: var(--vam-window-radius);
 }
 
-.vnm-window__grip {
+.vam-window__grip {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
   padding: 0 2px;
-  color: var(--vnm-fg-muted);
+  color: var(--vam-fg-muted);
 }
 
-.vnm-window__caption {
+.vam-window__caption {
   display: flex;
   flex: 1 1 auto;
   align-items: center;
   justify-content: center;
-  gap: var(--vnm-space-2);
+  gap: var(--vam-space-2);
   min-width: 0;
   overflow: hidden;
-  color: var(--vnm-fg-subtle);
-  font-size: var(--vnm-font-size-sm);
+  color: var(--vam-fg-subtle);
+  font-size: var(--vam-font-size-sm);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.vnm-window__button {
+.vam-window__button {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
@@ -224,31 +224,31 @@ defineExpose({
   height: 16px;
   padding: 0;
   border: 0;
-  border-radius: var(--vnm-radius-sm);
+  border-radius: var(--vam-radius-sm);
   background: transparent;
-  color: var(--vnm-fg-muted);
+  color: var(--vam-fg-muted);
   cursor: pointer;
 }
 
-.vnm-window__button:hover {
-  color: var(--vnm-fg-subtle);
+.vam-window__button:hover {
+  color: var(--vam-fg-subtle);
 }
 
-.vnm-window__button:focus-visible {
-  outline: 2px solid var(--vnm-focus-ring);
+.vam-window__button:focus-visible {
+  outline: 2px solid var(--vam-focus-ring);
   outline-offset: 1px;
 }
 
-.vnm-window__icon--flipped {
+.vam-window__icon--flipped {
   transform: rotate(180deg);
 }
 
-.vnm-window__body {
+.vam-window__body {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: var(--vnm-space-4);
+  gap: var(--vam-space-4);
   min-height: 0;
-  padding: var(--vnm-space-4);
+  padding: var(--vam-space-4);
 }
 </style>

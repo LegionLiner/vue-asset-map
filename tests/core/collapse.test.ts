@@ -1,18 +1,18 @@
 import { describe, expect, it, vi } from 'vitest'
 import { buildGraph, collapseGraph, groupIdFor, isAggregatedLink, projectGraph } from '../../src/core/index'
 import type { AggregatedLink } from '../../src/types/collapse'
-import type { NetworkEntity } from '../../src/types/entity'
-import type { NetworkLink } from '../../src/types/link'
+import type { AssetEntity } from '../../src/types/entity'
+import type { AssetLink } from '../../src/types/link'
 import { entities, links, views } from '../../fixtures/infra'
 
-const e = (id: string, extra: Partial<NetworkEntity> = {}): NetworkEntity => ({
+const e = (id: string, extra: Partial<AssetEntity> = {}): AssetEntity => ({
   id,
   kind: 'host',
   label: id,
   ...extra,
 })
 
-const l = (id: string, source: string, target: string, extra: Partial<NetworkLink> = {}): NetworkLink => ({
+const l = (id: string, source: string, target: string, extra: Partial<AssetLink> = {}): AssetLink => ({
   id,
   source,
   target,
@@ -22,8 +22,8 @@ const l = (id: string, source: string, target: string, extra: Partial<NetworkLin
 
 /** Родитель + `count` однотипных детей, все подключённые к родителю. */
 function farm(count: number, kind = 'container') {
-  const farmEntities: NetworkEntity[] = [e('parent', { kind: 'hypervisor' }), e('peer', { kind: 'router' })]
-  const farmLinks: NetworkLink[] = [l('parent-peer', 'parent', 'peer')]
+  const farmEntities: AssetEntity[] = [e('parent', { kind: 'hypervisor' }), e('peer', { kind: 'router' })]
+  const farmLinks: AssetLink[] = [l('parent-peer', 'parent', 'peer')]
 
   for (let index = 1; index <= count; index += 1) {
     farmEntities.push(e(`c${index}`, { kind, parentId: 'parent' }))
@@ -221,8 +221,8 @@ describe('collapseGraph: ручное раскрытие', () => {
   })
 
   it('раскрытие одной группы не раскрывает другую', () => {
-    const farmEntities: NetworkEntity[] = [e('parent', { kind: 'hypervisor' })]
-    const farmLinks: NetworkLink[] = []
+    const farmEntities: AssetEntity[] = [e('parent', { kind: 'hypervisor' })]
+    const farmLinks: AssetLink[] = []
     for (let index = 1; index <= 12; index += 1) {
       farmEntities.push(e(`c${index}`, { kind: 'container', parentId: 'parent' }))
       farmEntities.push(e(`v${index}`, { kind: 'vm', parentId: 'parent' }))
@@ -293,7 +293,7 @@ describe('collapseGraph: детерминизм и чистота', () => {
 
 describe('collapseGraph: взаимодействие с иерархией и видимостью', () => {
   it('поддерево участника уходит внутрь группы целиком', () => {
-    const farmEntities: NetworkEntity[] = [e('parent', { kind: 'hypervisor' })]
+    const farmEntities: AssetEntity[] = [e('parent', { kind: 'hypervisor' })]
     for (let index = 1; index <= 11; index += 1) {
       farmEntities.push(e(`c${index}`, { kind: 'container', parentId: 'parent' }))
       farmEntities.push(e(`c${index}-child`, { kind: 'process', parentId: `c${index}` }))
@@ -311,7 +311,7 @@ describe('collapseGraph: взаимодействие с иерархией и �
   })
 
   it('скрытый проекцией родитель не становится ключом группировки', () => {
-    const farmEntities: NetworkEntity[] = [
+    const farmEntities: AssetEntity[] = [
       e('root', { kind: 'cloud' }),
       e('mid', { kind: 'router', parentId: 'root' }),
     ]

@@ -1,6 +1,6 @@
-import type { EntityId, NetworkEntity } from '../types/entity'
-import type { NetworkGraph } from '../types/graph'
-import type { NetworkLink } from '../types/link'
+import type { EntityId, AssetEntity } from '../types/entity'
+import type { AssetGraph } from '../types/graph'
+import type { AssetLink } from '../types/link'
 import type {
   AggregatedLink,
   CollapsedGroup,
@@ -43,8 +43,8 @@ const DEFAULT_THRESHOLD = 10
 const KEY_SEPARATOR = '\u0000'
 
 /** Whether an edge of the collapsed graph stands for several original links. */
-export function isAggregatedLink<L>(link: NetworkLink<L>): link is AggregatedLink<L> {
-  // Cast: `aggregated` is absent from the `NetworkLink` half of the union, and
+export function isAggregatedLink<L>(link: AssetLink<L>): link is AggregatedLink<L> {
+  // Cast: `aggregated` is absent from the `AssetLink` half of the union, and
   // probing for it is exactly what this guard exists to do.
   return (link as { aggregated?: unknown }).aggregated === true
 }
@@ -54,7 +54,7 @@ export function groupIdFor(parentId: EntityId | null, bucket: string): string {
   return `group:${parentId ?? ''}:${bucket}`
 }
 
-const defaultGroupBy = (entity: NetworkEntity): string | null => entity.kind
+const defaultGroupBy = (entity: AssetEntity): string | null => entity.kind
 
 /**
  * Folds oversized sets of same-kind siblings into single group nodes and
@@ -78,7 +78,7 @@ const defaultGroupBy = (entity: NetworkEntity): string | null => entity.kind
  *    `CollapsedGroup.internalLinkCount` instead.
  */
 export function collapseGraph<E, L>(
-  graph: NetworkGraph<E, L>,
+  graph: AssetGraph<E, L>,
   options: CollapseOptions = {},
 ): CollapseResult<L> {
   const { rule, expandedIds, visibleEntityIds, visibleLinkIds, collapsedParentIds } = options
@@ -91,14 +91,14 @@ export function collapseGraph<E, L>(
 
   const isEntityVisible = (id: EntityId): boolean => inProjection(id) && !subtreeHidden.has(id)
 
-  const visibleEntities: NetworkEntity<E>[] = []
+  const visibleEntities: AssetEntity<E>[] = []
   for (const entity of graph.entities.values()) {
     if (isEntityVisible(entity.id)) visibleEntities.push(entity)
   }
 
   // Ends are checked against the projection, not against final visibility: an
   // edge of a hidden descendant is re-homed onto its collapsed parent, not lost.
-  const visibleLinks: NetworkLink<L>[] = []
+  const visibleLinks: AssetLink<L>[] = []
   for (const link of graph.links.values()) {
     if (visibleLinkIds !== undefined && !visibleLinkIds.has(link.id)) continue
     if (!inProjection(link.source) || !inProjection(link.target)) continue
@@ -121,7 +121,7 @@ export function collapseGraph<E, L>(
   }
 
   // `undefined` means "default rule"; only `false` disables collapsing. Same
-  // reading as the `collapse` prop of <NetworkMap>.
+  // reading as the `collapse` prop of <AssetMap>.
   const groups = decideGroups(graph, visibleEntities, rule ?? {}, expandedIds, isEntityVisible)
   const groupIds = new Set(groups.map((group) => group.id))
   indexMembers(graph, groups, groupOf, hiddenIds)
@@ -134,7 +134,7 @@ export function collapseGraph<E, L>(
 
 /** Nearest ancestor that is still visible, or `null` when there is none. */
 function visibleParentOf<E, L>(
-  graph: NetworkGraph<E, L>,
+  graph: AssetGraph<E, L>,
   id: EntityId,
   isEntityVisible: (id: EntityId) => boolean,
 ): EntityId | null {
@@ -150,8 +150,8 @@ function visibleParentOf<E, L>(
 
 /** Returns the groups in discovery order, walking the hierarchy top-down. */
 function decideGroups<E, L>(
-  graph: NetworkGraph<E, L>,
-  visibleEntities: readonly NetworkEntity<E>[],
+  graph: AssetGraph<E, L>,
+  visibleEntities: readonly AssetEntity<E>[],
   rule: CollapseRule,
   expandedIds: ReadonlySet<string> | undefined,
   isEntityVisible: (id: EntityId) => boolean,
@@ -160,7 +160,7 @@ function decideGroups<E, L>(
   const groupBy = rule.groupBy ?? defaultGroupBy
 
   // Keyed by effective visible parent; the `null` key holds the top level.
-  const childrenByParent = new Map<EntityId | null, NetworkEntity<E>[]>()
+  const childrenByParent = new Map<EntityId | null, AssetEntity<E>[]>()
   for (const entity of visibleEntities) {
     const parentId = visibleParentOf(graph, entity.id, isEntityVisible)
     const bucket = childrenByParent.get(parentId)
@@ -180,8 +180,8 @@ function decideGroups<E, L>(
     processed.add(parentId)
 
     const children = childrenByParent.get(parentId) ?? []
-    const buckets = new Map<string, NetworkEntity<E>[]>()
-    const ungrouped: NetworkEntity<E>[] = []
+    const buckets = new Map<string, AssetEntity<E>[]>()
+    const ungrouped: AssetEntity<E>[] = []
 
     for (const child of children) {
       const bucket = groupBy(child)
@@ -231,7 +231,7 @@ function decideGroups<E, L>(
  * the root wins and the result is unambiguous.
  */
 function hiddenBySubtree<E, L>(
-  graph: NetworkGraph<E, L>,
+  graph: AssetGraph<E, L>,
   collapsedParentIds: ReadonlySet<EntityId> | undefined,
   inProjection: (id: EntityId) => boolean,
 ): Map<EntityId, EntityId> {
@@ -256,7 +256,7 @@ function hiddenBySubtree<E, L>(
 
 /** Mutates `groupOf` and `hiddenIds`, adding group members and their subtrees. */
 function indexMembers<E, L>(
-  graph: NetworkGraph<E, L>,
+  graph: AssetGraph<E, L>,
   groups: readonly CollapsedGroup[],
   groupOf: Map<EntityId, string>,
   hiddenIds: Set<EntityId>,
@@ -281,7 +281,7 @@ function indexMembers<E, L>(
  * to the input arrays rather than to group discovery.
  */
 function orderNodes<E>(
-  visibleEntities: readonly NetworkEntity<E>[],
+  visibleEntities: readonly AssetEntity<E>[],
   groupOf: ReadonlyMap<EntityId, string>,
   hiddenIds: ReadonlySet<EntityId>,
 ): string[] {
@@ -305,12 +305,12 @@ function orderNodes<E>(
 interface LinkBundle<L> {
   source: string
   target: string
-  links: NetworkLink<L>[]
+  links: AssetLink<L>[]
 }
 
 /** Mutates `internalLinkCount` on the groups passed in. */
 function remapLinks<L>(
-  visibleLinks: readonly NetworkLink<L>[],
+  visibleLinks: readonly AssetLink<L>[],
   groupOf: ReadonlyMap<EntityId, string>,
   groupIds: ReadonlySet<string>,
   groups: readonly CollapsedGroup[],
@@ -378,14 +378,14 @@ function remapLinks<L>(
  * Bundle key. Undirected ends are normalised so `a→b` and `b→a` share a bundle;
  * `kind` and direction stay separate, or an aggregate would lose its edge style.
  */
-function bundleKey<L>(source: string, target: string, link: NetworkLink<L>): string {
+function bundleKey<L>(source: string, target: string, link: AssetLink<L>): string {
   const kind = link.kind ?? ''
   if (link.directed === true) return ['d', source, target, kind].join(KEY_SEPARATOR)
   const [a, b] = source <= target ? [source, target] : [target, source]
   return ['u', a, b, kind].join(KEY_SEPARATOR)
 }
 
-function aggregate<L>(bundle: LinkBundle<L>, first: NetworkLink<L>): AggregatedLink<L> {
+function aggregate<L>(bundle: LinkBundle<L>, first: AssetLink<L>): AggregatedLink<L> {
   const layers = new Set<string>()
   const sourceLinkIds: string[] = []
   for (const link of bundle.links) {

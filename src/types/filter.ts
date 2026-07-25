@@ -1,4 +1,4 @@
-import type { EntityId, NetworkEntity } from './entity'
+import type { EntityId, AssetEntity } from './entity'
 
 /** Current filter selection. Owned by the consumer through `v-model:filters`. */
 export interface FilterState {
@@ -6,7 +6,7 @@ export interface FilterState {
   /** Empty array means every kind. */
   kinds: string[]
   statuses: string[]
-  predicate?: (entity: NetworkEntity) => boolean
+  predicate?: (entity: AssetEntity) => boolean
   /**
    * Selection in consumer-defined groups: group id → chosen values.
    *
@@ -43,7 +43,7 @@ export interface FilterGroupDef {
    *
    * @default entity kind
    */
-  valuesOf?: (entity: NetworkEntity) => readonly string[]
+  valuesOf?: (entity: AssetEntity) => readonly string[]
   /**
    * Whether the group starts expanded.
    *
@@ -78,7 +78,7 @@ export interface FilterOptions {
    *
    * @default label plus sublabels
    */
-  searchFields?: (entity: NetworkEntity) => string[]
+  searchFields?: (entity: AssetEntity) => string[]
   /**
    * Restrict filtering to a subgraph, normally the current view projection.
    *

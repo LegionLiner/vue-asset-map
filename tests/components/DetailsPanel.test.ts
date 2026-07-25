@@ -2,12 +2,12 @@
 import { describe, expect, it } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { h, nextTick } from 'vue'
-import NetworkMap from '../../src/components/NetworkMap.vue'
-import type { NetworkMapSlots } from '../../src/types/props'
+import AssetMap from '../../src/components/AssetMap.vue'
+import type { AssetMapSlots } from '../../src/types/props'
 import { entities, links, statusColors, views } from '../../fixtures/infra'
 
-async function mountMap(props: Record<string, unknown> = {}, slots: NetworkMapSlots = {}) {
-  const wrapper = mount(NetworkMap, {
+async function mountMap(props: Record<string, unknown> = {}, slots: AssetMapSlots = {}) {
+  const wrapper = mount(AssetMap, {
     props: {
       entities,
       links,
@@ -31,7 +31,7 @@ async function mountMap(props: Record<string, unknown> = {}, slots: NetworkMapSl
 async function openPanel(wrapper: Awaited<ReturnType<typeof mountMap>>, label: string) {
   await wrapper.find(`[aria-label^="${label}"]`).trigger('click')
   await nextTick()
-  return wrapper.find('.vnm-window')
+  return wrapper.find('.vam-window')
 }
 
 describe('панель подробностей: каркас от пакета', () => {
@@ -39,8 +39,8 @@ describe('панель подробностей: каркас от пакета'
     const wrapper = await mountMap()
     const panel = await openPanel(wrapper, 'Tailscale VPS')
 
-    expect(panel.find('.vnm-window__title').text()).toBe('Tailscale VPS')
-    expect(panel.find('.vnm-window__kind').text()).toBe('vps')
+    expect(panel.find('.vam-window__title').text()).toBe('Tailscale VPS')
+    expect(panel.find('.vam-window__kind').text()).toBe('vps')
 
     wrapper.unmount()
   })
@@ -49,11 +49,11 @@ describe('панель подробностей: каркас от пакета'
     const wrapper = await mountMap()
     const panel = await openPanel(wrapper, 'Dmitry')
 
-    expect(panel.findAll('.vnm-window__button')[0]!.attributes('aria-label')).toBe('Закрыть панель')
+    expect(panel.findAll('.vam-window__button')[0]!.attributes('aria-label')).toBe('Закрыть панель')
 
     const english = await mountMap({ locale: 'en' })
     const englishPanel = await openPanel(english, 'Dmitry')
-    expect(englishPanel.findAll('.vnm-window__button')[0]!.attributes('aria-label')).toBe('Close panel')
+    expect(englishPanel.findAll('.vam-window__button')[0]!.attributes('aria-label')).toBe('Close panel')
 
     wrapper.unmount()
     english.unmount()
@@ -63,7 +63,7 @@ describe('панель подробностей: каркас от пакета'
     const wrapper = await mountMap()
     const panel = await openPanel(wrapper, 'Vlad')
 
-    expect(panel.find('.vnm-window__status').attributes('style')).toContain('var(--vnm-status-offline)')
+    expect(panel.find('.vam-window__status').attributes('style')).toContain('var(--vam-status-offline)')
 
     wrapper.unmount()
   })
@@ -95,7 +95,7 @@ describe('панель подробностей: каркас от пакета'
     expect(panel.findAll('[role="tab"]')[1]?.attributes('aria-selected')).toBe('true')
 
     await openPanel(wrapper, 'Keenetic 1')
-    expect(wrapper.find('.vnm-window').findAll('[role="tab"]')[0]?.attributes('aria-selected')).toBe('true')
+    expect(wrapper.find('.vam-window').findAll('[role="tab"]')[0]?.attributes('aria-selected')).toBe('true')
 
     wrapper.unmount()
   })
@@ -130,7 +130,7 @@ describe('панель подробностей: fallback-содержимое',
     })
 
     const panel = await openPanel(wrapper, 'Без метаданных')
-    expect(panel.find('.vnm-section__empty').exists()).toBe(true)
+    expect(panel.find('.vam-section__empty').exists()).toBe(true)
 
     wrapper.unmount()
   })
@@ -142,7 +142,7 @@ describe('панель подробностей: fallback-содержимое',
     await panel.findAll('[role="tab"]')[1]?.trigger('click')
     await nextTick()
 
-    const text = wrapper.find('.vnm-window__content').text()
+    const text = wrapper.find('.vam-window__content').text()
     expect(text).toContain('Интернет')
     expect(text).toContain('Proxmox Artjom home')
 
@@ -173,7 +173,7 @@ describe('панель подробностей: слоты потребител
 
     expect(panel.find('.own-body').text()).toBe('body:ws-dmitry:overview')
     // Шапка и табы — часть каркаса, их слот не отменяет.
-    expect(panel.find('.vnm-window__title').text()).toBe('Dmitry')
+    expect(panel.find('.vam-window__title').text()).toBe('Dmitry')
     expect(panel.findAll('[role="tab"]')).toHaveLength(2)
     // Fallback-список meta заменён полностью.
     expect(panel.text()).not.toContain('overlayIp')
@@ -205,8 +205,8 @@ describe('панель подробностей: слоты потребител
     const panel = await openPanel(wrapper, 'Vlad')
 
     expect(panel.find('.own-head').text()).toBe('H:Vlad')
-    expect(panel.find('.vnm-window__title').exists()).toBe(false)
-    expect(panel.findAll('.vnm-window__button')[0]!.exists()).toBe(true)
+    expect(panel.find('.vam-window__title').exists()).toBe(false)
+    expect(panel.findAll('.vam-window__button')[0]!.exists()).toBe(true)
 
     wrapper.unmount()
   })
@@ -223,7 +223,7 @@ describe('панель подробностей: слоты потребител
     await wrapper.find('.own-close').trigger('click')
     await nextTick()
 
-    expect(wrapper.find('.vnm-window').exists()).toBe(false)
+    expect(wrapper.find('.vam-window').exists()).toBe(false)
     wrapper.unmount()
   })
 })

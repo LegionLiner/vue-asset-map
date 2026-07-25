@@ -31,10 +31,10 @@ export type {
   RadialLayoutOptions,
 } from './layout/index'
 
-export { default as NetworkMap } from './components/NetworkMap.vue'
+export { default as AssetMap } from './components/AssetMap.vue'
 export { default as BaseNode } from './components/nodes/BaseNode.vue'
 export { default as GroupNode } from './components/nodes/GroupNode.vue'
-export { default as NetworkEdge } from './components/edges/NetworkEdge.vue'
+export { default as AssetEdge } from './components/edges/AssetEdge.vue'
 export { default as MiniMap } from './components/MiniMap.vue'
 // Floating-window chrome: build custom windows for the `#windows` slot from it.
 export { default as MapWindow } from './components/MapWindow.vue'
@@ -59,7 +59,7 @@ export {
 } from './registry/nodeRegistry'
 
 // Composables: the map can also be assembled by hand from the same pieces.
-export { useNetworkGraph } from './composables/useNetworkGraph'
+export { useAssetGraph } from './composables/useAssetGraph'
 export { useViewProjection } from './composables/useViewProjection'
 export { useFilters } from './composables/useFilters'
 export { useCollapse } from './composables/useCollapse'
@@ -75,8 +75,8 @@ export type { MapContext } from './composables/useMapContext'
 export type {
   EntityNodeData,
   GroupNodeData,
-  NetworkEdgeData,
-  NetworkNodeData,
+  AssetEdgeData,
+  AssetNodeData,
 } from './composables/useFlowElements'
 export type { NodeSize } from './composables/useLayout'
 
@@ -89,11 +89,11 @@ export type {
   EmptySlotProps,
   FocusOptions,
   InfectionOptions,
-  NetworkMapExposed,
-  NetworkMapLayoutSpec,
-  NetworkMapModels,
-  NetworkMapProps,
-  NetworkMapSlots,
+  AssetMapExposed,
+  AssetMapLayoutSpec,
+  AssetMapModels,
+  AssetMapProps,
+  AssetMapSlots,
   NodeEventPayload,
   NodeSlotProps,
   Viewport,

@@ -2,11 +2,11 @@
 import { describe, expect, it } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
-import NetworkMap from '../../src/components/NetworkMap.vue'
+import AssetMap from '../../src/components/AssetMap.vue'
 import { entities, links, statusColors, views } from '../../fixtures/infra'
 
 async function mountMap(props: Record<string, unknown> = {}) {
-  const wrapper = mount(NetworkMap, {
+  const wrapper = mount(AssetMap, {
     props: {
       entities,
       links,
@@ -32,7 +32,7 @@ describe('выделение подсвечивает связи и затемн
   it('до выделения никто не затемнён', async () => {
     const wrapper = await mountMap()
 
-    expect(wrapper.findAll('.vnm-node--dimmed')).toHaveLength(0)
+    expect(wrapper.findAll('.vam-node--dimmed')).toHaveLength(0)
     wrapper.unmount()
   })
 
@@ -43,12 +43,12 @@ describe('выделение подсвечивает связи и затемн
     await nextTick()
 
     // Сам узел и его связи в оверлее: координатор и прямой пиринг с Artjom.
-    expect(nodeClasses(wrapper, 'Dmitry')).not.toContain('vnm-node--dimmed')
-    expect(nodeClasses(wrapper, 'Tailscale VPS')).not.toContain('vnm-node--dimmed')
-    expect(nodeClasses(wrapper, 'Artjom')).not.toContain('vnm-node--dimmed')
+    expect(nodeClasses(wrapper, 'Dmitry')).not.toContain('vam-node--dimmed')
+    expect(nodeClasses(wrapper, 'Tailscale VPS')).not.toContain('vam-node--dimmed')
+    expect(nodeClasses(wrapper, 'Artjom')).not.toContain('vam-node--dimmed')
     // Всё остальное затемнено.
-    expect(nodeClasses(wrapper, 'Vlad')).toContain('vnm-node--dimmed')
-    expect(nodeClasses(wrapper, 'Proxmox GPU server')).toContain('vnm-node--dimmed')
+    expect(nodeClasses(wrapper, 'Vlad')).toContain('vam-node--dimmed')
+    expect(nodeClasses(wrapper, 'Proxmox GPU server')).toContain('vam-node--dimmed')
 
     wrapper.unmount()
   })
@@ -58,12 +58,12 @@ describe('выделение подсвечивает связи и затемн
 
     await wrapper.find('[aria-label^="Dmitry"]').trigger('click')
     await nextTick()
-    expect(wrapper.findAll('.vnm-node--dimmed').length).toBeGreaterThan(0)
+    expect(wrapper.findAll('.vam-node--dimmed').length).toBeGreaterThan(0)
 
     await wrapper.find('.vue-flow__pane').trigger('click')
     await nextTick()
 
-    expect(wrapper.findAll('.vnm-node--dimmed')).toHaveLength(0)
+    expect(wrapper.findAll('.vam-node--dimmed')).toHaveLength(0)
     wrapper.unmount()
   })
 
@@ -71,12 +71,12 @@ describe('выделение подсвечивает связи и затемн
     const shallow = await mountMap({ view: 'logical', neighborHighlightDepth: 1 })
     await shallow.find('[aria-label^="Vlad"]').trigger('click')
     await nextTick()
-    const shallowBright = shallow.findAll('.vnm-node').length - shallow.findAll('.vnm-node--dimmed').length
+    const shallowBright = shallow.findAll('.vam-node').length - shallow.findAll('.vam-node--dimmed').length
 
     const deep = await mountMap({ view: 'logical', neighborHighlightDepth: 2 })
     await deep.find('[aria-label^="Vlad"]').trigger('click')
     await nextTick()
-    const deepBright = deep.findAll('.vnm-node').length - deep.findAll('.vnm-node--dimmed').length
+    const deepBright = deep.findAll('.vam-node').length - deep.findAll('.vam-node--dimmed').length
 
     expect(deepBright).toBeGreaterThan(shallowBright)
 
@@ -90,9 +90,9 @@ describe('выделение подсвечивает связи и затемн
     await wrapper.find('[aria-label^="Dmitry"]').trigger('click')
     await nextTick()
 
-    expect(wrapper.findAll('.vnm-node--dimmed')).toHaveLength(0)
+    expect(wrapper.findAll('.vam-node--dimmed')).toHaveLength(0)
     // Выделение при этом работает.
-    expect(nodeClasses(wrapper, 'Dmitry')).toContain('vnm-node--selected')
+    expect(nodeClasses(wrapper, 'Dmitry')).toContain('vam-node--selected')
 
     wrapper.unmount()
   })
@@ -104,8 +104,8 @@ describe('выделение подсвечивает связи и затемн
     await wrapper.find('[aria-label^="Dmitry"]').trigger('click')
     await nextTick()
 
-    expect(nodeClasses(wrapper, 'Keenetic 2')).not.toContain('vnm-node--dimmed')
-    expect(nodeClasses(wrapper, 'Tailscale VPS')).toContain('vnm-node--dimmed')
+    expect(nodeClasses(wrapper, 'Keenetic 2')).not.toContain('vam-node--dimmed')
+    expect(nodeClasses(wrapper, 'Tailscale VPS')).toContain('vam-node--dimmed')
 
     wrapper.unmount()
   })
@@ -117,8 +117,8 @@ describe('выделение подсвечивает связи и затемн
     await wrapper.find('[aria-label^="NGINX VPS"]').trigger('click', { ctrlKey: true })
     await nextTick()
 
-    expect(nodeClasses(wrapper, 'Vlad')).not.toContain('vnm-node--dimmed')
-    expect(nodeClasses(wrapper, 'NGINX VPS')).not.toContain('vnm-node--dimmed')
+    expect(nodeClasses(wrapper, 'Vlad')).not.toContain('vam-node--dimmed')
+    expect(nodeClasses(wrapper, 'NGINX VPS')).not.toContain('vam-node--dimmed')
 
     wrapper.unmount()
   })
@@ -135,8 +135,8 @@ describe('выделение подсвечивает связи и затемн
     await nextTick()
 
     // Совпадение поиска яркое, а выбранный узел — нет: режимы не смешиваются.
-    expect(nodeClasses(wrapper, 'Vlad')).toContain('vnm-node--matched')
-    expect(nodeClasses(wrapper, 'Tailscale VPS')).toContain('vnm-node--dimmed')
+    expect(nodeClasses(wrapper, 'Vlad')).toContain('vam-node--matched')
+    expect(nodeClasses(wrapper, 'Tailscale VPS')).toContain('vam-node--dimmed')
 
     wrapper.unmount()
   })
@@ -146,7 +146,7 @@ describe('режим заражения', () => {
   it('без пометок никто не заражён', async () => {
     const wrapper = await mountMap()
 
-    expect(wrapper.findAll('.vnm-node--infected')).toHaveLength(0)
+    expect(wrapper.findAll('.vam-node--infected')).toHaveLength(0)
     wrapper.unmount()
   })
 
@@ -157,13 +157,13 @@ describe('режим заражения', () => {
       infectionOptions: { maxDepth: 1 },
     })
 
-    expect(nodeClasses(wrapper, 'Tailscale VPS')).toContain('vnm-node--infected')
-    expect(nodeClasses(wrapper, 'Tailscale VPS')).toContain('vnm-node--infection-source')
+    expect(nodeClasses(wrapper, 'Tailscale VPS')).toContain('vam-node--infected')
+    expect(nodeClasses(wrapper, 'Tailscale VPS')).toContain('vam-node--infection-source')
 
     // На один шаг захвачены прямые связи координатора.
-    expect(nodeClasses(wrapper, 'Dmitry')).toContain('vnm-node--infected')
+    expect(nodeClasses(wrapper, 'Dmitry')).toContain('vam-node--infected')
     // Помеченным вручную сосед не считается.
-    expect(nodeClasses(wrapper, 'Dmitry')).not.toContain('vnm-node--infection-source')
+    expect(nodeClasses(wrapper, 'Dmitry')).not.toContain('vam-node--infection-source')
 
     wrapper.unmount()
   })
@@ -180,8 +180,8 @@ describe('режим заражения', () => {
       infectionOptions: { maxDepth: 3 },
     })
 
-    expect(far.findAll('.vnm-node--infected').length).toBeGreaterThan(
-      near.findAll('.vnm-node--infected').length,
+    expect(far.findAll('.vam-node--infected').length).toBeGreaterThan(
+      near.findAll('.vam-node--infected').length,
     )
 
     near.unmount()
@@ -195,10 +195,10 @@ describe('режим заражения', () => {
       infectionOptions: { maxDepth: 1 },
     })
 
-    const infectedEdges = wrapper.findAll('.vnm-edge--infected')
+    const infectedEdges = wrapper.findAll('.vam-edge--infected')
     expect(infectedEdges.length).toBeGreaterThan(0)
     // Не все связи карты покрашены: захват ограничен одним шагом.
-    expect(infectedEdges.length).toBeLessThan(wrapper.findAll('.vnm-edge').length)
+    expect(infectedEdges.length).toBeLessThan(wrapper.findAll('.vam-edge').length)
 
     wrapper.unmount()
   })
@@ -217,8 +217,8 @@ describe('режим заражения', () => {
     })
 
     // Вверх по потоку добирается Cloudflare, вниз — нет.
-    expect(nodeClasses(upstream, 'Cloudflare')).toContain('vnm-node--infected')
-    expect(nodeClasses(downstream, 'Cloudflare')).not.toContain('vnm-node--infected')
+    expect(nodeClasses(upstream, 'Cloudflare')).toContain('vam-node--infected')
+    expect(nodeClasses(downstream, 'Cloudflare')).not.toContain('vam-node--infected')
 
     downstream.unmount()
     upstream.unmount()
@@ -232,21 +232,21 @@ describe('режим заражения', () => {
     })
 
     // Контейнер спрятан в группу — заражение видно на групповом узле.
-    expect(wrapper.find('.vnm-group').classes()).toContain('vnm-node--infected')
+    expect(wrapper.find('.vam-group').classes()).toContain('vam-node--infected')
     wrapper.unmount()
   })
 
   it('заражение можно включать и выключать', async () => {
     const wrapper = await mountMap({ view: 'logical', infected: [] })
-    expect(wrapper.findAll('.vnm-node--infected')).toHaveLength(0)
+    expect(wrapper.findAll('.vam-node--infected')).toHaveLength(0)
 
     await wrapper.setProps({ infected: ['vps-tailscale'] })
     await nextTick()
-    expect(wrapper.findAll('.vnm-node--infected').length).toBeGreaterThan(0)
+    expect(wrapper.findAll('.vam-node--infected').length).toBeGreaterThan(0)
 
     await wrapper.setProps({ infected: [] })
     await nextTick()
-    expect(wrapper.findAll('.vnm-node--infected')).toHaveLength(0)
+    expect(wrapper.findAll('.vam-node--infected')).toHaveLength(0)
 
     wrapper.unmount()
   })

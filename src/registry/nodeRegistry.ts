@@ -1,7 +1,7 @@
 import { markRaw, type Component } from 'vue'
 import BaseNode from '../components/nodes/BaseNode.vue'
 import GroupNode from '../components/nodes/GroupNode.vue'
-import NetworkEdge from '../components/edges/NetworkEdge.vue'
+import AssetEdge from '../components/edges/AssetEdge.vue'
 
 /**
  * Internal `node.type` values the map hands to VueFlow.
@@ -11,9 +11,9 @@ import NetworkEdge from '../components/edges/NetworkEdge.vue'
  * data. A `kind` reaches `type` only when a component is actually registered
  * under it.
  */
-export const NODE_TYPE_BASE = 'vnm-node'
-export const NODE_TYPE_GROUP = 'vnm-group'
-export const EDGE_TYPE_BASE = 'vnm-edge'
+export const NODE_TYPE_BASE = 'vam-node'
+export const NODE_TYPE_GROUP = 'vam-group'
+export const EDGE_TYPE_BASE = 'vam-edge'
 
 /**
  * Node component registry: the consumer's entries merged over the built-ins.
@@ -38,7 +38,7 @@ export function buildNodeTypes(custom?: Record<string, Component>): Record<strin
 /** Edge component registry, following the same rules as {@link buildNodeTypes}. */
 export function buildEdgeTypes(custom?: Record<string, Component>): Record<string, Component> {
   const types: Record<string, Component> = {
-    [EDGE_TYPE_BASE]: markRaw(NetworkEdge),
+    [EDGE_TYPE_BASE]: markRaw(AssetEdge),
   }
 
   for (const [name, component] of Object.entries(custom ?? {})) {

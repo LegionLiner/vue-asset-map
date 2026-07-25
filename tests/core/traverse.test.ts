@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { blastRadius, buildGraph, findPaths, neighbors } from '../../src/core/index'
-import type { NetworkEntity } from '../../src/types/entity'
-import type { NetworkLink } from '../../src/types/link'
+import type { AssetEntity } from '../../src/types/entity'
+import type { AssetLink } from '../../src/types/link'
 import { entities, links } from '../../fixtures/infra'
 
-const e = (id: string): NetworkEntity => ({ id, kind: 'host', label: id })
+const e = (id: string): AssetEntity => ({ id, kind: 'host', label: id })
 
-const l = (id: string, source: string, target: string, extra: Partial<NetworkLink> = {}): NetworkLink => ({
+const l = (id: string, source: string, target: string, extra: Partial<AssetLink> = {}): AssetLink => ({
   id,
   source,
   target,
@@ -100,7 +100,7 @@ describe('findPaths', () => {
   it('не зависает на плотном графе с множеством циклов', () => {
     const size = 12
     const denseEntities = Array.from({ length: size }, (_, index) => e(`n${index}`))
-    const denseLinks: NetworkLink[] = []
+    const denseLinks: AssetLink[] = []
     for (let from = 0; from < size; from += 1) {
       for (let to = from + 1; to < size; to += 1) {
         denseLinks.push(l(`e-${from}-${to}`, `n${from}`, `n${to}`))

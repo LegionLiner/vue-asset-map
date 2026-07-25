@@ -125,14 +125,14 @@ export const IconCheckbox = svg(20, '0 0 20 20', [
 /**
  * Checked checkbox.
  *
- * The fill is `currentColor` and the tick is `--vnm-accent-fg`: on a dark fill
+ * The fill is `currentColor` and the tick is `--vam-accent-fg`: on a dark fill
  * the tick has to stay legible, and which color that takes is the theme's call.
  */
 export const IconCheckboxChecked = svg(20, '0 0 20 20', [
   h('rect', { width: 20, height: 20, rx: 4, fill: 'currentColor' }),
   h('path', {
     d: 'M14.9699 7L9.07701 13L6.39844 10.2727',
-    stroke: 'var(--vnm-accent-fg)',
+    stroke: 'var(--vam-accent-fg)',
     'stroke-width': 2,
     'stroke-linecap': 'round',
     'stroke-linejoin': 'round',

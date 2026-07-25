@@ -138,73 +138,73 @@ defineExpose({ groupValuesOf })
 </script>
 
 <template>
-  <div class="vnm-filter">
+  <div class="vam-filter">
     <button
       type="button"
-      class="vnm-filter__button"
-      :class="{ 'vnm-filter__button--active': open }"
+      class="vam-filter__button"
+      :class="{ 'vam-filter__button--active': open }"
       :aria-label="t('filter.label')"
       :aria-expanded="open"
       @click="open = !open"
     >
       <IconFilter />
-      <span v-if="activeCount > 0" class="vnm-filter__badge">{{ activeCount }}</span>
+      <span v-if="activeCount > 0" class="vam-filter__badge">{{ activeCount }}</span>
     </button>
 
-    <section v-if="open" class="vnm-filter__panel" :aria-label="t('filter.label')">
-      <header class="vnm-filter__head">
-        <IconFilter class="vnm-filter__head-icon" />
-        <h3 class="vnm-filter__title">{{ t('filter.label') }}</h3>
-        <button type="button" class="vnm-filter__reset" :disabled="activeCount === 0" @click="reset">
+    <section v-if="open" class="vam-filter__panel" :aria-label="t('filter.label')">
+      <header class="vam-filter__head">
+        <IconFilter class="vam-filter__head-icon" />
+        <h3 class="vam-filter__title">{{ t('filter.label') }}</h3>
+        <button type="button" class="vam-filter__reset" :disabled="activeCount === 0" @click="reset">
           {{ t('filter.reset') }}
         </button>
       </header>
 
-      <div class="vnm-filter__search">
+      <div class="vam-filter__search">
         <input
           v-model="query"
           type="search"
-          class="vnm-filter__search-input"
+          class="vam-filter__search-input"
           :aria-label="t('filter.search')"
           :placeholder="t('filter.search')"
         />
       </div>
 
-      <div class="vnm-filter__groups">
-        <section v-for="group in groups" :key="group.id" class="vnm-filter__group">
+      <div class="vam-filter__groups">
+        <section v-for="group in groups" :key="group.id" class="vam-filter__group">
           <button
             type="button"
-            class="vnm-filter__group-head"
+            class="vam-filter__group-head"
             :aria-expanded="isOpen(group)"
             @click="toggleGroup(group)"
           >
-            <span class="vnm-filter__group-title">{{ group.label }}</span>
+            <span class="vam-filter__group-title">{{ group.label }}</span>
             <IconChevron
-              class="vnm-filter__chevron"
-              :class="{ 'vnm-filter__chevron--closed': !isOpen(group) }"
+              class="vam-filter__chevron"
+              :class="{ 'vam-filter__chevron--closed': !isOpen(group) }"
             />
           </button>
 
-          <div v-if="isOpen(group)" class="vnm-filter__options">
-            <p v-if="optionsOf(group).length === 0" class="vnm-filter__empty">
+          <div v-if="isOpen(group)" class="vam-filter__options">
+            <p v-if="optionsOf(group).length === 0" class="vam-filter__empty">
               {{ t('filter.empty') }}
             </p>
 
-            <label v-for="option in optionsOf(group)" :key="option.value" class="vnm-filter__option">
+            <label v-for="option in optionsOf(group)" :key="option.value" class="vam-filter__option">
               <input
                 type="checkbox"
-                class="vnm-filter__checkbox"
+                class="vam-filter__checkbox"
                 :checked="isChecked(group.id, option.value)"
                 @change="toggleValue(group.id, option.value)"
               />
               <IconCheckboxChecked
                 v-if="isChecked(group.id, option.value)"
-                class="vnm-filter__checkbox-icon vnm-filter__checkbox-icon--checked"
+                class="vam-filter__checkbox-icon vam-filter__checkbox-icon--checked"
               />
-              <IconCheckbox v-else class="vnm-filter__checkbox-icon" />
+              <IconCheckbox v-else class="vam-filter__checkbox-icon" />
 
-              <span class="vnm-filter__option-label">{{ option.label }}</span>
-              <span class="vnm-filter__count">{{ option.count }}</span>
+              <span class="vam-filter__option-label">{{ option.label }}</span>
+              <span class="vam-filter__count">{{ option.count }}</span>
             </label>
           </div>
         </section>
@@ -214,163 +214,163 @@ defineExpose({ groupValuesOf })
 </template>
 
 <style>
-.vnm-filter {
+.vam-filter {
   position: relative;
   flex: 0 0 auto;
 }
 
-.vnm-filter__button {
+.vam-filter__button {
   display: flex;
   position: relative;
   align-items: center;
   justify-content: center;
-  gap: var(--vnm-space-2);
-  padding: var(--vnm-space-2);
+  gap: var(--vam-space-2);
+  padding: var(--vam-space-2);
   border: 0;
-  border-radius: var(--vnm-radius-md);
-  background: var(--vnm-surface);
-  color: var(--vnm-fg-muted);
+  border-radius: var(--vam-radius-md);
+  background: var(--vam-surface);
+  color: var(--vam-fg-muted);
   cursor: pointer;
 }
 
-.vnm-filter__button:hover,
-.vnm-filter__button--active {
-  color: var(--vnm-fg-subtle);
+.vam-filter__button:hover,
+.vam-filter__button--active {
+  color: var(--vam-fg-subtle);
 }
 
-.vnm-filter__button:focus-visible {
-  outline: 2px solid var(--vnm-focus-ring);
+.vam-filter__button:focus-visible {
+  outline: 2px solid var(--vam-focus-ring);
   outline-offset: 1px;
 }
 
-.vnm-filter__badge {
+.vam-filter__badge {
   position: absolute;
   top: 0;
   right: 0;
   min-width: 14px;
-  border-radius: var(--vnm-radius-sm);
-  background: var(--vnm-accent);
-  color: var(--vnm-accent-fg);
-  font-size: var(--vnm-font-size-sm);
-  font-weight: var(--vnm-font-weight-bold);
+  border-radius: var(--vam-radius-sm);
+  background: var(--vam-accent);
+  color: var(--vam-accent-fg);
+  font-size: var(--vam-font-size-sm);
+  font-weight: var(--vam-font-weight-bold);
   line-height: 14px;
   text-align: center;
 }
 
-.vnm-filter__panel {
+.vam-filter__panel {
   position: absolute;
   z-index: 30;
-  top: calc(100% + var(--vnm-space-1));
+  top: calc(100% + var(--vam-space-1));
   left: 0;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--vnm-space-2);
+  gap: var(--vam-space-2);
   box-sizing: border-box;
-  width: var(--vnm-filter-width);
+  width: var(--vam-filter-width);
   /* Bounded by the canvas as well: the panel opens inside the map and must not
      spill past it, or a scrollbar would appear. */
-  max-height: min(var(--vnm-filter-height), 80vh);
-  padding: var(--vnm-space-4);
+  max-height: min(var(--vam-filter-height), 80vh);
+  padding: var(--vam-space-4);
   overflow: hidden;
-  border-radius: var(--vnm-radius-md);
-  background: var(--vnm-surface);
-  box-shadow: var(--vnm-shadow-lg);
+  border-radius: var(--vam-radius-md);
+  background: var(--vam-surface);
+  box-shadow: var(--vam-shadow-lg);
 }
 
-.vnm-filter__head {
+.vam-filter__head {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: var(--vnm-space-2);
+  gap: var(--vam-space-2);
   width: 100%;
 }
 
-.vnm-filter__head-icon {
+.vam-filter__head-icon {
   flex-shrink: 0;
-  color: var(--vnm-fg-muted);
+  color: var(--vam-fg-muted);
 }
 
-.vnm-filter__title {
+.vam-filter__title {
   flex: 1 1 auto;
   margin: 0;
-  color: var(--vnm-fg-subtle);
-  font-size: var(--vnm-font-size-lg);
-  font-weight: var(--vnm-font-weight-bold);
-  line-height: var(--vnm-line-height-lg);
+  color: var(--vam-fg-subtle);
+  font-size: var(--vam-font-size-lg);
+  font-weight: var(--vam-font-weight-bold);
+  line-height: var(--vam-line-height-lg);
 }
 
-.vnm-filter__reset {
+.vam-filter__reset {
   flex: 0 0 auto;
   padding: 0;
   border: 0;
   background: transparent;
-  color: var(--vnm-fg-subtle);
-  font-family: var(--vnm-font);
-  font-size: var(--vnm-font-size-sm);
+  color: var(--vam-fg-subtle);
+  font-family: var(--vam-font);
+  font-size: var(--vam-font-size-sm);
   cursor: pointer;
 }
 
-.vnm-filter__reset:disabled {
-  color: var(--vnm-fg-muted);
+.vam-filter__reset:disabled {
+  color: var(--vam-fg-muted);
   cursor: not-allowed;
 }
 
-.vnm-filter__reset:focus-visible {
-  outline: 2px solid var(--vnm-focus-ring);
+.vam-filter__reset:focus-visible {
+  outline: 2px solid var(--vam-focus-ring);
   outline-offset: 1px;
 }
 
-.vnm-filter__search {
+.vam-filter__search {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
   box-sizing: border-box;
   width: 100%;
   padding: 6px 10px;
-  border: 1px solid var(--vnm-border);
-  border-radius: var(--vnm-radius-md);
+  border: 1px solid var(--vam-border);
+  border-radius: var(--vam-radius-md);
 }
 
-.vnm-filter__search-input {
+.vam-filter__search-input {
   width: 100%;
   min-width: 0;
   border: 0;
   background: transparent;
-  color: var(--vnm-fg);
-  font-family: var(--vnm-font);
-  font-size: var(--vnm-font-size);
+  color: var(--vam-fg);
+  font-family: var(--vam-font);
+  font-size: var(--vam-font-size);
 }
 
-.vnm-filter__search-input::placeholder {
-  color: var(--vnm-fg-subtle);
+.vam-filter__search-input::placeholder {
+  color: var(--vam-fg-subtle);
 }
 
-.vnm-filter__search-input:focus {
+.vam-filter__search-input:focus {
   outline: none;
 }
 
-.vnm-filter__groups {
+.vam-filter__groups {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: var(--vnm-space-2);
+  gap: var(--vam-space-2);
   width: 100%;
   min-height: 0;
   overflow-y: auto;
 }
 
-.vnm-filter__group {
+.vam-filter__group {
   display: flex;
   flex-direction: column;
-  gap: var(--vnm-space-1);
+  gap: var(--vam-space-1);
 }
 
-.vnm-filter__group-head {
+.vam-filter__group-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--vnm-space-2);
+  gap: var(--vam-space-2);
   width: 100%;
   padding: 0;
   border: 0;
@@ -378,84 +378,84 @@ defineExpose({ groupValuesOf })
   cursor: pointer;
 }
 
-.vnm-filter__group-title {
-  color: var(--vnm-fg-subtle);
-  font-family: var(--vnm-font);
-  font-size: var(--vnm-font-size-lg);
-  font-weight: var(--vnm-font-weight-bold);
-  line-height: var(--vnm-line-height-lg);
+.vam-filter__group-title {
+  color: var(--vam-fg-subtle);
+  font-family: var(--vam-font);
+  font-size: var(--vam-font-size-lg);
+  font-weight: var(--vam-font-weight-bold);
+  line-height: var(--vam-line-height-lg);
 }
 
-.vnm-filter__group-head:focus-visible {
-  outline: 2px solid var(--vnm-focus-ring);
+.vam-filter__group-head:focus-visible {
+  outline: 2px solid var(--vam-focus-ring);
   outline-offset: 2px;
 }
 
-.vnm-filter__chevron {
+.vam-filter__chevron {
   flex-shrink: 0;
-  color: var(--vnm-fg-subtle);
-  transition: transform var(--vnm-transition);
+  color: var(--vam-fg-subtle);
+  transition: transform var(--vam-transition);
 }
 
-.vnm-filter__chevron--closed {
+.vam-filter__chevron--closed {
   transform: rotate(-90deg);
 }
 
-.vnm-filter__options {
+.vam-filter__options {
   display: flex;
   flex-direction: column;
-  gap: var(--vnm-space-1);
+  gap: var(--vam-space-1);
 }
 
-.vnm-filter__option {
+.vam-filter__option {
   display: flex;
   align-items: center;
-  gap: var(--vnm-space-2);
-  color: var(--vnm-fg);
-  font-size: var(--vnm-font-size-lg);
-  line-height: var(--vnm-line-height-lg);
+  gap: var(--vam-space-2);
+  color: var(--vam-fg);
+  font-size: var(--vam-font-size-lg);
+  line-height: var(--vam-line-height-lg);
   cursor: pointer;
 }
 
 /* The real checkbox stays for keyboard and screen readers; the icon is what
    gets drawn. */
-.vnm-filter__checkbox {
+.vam-filter__checkbox {
   position: absolute;
   width: 1px;
   height: 1px;
   opacity: 0;
 }
 
-.vnm-filter__checkbox-icon {
+.vam-filter__checkbox-icon {
   flex-shrink: 0;
-  color: var(--vnm-fg-muted);
+  color: var(--vam-fg-muted);
 }
 
-.vnm-filter__checkbox-icon--checked {
-  color: var(--vnm-accent);
+.vam-filter__checkbox-icon--checked {
+  color: var(--vam-accent);
 }
 
-.vnm-filter__checkbox:focus-visible + .vnm-filter__checkbox-icon {
-  outline: 2px solid var(--vnm-focus-ring);
+.vam-filter__checkbox:focus-visible + .vam-filter__checkbox-icon {
+  outline: 2px solid var(--vam-focus-ring);
   outline-offset: 1px;
 }
 
-.vnm-filter__option-label {
+.vam-filter__option-label {
   flex: 1 1 auto;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.vnm-filter__count {
-  color: var(--vnm-fg-muted);
-  font-family: var(--vnm-font-mono);
-  font-size: var(--vnm-font-size-sm);
+.vam-filter__count {
+  color: var(--vam-fg-muted);
+  font-family: var(--vam-font-mono);
+  font-size: var(--vam-font-size-sm);
 }
 
-.vnm-filter__empty {
+.vam-filter__empty {
   margin: 0;
-  color: var(--vnm-fg-muted);
-  font-size: var(--vnm-font-size-sm);
+  color: var(--vam-fg-muted);
+  font-size: var(--vam-font-size-sm);
 }
 </style>

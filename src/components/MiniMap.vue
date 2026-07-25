@@ -118,7 +118,7 @@ function onClick(event: MouseEvent): void {
 
 <template>
   <svg
-    class="vnm-minimap"
+    class="vam-minimap"
     :width="box.width"
     :height="box.height"
     :viewBox="viewBox"
@@ -130,10 +130,10 @@ function onClick(event: MouseEvent): void {
     <rect
       v-for="node in nodes"
       :key="node.id"
-      class="vnm-minimap__node"
+      class="vam-minimap__node"
       :class="{
-        'vnm-minimap__node--matched': node.matched === true,
-        'vnm-minimap__node--selected': node.selected === true,
+        'vam-minimap__node--matched': node.matched === true,
+        'vam-minimap__node--selected': node.selected === true,
       }"
       :x="node.x"
       :y="node.y"
@@ -142,7 +142,7 @@ function onClick(event: MouseEvent): void {
     />
 
     <rect
-      class="vnm-minimap__viewport"
+      class="vam-minimap__viewport"
       :x="viewportRect.x"
       :y="viewportRect.y"
       :width="viewportRect.width"
@@ -153,34 +153,34 @@ function onClick(event: MouseEvent): void {
 </template>
 
 <style>
-.vnm-minimap {
+.vam-minimap {
   position: absolute;
-  right: var(--vnm-space-3);
-  bottom: var(--vnm-space-3);
-  border: 1px solid var(--vnm-border);
-  border-radius: var(--vnm-radius-md);
-  background: var(--vnm-surface);
-  box-shadow: var(--vnm-shadow-md);
+  right: var(--vam-space-3);
+  bottom: var(--vam-space-3);
+  border: 1px solid var(--vam-border);
+  border-radius: var(--vam-radius-md);
+  background: var(--vam-surface);
+  box-shadow: var(--vam-shadow-md);
   cursor: pointer;
 }
 
-.vnm-minimap__node {
-  fill: var(--vnm-fg-muted);
+.vam-minimap__node {
+  fill: var(--vam-fg-muted);
   opacity: 0.6;
 }
 
-.vnm-minimap__node--matched {
-  fill: var(--vnm-highlight);
+.vam-minimap__node--matched {
+  fill: var(--vam-highlight);
   opacity: 1;
 }
 
-.vnm-minimap__node--selected {
-  fill: var(--vnm-accent);
+.vam-minimap__node--selected {
+  fill: var(--vam-accent);
   opacity: 1;
 }
 
-.vnm-minimap__viewport {
-  fill: var(--vnm-accent-soft);
-  stroke: var(--vnm-accent);
+.vam-minimap__viewport {
+  fill: var(--vam-accent-soft);
+  stroke: var(--vam-accent);
 }
 </style>

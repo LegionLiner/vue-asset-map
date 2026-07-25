@@ -2,12 +2,12 @@
 import { describe, expect, it } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { h, nextTick } from 'vue'
-import NetworkMap from '../../src/components/NetworkMap.vue'
+import AssetMap from '../../src/components/AssetMap.vue'
 import { buildGraph, collapseGraph, isAggregatedLink } from '../../src/core/index'
 import { entities, filterGroups, links, statusColors, views } from '../../fixtures/infra'
 
 async function mountMap(props: Record<string, unknown> = {}) {
-  const wrapper = mount(NetworkMap, {
+  const wrapper = mount(AssetMap, {
     props: {
       entities,
       links,
@@ -30,8 +30,8 @@ describe('узел: круг с подписью под ним', () => {
     const wrapper = await mountMap()
 
     // `Интернет` — корень, `Proxmox Beelink` висит на роутере.
-    expect(wrapper.find('[aria-label^="Интернет"]').classes()).toContain('vnm-node--root')
-    expect(wrapper.find('[aria-label^="Proxmox Beelink"]').classes()).toContain('vnm-node--child')
+    expect(wrapper.find('[aria-label^="Интернет"]').classes()).toContain('vam-node--root')
+    expect(wrapper.find('[aria-label^="Proxmox Beelink"]').classes()).toContain('vam-node--child')
 
     wrapper.unmount()
   })
@@ -40,9 +40,9 @@ describe('узел: круг с подписью под ним', () => {
     const wrapper = await mountMap({ view: 'logical' })
     const node = wrapper.find('[aria-label^="Tailscale VPS"]')
 
-    expect(node.find('.vnm-node__circle').exists()).toBe(true)
-    expect(node.find('.vnm-node__info').exists()).toBe(true)
-    expect(node.find('.vnm-node__label').text()).toBe('Tailscale VPS')
+    expect(node.find('.vam-node__circle').exists()).toBe(true)
+    expect(node.find('.vam-node__info').exists()).toBe(true)
+    expect(node.find('.vam-node__label').text()).toBe('Tailscale VPS')
 
     wrapper.unmount()
   })
@@ -51,18 +51,18 @@ describe('узел: круг с подписью под ним', () => {
     const wrapper = await mountMap({ view: 'logical' })
     const node = wrapper.find('[aria-label^="Tailscale VPS"]')
 
-    expect(node.find('.vnm-node__sublabel').text()).toBe('46.8.158.127')
-    expect(node.find('.vnm-node__sublabel-overlay').text()).toBe('100.64.0.2')
+    expect(node.find('.vam-node__sublabel').text()).toBe('46.8.158.127')
+    expect(node.find('.vam-node__sublabel-overlay').text()).toBe('100.64.0.2')
 
     wrapper.unmount()
   })
 
   it('индикатор состояния лежит внутри круга и окрашен темой', async () => {
     const wrapper = await mountMap()
-    const status = wrapper.find('[aria-label^="Vlad"]').find('.vnm-node__circle .vnm-node__status')
+    const status = wrapper.find('[aria-label^="Vlad"]').find('.vam-node__circle .vam-node__status')
 
     expect(status.exists()).toBe(true)
-    expect(status.attributes('style')).toContain('var(--vnm-status-offline)')
+    expect(status.attributes('style')).toContain('var(--vam-status-offline)')
 
     wrapper.unmount()
   })
@@ -105,9 +105,9 @@ describe('узел: круг с подписью под ним', () => {
 
     // Класс выделения на корне, но рамку по CSS получают круг и плашка —
     // проверяем, что оба элемента на месте и корень не рисует свою рамку.
-    expect(node.classes()).toContain('vnm-node--selected')
-    expect(node.find('.vnm-node__circle').exists()).toBe(true)
-    expect(node.find('.vnm-node__info').exists()).toBe(true)
+    expect(node.classes()).toContain('vam-node--selected')
+    expect(node.find('.vam-node__circle').exists()).toBe(true)
+    expect(node.find('.vam-node__info').exists()).toBe(true)
 
     wrapper.unmount()
   })
@@ -116,8 +116,8 @@ describe('узел: круг с подписью под ним', () => {
     const wrapper = await mountMap({ view: 'logical' })
     const node = wrapper.find('[aria-label^="Tailscale VPS"]')
 
-    expect(node.find('.vnm-node__badges').exists()).toBe(true)
-    expect(node.find('.vnm-node__info .vnm-node__badges').exists()).toBe(false)
+    expect(node.find('.vam-node__badges').exists()).toBe(true)
+    expect(node.find('.vam-node__info .vam-node__badges').exists()).toBe(false)
 
     wrapper.unmount()
   })
@@ -137,8 +137,8 @@ describe('кнопка свёртки поддерева на узле', () => {
     const wrapper = await mountMap()
 
     // У роутера есть дети, у рабочей станции — нет.
-    expect(wrapper.find('[aria-label^="Keenetic 2"]').find('.vnm-node__toggle').exists()).toBe(true)
-    expect(wrapper.find('[aria-label^="Vlad"]').find('.vnm-node__toggle').exists()).toBe(false)
+    expect(wrapper.find('[aria-label^="Keenetic 2"]').find('.vam-node__toggle').exists()).toBe(true)
+    expect(wrapper.find('[aria-label^="Vlad"]').find('.vam-node__toggle').exists()).toBe(false)
 
     wrapper.unmount()
   })
@@ -148,7 +148,7 @@ describe('кнопка свёртки поддерева на узле', () => {
 
     expect(wrapper.find('[aria-label^="Vlad"]').exists()).toBe(true)
 
-    const toggle = wrapper.find('[aria-label^="Keenetic 2"]').find('.vnm-node__toggle')
+    const toggle = wrapper.find('[aria-label^="Keenetic 2"]').find('.vam-node__toggle')
     await toggle.trigger('click')
     await flushPromises()
     await nextTick()
@@ -161,7 +161,7 @@ describe('кнопка свёртки поддерева на узле', () => {
     // А офис A не задет.
     expect(wrapper.find('[aria-label^="Artjom"]').exists()).toBe(true)
 
-    await wrapper.find('[aria-label^="Keenetic 2"]').find('.vnm-node__toggle').trigger('click')
+    await wrapper.find('[aria-label^="Keenetic 2"]').find('.vam-node__toggle').trigger('click')
     await flushPromises()
     await nextTick()
 
@@ -172,13 +172,13 @@ describe('кнопка свёртки поддерева на узле', () => {
 
   it('эмитит node-collapse и node-expand с сущностью', async () => {
     const wrapper = await mountMap()
-    const toggle = wrapper.find('[aria-label^="Keenetic 1"]').find('.vnm-node__toggle')
+    const toggle = wrapper.find('[aria-label^="Keenetic 1"]').find('.vam-node__toggle')
 
     await toggle.trigger('click')
     await flushPromises()
     expect(wrapper.emitted('node-collapse')?.[0]?.[0]).toMatchObject({ id: 'keenetic-1' })
 
-    await wrapper.find('[aria-label^="Keenetic 1"]').find('.vnm-node__toggle').trigger('click')
+    await wrapper.find('[aria-label^="Keenetic 1"]').find('.vam-node__toggle').trigger('click')
     await flushPromises()
     expect(wrapper.emitted('node-expand')?.[0]?.[0]).toMatchObject({ id: 'keenetic-1' })
 
@@ -188,12 +188,12 @@ describe('кнопка свёртки поддерева на узле', () => {
   it('клик по кнопке не выделяет узел', async () => {
     const wrapper = await mountMap()
 
-    await wrapper.find('[aria-label^="Keenetic 2"]').find('.vnm-node__toggle').trigger('click')
+    await wrapper.find('[aria-label^="Keenetic 2"]').find('.vam-node__toggle').trigger('click')
     await flushPromises()
     await nextTick()
 
     expect(wrapper.emitted('node-click')).toBeUndefined()
-    expect(wrapper.find('.vnm-window').exists()).toBe(false)
+    expect(wrapper.find('.vam-window').exists()).toBe(false)
 
     wrapper.unmount()
   })
@@ -263,7 +263,7 @@ describe('окно подробностей', () => {
     await wrapper.find('[aria-label^="Dmitry"]').trigger('click')
     await nextTick()
 
-    const buttons = wrapper.findAll('.vnm-window__button')
+    const buttons = wrapper.findAll('.vam-window__button')
     expect(buttons).toHaveLength(2)
     expect(buttons[0]?.attributes('aria-label')).toBe('Закрыть панель')
     expect(buttons[1]?.attributes('aria-label')).toBe('Свернуть окно')
@@ -283,12 +283,12 @@ describe('окно подробностей', () => {
     wrapper: Awaited<ReturnType<typeof mountMap>>,
     index: number,
   ): Promise<void> {
-    const button = wrapper.findAll('.vnm-window__button')[index]
+    const button = wrapper.findAll('.vam-window__button')[index]
     if (!button) throw new Error(`нет кнопки шапки #${index}`)
 
     await button.trigger('pointerdown', { button: 0, clientX: 10, clientY: 10, pointerId: 1 })
     // Перетаскивание не должно было начаться: иначе клик будет съеден.
-    expect(wrapper.find('.vnm-window').classes()).not.toContain('vnm-window--dragging')
+    expect(wrapper.find('.vam-window').classes()).not.toContain('vam-window--dragging')
 
     await button.trigger('pointerup', { pointerId: 1 })
     await button.trigger('click')
@@ -299,11 +299,11 @@ describe('окно подробностей', () => {
     const wrapper = await mountMap()
     await wrapper.find('[aria-label^="Dmitry"]').trigger('click')
     await nextTick()
-    expect(wrapper.find('.vnm-window').exists()).toBe(true)
+    expect(wrapper.find('.vam-window').exists()).toBe(true)
 
     await pressHeaderButton(wrapper, 0)
 
-    expect(wrapper.find('.vnm-window').exists()).toBe(false)
+    expect(wrapper.find('.vam-window').exists()).toBe(false)
     wrapper.unmount()
   })
 
@@ -314,9 +314,9 @@ describe('окно подробностей', () => {
 
     await pressHeaderButton(wrapper, 1)
 
-    expect(wrapper.find('.vnm-window').classes()).toContain('vnm-window--collapsed')
+    expect(wrapper.find('.vam-window').classes()).toContain('vam-window--collapsed')
     // Окно осталось на месте: нажатие на кнопку не считается перетаскиванием.
-    expect(wrapper.find('.vnm-window').attributes('style')).toContain('translate(0px, 0px)')
+    expect(wrapper.find('.vam-window').attributes('style')).toContain('translate(0px, 0px)')
 
     wrapper.unmount()
   })
@@ -326,12 +326,12 @@ describe('окно подробностей', () => {
     await wrapper.find('[aria-label^="Dmitry"]').trigger('click')
     await nextTick()
 
-    const button = wrapper.findAll('.vnm-window__button')[1]
+    const button = wrapper.findAll('.vam-window__button')[1]
     await button?.trigger('pointerdown', { button: 0, clientX: 10, clientY: 10, pointerId: 1 })
-    await wrapper.find('.vnm-window__header').trigger('pointermove', { clientX: 200, clientY: 200 })
+    await wrapper.find('.vam-window__header').trigger('pointermove', { clientX: 200, clientY: 200 })
     await nextTick()
 
-    expect(wrapper.find('.vnm-window').attributes('style')).toContain('translate(0px, 0px)')
+    expect(wrapper.find('.vam-window').attributes('style')).toContain('translate(0px, 0px)')
     wrapper.unmount()
   })
 
@@ -340,14 +340,14 @@ describe('окно подробностей', () => {
     await wrapper.find('[aria-label^="Dmitry"]').trigger('click')
     await nextTick()
 
-    expect(wrapper.find('.vnm-window__body').exists()).toBe(true)
+    expect(wrapper.find('.vam-window__body').exists()).toBe(true)
 
-    await wrapper.findAll('.vnm-window__button')[1]?.trigger('click')
+    await wrapper.findAll('.vam-window__button')[1]?.trigger('click')
     await nextTick()
 
-    expect(wrapper.find('.vnm-window').classes()).toContain('vnm-window--collapsed')
-    expect(wrapper.find('.vnm-window__body').exists()).toBe(false)
-    expect(wrapper.findAll('.vnm-window__button')[1]?.attributes('aria-label')).toBe('Развернуть окно')
+    expect(wrapper.find('.vam-window').classes()).toContain('vam-window--collapsed')
+    expect(wrapper.find('.vam-window__body').exists()).toBe(false)
+    expect(wrapper.findAll('.vam-window__button')[1]?.attributes('aria-label')).toBe('Развернуть окно')
 
     wrapper.unmount()
   })
@@ -357,8 +357,8 @@ describe('окно подробностей', () => {
     await map.find('[aria-label^="Dmitry"]').trigger('click')
     await nextTick()
 
-    const header = map.find('.vnm-window__header')
-    const windowEl = map.find('.vnm-window')
+    const header = map.find('.vam-window__header')
+    const windowEl = map.find('.vam-window')
     expect(windowEl.attributes('style')).toContain('translate(0px, 0px)')
 
     // setPointerCapture в jsdom нет — подменяем, иначе обработчик упадёт.
@@ -369,7 +369,7 @@ describe('окно подробностей', () => {
     await header.trigger('pointermove', { clientX: 160, clientY: 140, pointerId: 1 })
     await nextTick()
 
-    expect(map.find('.vnm-window').attributes('style')).toContain('translate(60px, 40px)')
+    expect(map.find('.vam-window').attributes('style')).toContain('translate(60px, 40px)')
 
     await header.trigger('pointerup', { pointerId: 1 })
     map.unmount()
@@ -381,7 +381,7 @@ describe('окно подробностей', () => {
     await wrapper.find('[aria-label^="Dmitry"]').trigger('click')
     await nextTick()
 
-    const header = wrapper.find('.vnm-window__header')
+    const header = wrapper.find('.vam-window__header')
     const element = header.element as HTMLElement & { setPointerCapture: (id: number) => void }
     element.setPointerCapture = () => {}
 
@@ -389,12 +389,12 @@ describe('окно подробностей', () => {
     await header.trigger('pointermove', { clientX: 50, clientY: 50, pointerId: 1 })
     await header.trigger('pointerup', { pointerId: 1 })
     await nextTick()
-    expect(wrapper.find('.vnm-window').attributes('style')).toContain('translate(50px, 50px)')
+    expect(wrapper.find('.vam-window').attributes('style')).toContain('translate(50px, 50px)')
 
     await wrapper.find('[aria-label^="Vlad"]').trigger('click')
     await nextTick()
 
-    expect(wrapper.find('.vnm-window').attributes('style')).toContain('translate(0px, 0px)')
+    expect(wrapper.find('.vam-window').attributes('style')).toContain('translate(0px, 0px)')
     wrapper.unmount()
   })
 
@@ -403,19 +403,19 @@ describe('окно подробностей', () => {
     await wrapper.find('[aria-label^="Dmitry"]').trigger('click')
     await nextTick()
 
-    const header = wrapper.find('.vnm-window__header')
+    const header = wrapper.find('.vam-window__header')
     await header.trigger('pointerdown', { button: 2, clientX: 0, clientY: 0, pointerId: 1 })
     await header.trigger('pointermove', { clientX: 90, clientY: 90, pointerId: 1 })
     await nextTick()
 
-    expect(wrapper.find('.vnm-window').attributes('style')).toContain('translate(0px, 0px)')
+    expect(wrapper.find('.vam-window').attributes('style')).toContain('translate(0px, 0px)')
     wrapper.unmount()
   })
 })
 
 describe('панель фильтров: списки из данных потребителя', () => {
   async function openFilters(wrapper: Awaited<ReturnType<typeof mountMap>>) {
-    await wrapper.find('.vnm-filter__button').trigger('click')
+    await wrapper.find('.vam-filter__button').trigger('click')
     await nextTick()
   }
 
@@ -423,10 +423,10 @@ describe('панель фильтров: списки из данных потр
     const wrapper = await mountMap({ filterOptions: { groups: filterGroups } })
     await openFilters(wrapper)
 
-    const titles = wrapper.findAll('.vnm-filter__group-title').map((node) => node.text())
+    const titles = wrapper.findAll('.vam-filter__group-title').map((node) => node.text())
     expect(titles).toEqual(['Подсеть', 'Тип актива', 'Критичность'])
 
-    const labels = wrapper.findAll('.vnm-filter__option-label').map((node) => node.text())
+    const labels = wrapper.findAll('.vam-filter__option-label').map((node) => node.text())
     expect(labels).toContain('Docker Bridge')
     expect(labels).toContain('Виртуальная машина')
 
@@ -437,7 +437,7 @@ describe('панель фильтров: списки из данных потр
     const wrapper = await mountMap({ filterOptions: { groups: filterGroups } })
     await openFilters(wrapper)
 
-    const labels = wrapper.findAll('.vnm-filter__option-label').map((node) => node.text())
+    const labels = wrapper.findAll('.vam-filter__option-label').map((node) => node.text())
     // «Критичность» объявлена свёрнутой.
     expect(labels).not.toContain('Критический')
 
@@ -448,15 +448,15 @@ describe('панель фильтров: списки из данных потр
     const wrapper = await mountMap({ filterOptions: { groups: filterGroups } })
     await openFilters(wrapper)
 
-    const heads = wrapper.findAll('.vnm-filter__group-head')
+    const heads = wrapper.findAll('.vam-filter__group-head')
     const severity = heads[2]
     expect(severity?.attributes('aria-expanded')).toBe('false')
 
     await severity?.trigger('click')
     await nextTick()
 
-    expect(wrapper.findAll('.vnm-filter__group-head')[2]?.attributes('aria-expanded')).toBe('true')
-    expect(wrapper.findAll('.vnm-filter__option-label').map((node) => node.text())).toContain('Критический')
+    expect(wrapper.findAll('.vam-filter__group-head')[2]?.attributes('aria-expanded')).toBe('true')
+    expect(wrapper.findAll('.vam-filter__option-label').map((node) => node.text())).toContain('Критический')
 
     // Состояние уходит наружу, а не в localStorage.
     expect(wrapper.emitted('update:openFilterGroups')).toBeTruthy()
@@ -469,7 +469,7 @@ describe('панель фильтров: списки из данных потр
     await openFilters(wrapper)
 
     const dockerOption = wrapper
-      .findAll('.vnm-filter__option')
+      .findAll('.vam-filter__option')
       .find((option) => option.text().includes('Docker Bridge'))
 
     await dockerOption?.find('input').setValue(true)
@@ -477,7 +477,7 @@ describe('панель фильтров: списки из данных потр
     await nextTick()
 
     // В подсети Docker живут только контейнеры, а они свёрнуты в группу.
-    expect(wrapper.find('.vnm-group').exists()).toBe(true)
+    expect(wrapper.find('.vam-group').exists()).toBe(true)
     expect(wrapper.find('[aria-label^="Интернет"]').exists()).toBe(false)
 
     const emitted = wrapper.emitted('update:filters')?.at(-1)?.[0] as { groups?: Record<string, string[]> }
@@ -491,11 +491,11 @@ describe('панель фильтров: списки из данных потр
     await openFilters(wrapper)
 
     const docker = wrapper
-      .findAll('.vnm-filter__option')
+      .findAll('.vam-filter__option')
       .find((option) => option.text().includes('Docker Bridge'))
 
     // 14 контейнеров фермы.
-    expect(docker?.find('.vnm-filter__count').text()).toBe('14')
+    expect(docker?.find('.vam-filter__count').text()).toBe('14')
     wrapper.unmount()
   })
 
@@ -503,10 +503,10 @@ describe('панель фильтров: списки из данных потр
     const wrapper = await mountMap({ filterOptions: { groups: filterGroups } })
     await openFilters(wrapper)
 
-    await wrapper.find('.vnm-filter__search-input').setValue('docker')
+    await wrapper.find('.vam-filter__search-input').setValue('docker')
     await nextTick()
 
-    const labels = wrapper.findAll('.vnm-filter__option-label').map((node) => node.text())
+    const labels = wrapper.findAll('.vam-filter__option-label').map((node) => node.text())
     expect(labels).toEqual(['Docker Bridge'])
 
     wrapper.unmount()
@@ -516,7 +516,7 @@ describe('панель фильтров: списки из данных потр
     const wrapper = await mountMap()
     await openFilters(wrapper)
 
-    const titles = wrapper.findAll('.vnm-filter__group-title').map((node) => node.text())
+    const titles = wrapper.findAll('.vam-filter__group-title').map((node) => node.text())
     expect(titles).toEqual(['Типы узлов', 'Состояние'])
 
     wrapper.unmount()
@@ -529,9 +529,9 @@ describe('панель фильтров: списки из данных потр
     })
     await openFilters(wrapper)
 
-    expect(wrapper.find('.vnm-filter__badge').text()).toBe('1')
+    expect(wrapper.find('.vam-filter__badge').text()).toBe('1')
 
-    await wrapper.find('.vnm-filter__reset').trigger('click')
+    await wrapper.find('.vam-filter__reset').trigger('click')
     await flushPromises()
 
     const emitted = wrapper.emitted('update:filters')?.at(-1)?.[0] as {
@@ -550,14 +550,14 @@ describe('тулбар лежит поверх полотна', () => {
   it('тулбар находится внутри полотна, а не отдельной полосой сверху', async () => {
     const wrapper = await mountMap()
 
-    const canvas = wrapper.find('.vnm-canvas')
-    expect(canvas.find('.vnm-toolbar').exists()).toBe(true)
+    const canvas = wrapper.find('.vam-canvas')
+    expect(canvas.find('.vam-toolbar').exists()).toBe(true)
 
     wrapper.unmount()
   })
 
   it('слот toolbar-right рендерится справа', async () => {
-    const wrapper = mount(NetworkMap, {
+    const wrapper = mount(AssetMap, {
       props: { entities, links, views, onlyRenderVisibleElements: false },
       slots: { 'toolbar-right': () => h('button', { class: 'add-btn' }, 'Добавить') },
       attachTo: document.body,
@@ -565,7 +565,7 @@ describe('тулбар лежит поверх полотна', () => {
     await flushPromises()
     await nextTick()
 
-    expect(wrapper.find('.vnm-toolbar__group--end .add-btn').exists()).toBe(true)
+    expect(wrapper.find('.vam-toolbar__group--end .add-btn').exists()).toBe(true)
     wrapper.unmount()
   })
 })

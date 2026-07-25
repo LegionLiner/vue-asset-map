@@ -2,13 +2,13 @@
 import { describe, expect, it } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { h, nextTick } from 'vue'
-import NetworkMap from '../../src/components/NetworkMap.vue'
+import AssetMap from '../../src/components/AssetMap.vue'
 import MapWindow from '../../src/components/MapWindow.vue'
-import type { NetworkMapSlots } from '../../src/types/props'
+import type { AssetMapSlots } from '../../src/types/props'
 import { entities, links, statusColors, views } from '../../fixtures/infra'
 
-async function mountMap(props: Record<string, unknown> = {}, slots: NetworkMapSlots = {}) {
-  const wrapper = mount(NetworkMap, {
+async function mountMap(props: Record<string, unknown> = {}, slots: AssetMapSlots = {}) {
+  const wrapper = mount(AssetMap, {
     props: {
       entities,
       links,
@@ -43,10 +43,10 @@ describe('несколько окон подробностей', () => {
     const wrapper = await mountMap()
 
     await clickNode(wrapper, 'Dmitry')
-    expect(wrapper.findAll('.vnm-window')).toHaveLength(1)
+    expect(wrapper.findAll('.vam-window')).toHaveLength(1)
 
     await clickNode(wrapper, 'Vlad')
-    expect(wrapper.findAll('.vnm-window')).toHaveLength(2)
+    expect(wrapper.findAll('.vam-window')).toHaveLength(2)
 
     wrapper.unmount()
   })
@@ -57,7 +57,7 @@ describe('несколько окон подробностей', () => {
     await clickNode(wrapper, 'Dmitry')
     await clickNode(wrapper, 'Vlad')
 
-    const windows = wrapper.findAll('.vnm-window')
+    const windows = wrapper.findAll('.vam-window')
     expect(windows).toHaveLength(1)
     expect(windows[0]?.text()).toContain('Vlad')
 
@@ -71,7 +71,7 @@ describe('несколько окон подробностей', () => {
     await clickNode(wrapper, 'Vlad', { ctrl: true })
     await clickNode(wrapper, 'Andrey', { ctrl: true })
 
-    const windows = wrapper.findAll('.vnm-window')
+    const windows = wrapper.findAll('.vam-window')
     expect(windows).toHaveLength(3)
     expect(wrapper.text()).toContain('Dmitry')
     expect(wrapper.text()).toContain('Vlad')
@@ -87,7 +87,7 @@ describe('несколько окон подробностей', () => {
     await clickNode(wrapper, 'Vlad', { ctrl: true })
     await clickNode(wrapper, 'Andrey', { ctrl: true })
 
-    expect(wrapper.findAll('.vnm-window')).toHaveLength(2)
+    expect(wrapper.findAll('.vam-window')).toHaveLength(2)
     // Самый старый узел уступил место новому.
     expect(wrapper.emitted('update:openDetails')?.at(-1)?.[0]).toEqual(['ws-vlad', 'ws-andrey'])
     expect(wrapper.text()).not.toContain('Fedora 41')
@@ -102,7 +102,7 @@ describe('несколько окон подробностей', () => {
     await clickNode(wrapper, 'Vlad', { ctrl: true })
     await clickNode(wrapper, 'Dmitry', { ctrl: true })
 
-    expect(wrapper.findAll('.vnm-window')).toHaveLength(2)
+    expect(wrapper.findAll('.vam-window')).toHaveLength(2)
     expect(wrapper.emitted('update:openDetails')?.at(-1)?.[0]).toEqual(['ws-vlad', 'ws-dmitry'])
 
     wrapper.unmount()
@@ -114,7 +114,7 @@ describe('несколько окон подробностей', () => {
     await clickNode(wrapper, 'Dmitry')
     await clickNode(wrapper, 'Vlad', { ctrl: true })
 
-    const styles = wrapper.findAll('.vnm-window').map((node) => node.attributes('style') ?? '')
+    const styles = wrapper.findAll('.vam-window').map((node) => node.attributes('style') ?? '')
     expect(styles[0]).toContain('translate(0px, 0px)')
     expect(styles[1]).toContain('translate(-24px, 24px)')
 
@@ -128,20 +128,20 @@ describe('несколько окон подробностей', () => {
     await clickNode(wrapper, 'Vlad', { ctrl: true })
 
     // Сворачиваем второе окно — первое остаётся раскрытым.
-    const second = wrapper.findAll('.vnm-window')[1]
-    await second?.findAll('.vnm-window__button')[1]?.trigger('click')
+    const second = wrapper.findAll('.vam-window')[1]
+    await second?.findAll('.vam-window__button')[1]?.trigger('click')
     await nextTick()
 
-    const windows = wrapper.findAll('.vnm-window')
-    expect(windows[0]?.classes()).not.toContain('vnm-window--collapsed')
-    expect(windows[1]?.classes()).toContain('vnm-window--collapsed')
+    const windows = wrapper.findAll('.vam-window')
+    expect(windows[0]?.classes()).not.toContain('vam-window--collapsed')
+    expect(windows[1]?.classes()).toContain('vam-window--collapsed')
     // Свёрнутое окно осталось открытым: его не пришлось закрывать.
     expect(windows).toHaveLength(2)
 
-    await windows[0]?.findAll('.vnm-window__button')[0]?.trigger('click')
+    await windows[0]?.findAll('.vam-window__button')[0]?.trigger('click')
     await nextTick()
 
-    expect(wrapper.findAll('.vnm-window')).toHaveLength(1)
+    expect(wrapper.findAll('.vam-window')).toHaveLength(1)
     wrapper.unmount()
   })
 
@@ -151,14 +151,14 @@ describe('несколько окон подробностей', () => {
     await clickNode(wrapper, 'Dmitry')
     await clickNode(wrapper, 'Vlad', { ctrl: true })
 
-    await wrapper.find('.vnm-root').trigger('keydown', { key: 'Escape' })
+    await wrapper.find('.vam-root').trigger('keydown', { key: 'Escape' })
     await nextTick()
-    expect(wrapper.findAll('.vnm-window')).toHaveLength(1)
-    expect(wrapper.find('.vnm-window').text()).toContain('Dmitry')
+    expect(wrapper.findAll('.vam-window')).toHaveLength(1)
+    expect(wrapper.find('.vam-window').text()).toContain('Dmitry')
 
-    await wrapper.find('.vnm-root').trigger('keydown', { key: 'Escape' })
+    await wrapper.find('.vam-root').trigger('keydown', { key: 'Escape' })
     await nextTick()
-    expect(wrapper.findAll('.vnm-window')).toHaveLength(0)
+    expect(wrapper.findAll('.vam-window')).toHaveLength(0)
 
     wrapper.unmount()
   })
@@ -168,9 +168,9 @@ describe('несколько окон подробностей', () => {
 
     await clickNode(wrapper, 'Dmitry')
 
-    expect(wrapper.findAll('.vnm-window')).toHaveLength(0)
+    expect(wrapper.findAll('.vam-window')).toHaveLength(0)
     // Выделение при этом работает.
-    expect(wrapper.find('[aria-label^="Dmitry"]').classes()).toContain('vnm-node--selected')
+    expect(wrapper.find('[aria-label^="Dmitry"]').classes()).toContain('vam-node--selected')
 
     wrapper.unmount()
   })
@@ -178,11 +178,11 @@ describe('несколько окон подробностей', () => {
   it('клик по групповому узлу окно не открывает: у группы нет сущности', async () => {
     const wrapper = await mountMap()
 
-    await wrapper.find('.vnm-group').trigger('click')
+    await wrapper.find('.vam-group').trigger('click')
     await flushPromises()
     await nextTick()
 
-    expect(wrapper.findAll('.vnm-window')).toHaveLength(0)
+    expect(wrapper.findAll('.vam-window')).toHaveLength(0)
     wrapper.unmount()
   })
 
@@ -192,11 +192,11 @@ describe('несколько окон подробностей', () => {
       openDetails: ['ws-vlad', 'keenetic-1'],
     })
 
-    expect(wrapper.findAll('.vnm-window')).toHaveLength(2)
+    expect(wrapper.findAll('.vam-window')).toHaveLength(2)
 
     await wrapper.setProps({ openDetails: [] })
     await nextTick()
-    expect(wrapper.findAll('.vnm-window')).toHaveLength(0)
+    expect(wrapper.findAll('.vam-window')).toHaveLength(0)
 
     wrapper.unmount()
   })
@@ -209,8 +209,8 @@ describe('MapWindow: каркас для своих окон', () => {
       attachTo: document.body,
     })
 
-    expect(wrapper.find('.vnm-window__body').exists()).toBe(false)
-    expect(wrapper.classes()).toContain('vnm-window--header-only')
+    expect(wrapper.find('.vam-window__body').exists()).toBe(false)
+    expect(wrapper.classes()).toContain('vam-window--header-only')
     expect(wrapper.text()).toContain('История')
 
     wrapper.unmount()
@@ -219,14 +219,14 @@ describe('MapWindow: каркас для своих окон', () => {
   it('closable: false убирает кнопку закрытия', () => {
     const wrapper = mount(MapWindow, { props: { closable: false, collapsible: false } })
 
-    expect(wrapper.findAll('.vnm-window__button')).toHaveLength(0)
+    expect(wrapper.findAll('.vam-window__button')).toHaveLength(0)
     wrapper.unmount()
   })
 
   it('ручка перетаскивания подписана из локали', () => {
     const wrapper = mount(MapWindow, { props: { dragHandle: true } })
 
-    expect(wrapper.find('.vnm-window__grip').attributes('aria-label')).toBe('Перетащить окно')
+    expect(wrapper.find('.vam-window__grip').attributes('aria-label')).toBe('Перетащить окно')
     wrapper.unmount()
   })
 
@@ -241,7 +241,7 @@ describe('MapWindow: каркас для своих окон', () => {
 
     expect(wrapper.find('.own-head').text()).toBe('раскрыто')
 
-    await wrapper.findAll('.vnm-window__button')[1]?.trigger('click')
+    await wrapper.findAll('.vam-window__button')[1]?.trigger('click')
     await nextTick()
 
     expect(wrapper.find('.own-head').text()).toBe('сжато')
@@ -253,7 +253,7 @@ describe('MapWindow: каркас для своих окон', () => {
   it('своя подпись кнопок перекрывает локаль', () => {
     const wrapper = mount(MapWindow, { props: { closeLabel: 'Убрать' } })
 
-    expect(wrapper.findAll('.vnm-window__button')[0]?.attributes('aria-label')).toBe('Убрать')
+    expect(wrapper.findAll('.vam-window__button')[0]?.attributes('aria-label')).toBe('Убрать')
     wrapper.unmount()
   })
 
@@ -278,7 +278,7 @@ describe('окна не перекрывают кнопки приложения
     const wrapper = await mountMap()
 
     // Токен не подменён — окна используют значение по умолчанию.
-    expect(wrapper.find('.vnm-canvas').attributes('style') ?? '').not.toContain('--vnm-windows-top')
+    expect(wrapper.find('.vam-canvas').attributes('style') ?? '').not.toContain('--vam-windows-top')
 
     wrapper.unmount()
   })
@@ -289,9 +289,9 @@ describe('окна не перекрывают кнопки приложения
       { 'toolbar-right': () => h('button', { class: 'add-btn' }, 'Добавить') },
     )
 
-    const style = wrapper.find('.vnm-canvas').attributes('style') ?? ''
-    expect(style).toContain('--vnm-windows-top')
-    expect(style).toContain('var(--vnm-toolbar-height)')
+    const style = wrapper.find('.vam-canvas').attributes('style') ?? ''
+    expect(style).toContain('--vam-windows-top')
+    expect(style).toContain('var(--vam-toolbar-height)')
 
     wrapper.unmount()
   })
@@ -302,7 +302,7 @@ describe('окна не перекрывают кнопки приложения
       { 'toolbar-right': () => h('button', {}, 'Добавить') },
     )
 
-    expect(wrapper.find('.vnm-canvas').attributes('style') ?? '').not.toContain('--vnm-windows-top')
+    expect(wrapper.find('.vam-canvas').attributes('style') ?? '').not.toContain('--vam-windows-top')
     wrapper.unmount()
   })
 })
@@ -311,7 +311,7 @@ describe('свои окна через слот #windows', () => {
   it('слот рендерится поверх окон подробностей', async () => {
     const wrapper = await mountMap({}, { windows: () => h('div', { class: 'own-window' }, 'история') })
 
-    expect(wrapper.find('.vnm-windows .own-window').exists()).toBe(true)
+    expect(wrapper.find('.vam-windows .own-window').exists()).toBe(true)
     wrapper.unmount()
   })
 
@@ -323,13 +323,13 @@ describe('свои окна через слот #windows', () => {
 
     await clickNode(wrapper, 'Dmitry')
     // Два окна: подробности и своё. Своё закрыть нельзя — у него нет кнопки.
-    expect(wrapper.findAll('.vnm-window')).toHaveLength(2)
+    expect(wrapper.findAll('.vam-window')).toHaveLength(2)
 
-    await wrapper.find('.vnm-root').trigger('keydown', { key: 'Escape' })
+    await wrapper.find('.vam-root').trigger('keydown', { key: 'Escape' })
     await nextTick()
 
     // Escape убрал только окно подробностей.
-    const remaining = wrapper.findAll('.vnm-window')
+    const remaining = wrapper.findAll('.vam-window')
     expect(remaining).toHaveLength(1)
     expect(remaining[0]?.text()).toContain('История')
 

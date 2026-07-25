@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, useTemplateRef } from 'vue'
-import { MapWindow, NetworkMap, type FilterState, type NetworkMapExposed, type ThemeMode } from 'vue-asset-map'
+import { MapWindow, AssetMap, type FilterState, type AssetMapExposed, type ThemeMode } from 'vue-asset-map'
 import {
   entities as fixtureEntities,
   filterGroups,
@@ -30,7 +30,7 @@ import {
  * свёртка фермы контейнеров, кастомная панель подробностей и трассировка пути.
  */
 
-const map = useTemplateRef<NetworkMapExposed>('map')
+const map = useTemplateRef<AssetMapExposed>('map')
 
 const theme = ref<ThemeMode>('light')
 const viewId = ref(views[0]?.id)
@@ -261,7 +261,7 @@ const historyControls = [
       </span>
     </div>
 
-    <NetworkMap
+    <AssetMap
       ref="map"
       v-model:view="viewId"
       v-model:selection="selection"
@@ -366,7 +366,7 @@ const historyControls = [
           </div>
         </div>
       </template>
-    </NetworkMap>
+    </AssetMap>
 
     <!-- Модалка добавления — реализация приложения, а не библиотеки. -->
     <div v-if="addOpen" class="pg-modal" role="dialog" aria-modal="true" aria-label="Добавить актив">

@@ -1,19 +1,19 @@
 <script setup lang="ts" generic="E = unknown, L = unknown">
 import { computed, nextTick, onMounted, ref, shallowRef, useSlots, watch, type Slot } from 'vue'
 import { VueFlow, useVueFlow, type NodeDragEvent } from '@vue-flow/core'
-import type { EntityId, NetworkEntity, XY } from '../types/entity'
+import type { EntityId, AssetEntity, XY } from '../types/entity'
 import type { CollapsedGroup } from '../types/collapse'
 import type { FilterState } from '../types/filter'
-import type { NetworkGraph } from '../types/graph'
+import type { AssetGraph } from '../types/graph'
 import type {
   FocusOptions,
-  NetworkMapExposed,
-  NetworkMapProps,
-  NetworkMapSlots,
+  AssetMapExposed,
+  AssetMapProps,
+  AssetMapSlots,
   NodeEventPayload,
   Viewport,
 } from '../types/props'
-import { useNetworkGraph } from '../composables/useNetworkGraph'
+import { useAssetGraph } from '../composables/useAssetGraph'
 import { useViewProjection } from '../composables/useViewProjection'
 import { useFilters } from '../composables/useFilters'
 import { useCollapse } from '../composables/useCollapse'
@@ -32,7 +32,7 @@ import { createTranslator, resolveLocale } from '../locale/index'
 import { blastRadius, findPaths, neighbors } from '../core/traverse'
 import { resolveTheme } from '../composables/useTheme'
 
-const props = withDefaults(defineProps<NetworkMapProps<E, L>>(), {
+const props = withDefaults(defineProps<AssetMapProps<E, L>>(), {
   showToolbar: true,
   showDetailsPanel: true,
   showMinimap: false,
@@ -54,8 +54,8 @@ const emit = defineEmits<{
   'pane-click': [event: MouseEvent]
   expand: [payload: { groupId: string; group: CollapsedGroup | undefined }]
   collapse: [payload: { groupId: string; group: CollapsedGroup | undefined }]
-  'node-expand': [payload: { id: EntityId; entity: NetworkEntity<E> | undefined }]
-  'node-collapse': [payload: { id: EntityId; entity: NetworkEntity<E> | undefined }]
+  'node-expand': [payload: { id: EntityId; entity: AssetEntity<E> | undefined }]
+  'node-collapse': [payload: { id: EntityId; entity: AssetEntity<E> | undefined }]
   'selection-change': [ids: EntityId[]]
   'layout-start': [engine: string]
   'layout-done': [payload: { engine: string; positions: number }]
@@ -82,7 +82,7 @@ const collapsedNodes = defineModel<Set<EntityId>>('collapsedNodes', {
   default: () => new Set<EntityId>(),
 })
 
-defineSlots<NetworkMapSlots<E, L>>()
+defineSlots<AssetMapSlots<E, L>>()
 
 const slots = useSlots()
 
@@ -91,7 +91,7 @@ const t = computed(() => createTranslator(messages.value))
 
 const theme = resolveTheme(computed(() => props.theme))
 
-const { graph } = useNetworkGraph<E, L>(
+const { graph } = useAssetGraph<E, L>(
   computed(() => props.entities),
   computed(() => props.links),
 )
@@ -129,7 +129,7 @@ const collapseState = useCollapse(
  * the view nor the number of sublabels: otherwise switching to a view that hides
  * sublabels would resize every node and the layout would jump.
  *
- * The numbers mirror the `--vnm-node-*` tokens. Reading them from CSS during
+ * The numbers mirror the `--vam-node-*` tokens. Reading them from CSS during
  * layout is not an option: layout also runs without a DOM, in the core tests.
  */
 const NODE_LABEL_WIDTH = 127.5
@@ -462,24 +462,24 @@ watch(openDetails, () => void nextTick(measureCustomWindows))
 /**
  * Top offsets for the floating windows.
  *
- * `--vnm-windows-top` drops the windows below the toolbar when its right slot has
+ * `--vam-windows-top` drops the windows below the toolbar when its right slot has
  * anything in it: the map's own controls sit on the left, which a right-aligned
  * window already clears, but application buttons from `#toolbar-right` would be
  * covered and become unclickable.
  *
- * `--vnm-details-top` drops the details windows further, below the consumer's own
+ * `--vam-details-top` drops the details windows further, below the consumer's own
  * windows, so a newly opened one does not cover, say, a history strip.
  */
 const canvasStyle = computed<Record<string, string> | undefined>(() => {
   const style: Record<string, string> = {}
 
   if (props.showToolbar && slots['toolbar-right']) {
-    style['--vnm-windows-top'] = 'calc(var(--vnm-space-3) + var(--vnm-toolbar-height) + var(--vnm-space-2))'
+    style['--vam-windows-top'] = 'calc(var(--vam-space-3) + var(--vam-toolbar-height) + var(--vam-space-2))'
   }
 
   if (customWindowsHeight.value > 0) {
-    style['--vnm-details-top'] =
-      `calc(var(--vnm-windows-top) + ${customWindowsHeight.value}px + var(--vnm-space-2))`
+    style['--vam-details-top'] =
+      `calc(var(--vam-windows-top) + ${customWindowsHeight.value}px + var(--vam-space-2))`
   }
 
   return Object.keys(style).length > 0 ? style : undefined
@@ -510,7 +510,7 @@ function closeDetail(id: EntityId): void {
 const detailWindows = computed(() =>
   openDetails.value
     .map((id) => graph.value.entities.get(id))
-    .filter((entity): entity is NetworkEntity<E> => entity !== undefined),
+    .filter((entity): entity is AssetEntity<E> => entity !== undefined),
 )
 
 /** A hidden node resolves to whatever hides it: a group or a collapsed parent. */
@@ -650,7 +650,7 @@ const context: MapContext = {
   graph,
   showSublabels,
   simplified,
-  // Cast: `defineSlots` narrows `useSlots()` to `NetworkMapSlots`, while lookup by
+  // Cast: `defineSlots` narrows `useSlots()` to `AssetMapSlots`, while lookup by
   // an arbitrary name needs an indexable object. This is the only place that
   // widening to `Record` is required.
   slot: (name) => (slots as Record<string, Slot | undefined>)[name],
@@ -714,18 +714,18 @@ defineExpose({
   relayout: (): Promise<void> => layoutState.relayout(),
   highlightPath,
   clearHighlight,
-  getGraph: (): NetworkGraph<E, L> => graph.value,
-} satisfies NetworkMapExposed<E, L>)
+  getGraph: (): AssetGraph<E, L> => graph.value,
+} satisfies AssetMapExposed<E, L>)
 </script>
 
 <template>
-  <div :class="['vnm-root', `vnm-theme-${theme}`]" @keydown="onRootKeydown">
-    <div class="vnm-body">
-      <div class="vnm-canvas" role="application" :aria-label="t('canvas.label')" :style="canvasStyle">
+  <div :class="['vam-root', `vam-theme-${theme}`]" @keydown="onRootKeydown">
+    <div class="vam-body">
+      <div class="vam-canvas" role="application" :aria-label="t('canvas.label')" :style="canvasStyle">
         <!-- The toolbar floats over the canvas with no background of its own;
              only the controls carry one, so the map loses no vertical space. -->
-        <div v-if="showToolbar" class="vnm-toolbar">
-          <div class="vnm-toolbar__group">
+        <div v-if="showToolbar" class="vam-toolbar">
+          <div class="vam-toolbar__group">
             <slot name="toolbar-left" />
 
             <FilterMenu
@@ -737,7 +737,7 @@ defineExpose({
               @update:open-groups="openFilterGroups = $event"
             />
 
-            <div class="vnm-toolbar__search">
+            <div class="vam-toolbar__search">
               <SearchInput
                 :model-value="filters.query"
                 :result-count="filterState.matchedIds.value.size"
@@ -754,7 +754,7 @@ defineExpose({
             />
           </div>
 
-          <div class="vnm-toolbar__group vnm-toolbar__group--end">
+          <div class="vam-toolbar__group vam-toolbar__group--end">
             <slot name="toolbar-right" />
           </div>
         </div>
@@ -783,11 +783,11 @@ defineExpose({
           @move="focusPoint"
         />
 
-        <div v-if="loading" class="vnm-overlay" role="status">
+        <div v-if="loading" class="vam-overlay" role="status">
           <slot name="loading">{{ t('canvas.loading') }}</slot>
         </div>
 
-        <div v-else-if="isEmpty" class="vnm-overlay">
+        <div v-else-if="isEmpty" class="vam-overlay">
           <slot name="empty">{{ t('canvas.empty') }}</slot>
         </div>
 
@@ -805,7 +805,7 @@ defineExpose({
 
         <!-- Consumer windows, above the details windows. The wrapper does not
              capture the pointer, so the canvas stays draggable between them. -->
-        <div v-if="slots.windows" ref="windowsLayer" class="vnm-windows">
+        <div v-if="slots.windows" ref="windowsLayer" class="vam-windows">
           <slot name="windows" />
         </div>
       </div>
@@ -820,23 +820,23 @@ defineExpose({
  * the package in plain Node (SSR without a bundler). A CSS `@import`, by
  * contrast, is inlined by Vite at build time, so the tokens end up in
  * `dist/style.css` — without it a consumer would get components whose every
- * var(--vnm-*) is undefined.
+ * var(--vam-*) is undefined.
  *
- * It lives in this component specifically: it renders `.vnm-root`, and the
+ * It lives in this component specifically: it renders `.vam-root`, and the
  * tokens are declared on exactly that class. */
 @import '../theme/index.css';
 
-.vnm-root {
+.vam-root {
   display: flex;
   flex-direction: column;
   width: 100%;
   height: 100%;
   min-height: 0;
-  background: var(--vnm-bg);
-  color: var(--vnm-fg);
-  font-family: var(--vnm-font);
-  font-size: var(--vnm-font-size);
-  line-height: var(--vnm-line-height);
+  background: var(--vam-bg);
+  color: var(--vam-fg);
+  font-family: var(--vam-font);
+  font-size: var(--vam-font-size);
+  line-height: var(--vam-line-height);
   /* The map never shows scrollbars: everything above the canvas — toolbar,
      filter panel, details window — is absolutely positioned and may briefly
      exceed the bounds while opening. Without clipping that would flash a
@@ -847,92 +847,92 @@ defineExpose({
 /* The toolbar sits over the canvas with no background of its own; only the
    controls have one. `pointer-events` are handed back to the controls so the
    canvas can still be dragged in the gaps between them. */
-.vnm-toolbar {
+.vam-toolbar {
   position: absolute;
   z-index: 10;
-  top: var(--vnm-space-3);
-  right: var(--vnm-space-3);
-  left: var(--vnm-space-3);
+  top: var(--vam-space-3);
+  right: var(--vam-space-3);
+  left: var(--vam-space-3);
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--vnm-space-3);
+  gap: var(--vam-space-3);
   pointer-events: none;
 }
 
-.vnm-toolbar__group {
+.vam-toolbar__group {
   display: flex;
   align-items: center;
-  gap: var(--vnm-space-1);
+  gap: var(--vam-space-1);
   min-width: 0;
 }
 
-.vnm-toolbar__group > * {
+.vam-toolbar__group > * {
   pointer-events: auto;
 }
 
-.vnm-toolbar__group--end {
+.vam-toolbar__group--end {
   justify-content: flex-end;
 }
 
 /* The search field is the only control with a fixed width in the design. */
-.vnm-toolbar__search {
+.vam-toolbar__search {
   display: flex;
   width: 350px;
   max-width: 100%;
   align-items: center;
-  height: var(--vnm-toolbar-height);
-  border-radius: var(--vnm-radius-md);
-  background: var(--vnm-surface);
+  height: var(--vam-toolbar-height);
+  border-radius: var(--vam-radius-md);
+  background: var(--vam-surface);
 }
 
-.vnm-body {
+.vam-body {
   display: flex;
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
 }
 
-.vnm-canvas {
+.vam-canvas {
   position: relative;
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
-  background-color: var(--vnm-bg);
+  background-color: var(--vam-bg);
   /* Canvas dot grid drawn as a background, avoiding @vue-flow/background. */
-  background-image: radial-gradient(var(--vnm-canvas-dot) var(--vnm-canvas-dot-size), transparent 0);
-  background-size: var(--vnm-canvas-grid) var(--vnm-canvas-grid);
+  background-image: radial-gradient(var(--vam-canvas-dot) var(--vam-canvas-dot-size), transparent 0);
+  background-size: var(--vam-canvas-grid) var(--vam-canvas-grid);
 }
 
-.vnm-overlay {
+.vam-overlay {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--vnm-fg-muted);
+  color: var(--vam-fg-muted);
   pointer-events: none;
 }
 
 /* Layer for the consumer's windows. The layer itself is transparent to the
    pointer while the windows inside are not, or it would cover the whole canvas. */
-.vnm-windows {
+.vam-windows {
   position: absolute;
   z-index: 40;
   /* Starts where the details windows do: consumer windows must not cover the
      toolbar buttons either. */
-  inset: var(--vnm-windows-top) 0 0 0;
+  inset: var(--vam-windows-top) 0 0 0;
   pointer-events: none;
 }
 
-.vnm-windows > * {
+.vam-windows > * {
   pointer-events: auto;
 }
 
 /* VueFlow wraps every node in an element of its own; strip its borders. */
-.vnm-canvas .vue-flow__node {
+.vam-canvas .vue-flow__node {
   border: 0;
   background: transparent;
-  font-family: var(--vnm-font);
+  font-family: var(--vam-font);
 }
 </style>

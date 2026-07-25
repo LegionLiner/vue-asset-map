@@ -2,7 +2,7 @@ import { computed, onScopeDispose, ref, watch, type ComputedRef, type Ref } from
 import { applyFilters, facetCounts, isFilterActive } from '../core/filter'
 import type { EntityId } from '../types/entity'
 import type { FacetCounts, FilterOptions, FilterResult, FilterState } from '../types/filter'
-import type { NetworkGraph } from '../types/graph'
+import type { AssetGraph } from '../types/graph'
 import type { ProjectionResult } from '../types/view'
 
 /** Return value of {@link useFilters}. */
@@ -28,7 +28,7 @@ const DEFAULT_DEBOUNCE_MS = 200
  * deliberate act, and delaying it would just feel sluggish.
  */
 export function useFilters<E, L>(
-  graph: Ref<NetworkGraph<E, L>> | ComputedRef<NetworkGraph<E, L>>,
+  graph: Ref<AssetGraph<E, L>> | ComputedRef<AssetGraph<E, L>>,
   projection: Ref<ProjectionResult> | ComputedRef<ProjectionResult>,
   filters: Ref<FilterState>,
   options: Ref<FilterOptions | undefined>,

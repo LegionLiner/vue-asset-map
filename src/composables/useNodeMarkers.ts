@@ -1,6 +1,6 @@
 import { computed, onScopeDispose, ref, type ComputedRef, type Ref } from 'vue'
-import type { EntityId, NetworkEntity } from '../types/entity'
-import type { NetworkGraph } from '../types/graph'
+import type { EntityId, AssetEntity } from '../types/entity'
+import type { AssetGraph } from '../types/graph'
 import type { NodeMarkerDef, ResolvedNodeMarker } from '../types/marker'
 
 /** Return value of {@link useNodeMarkers}. */
@@ -22,7 +22,7 @@ export interface UseNodeMarkersReturn {
 const DEFAULT_HOVER_DELAY_MS = 500
 
 /** Colors are handed out by declaration order and wrap around when exhausted. */
-const PALETTE = ['var(--vnm-marker-1)', 'var(--vnm-marker-2)', 'var(--vnm-marker-3)'] as const
+const PALETTE = ['var(--vam-marker-1)', 'var(--vam-marker-2)', 'var(--vam-marker-3)'] as const
 
 /**
  * Membership markers for nodes, plus the hover highlighting they drive.
@@ -35,7 +35,7 @@ const PALETTE = ['var(--vnm-marker-1)', 'var(--vnm-marker-2)', 'var(--vnm-marker
  * pending delay and highlighting that already started.
  */
 export function useNodeMarkers<E, L>(
-  graph: Ref<NetworkGraph<E, L>> | ComputedRef<NetworkGraph<E, L>>,
+  graph: Ref<AssetGraph<E, L>> | ComputedRef<AssetGraph<E, L>>,
   markers: Ref<NodeMarkerDef[] | undefined>,
   hoverDelay: Ref<number | undefined>,
 ): UseNodeMarkersReturn {
@@ -85,9 +85,9 @@ export function useNodeMarkers<E, L>(
       const match = def.match
       if (!match) return
       for (const entity of graph.value.entities.values()) {
-        // Cast: `match` is declared over `NetworkEntity<unknown>`, and `meta` is
+        // Cast: `match` is declared over `AssetEntity<unknown>`, and `meta` is
         // only read by the consumer's own predicate.
-        if (match(entity as NetworkEntity, graph.value)) attach(entity.id, marker)
+        if (match(entity as AssetEntity, graph.value)) attach(entity.id, marker)
       }
     })
 

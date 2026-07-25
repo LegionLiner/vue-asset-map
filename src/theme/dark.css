@@ -1,55 +1,55 @@
 /*
  * Dark theme.
  *
- * Applied through the `.vnm-theme-dark` class rather than
+ * Applied through the `.vam-theme-dark` class rather than
  * `@media (prefers-color-scheme)`: the product has an explicit switch and it has
  * to beat the system setting. `theme: 'auto'` reads the system once at
  * initialisation and sets the class; from then on the user decides.
  */
-.vnm-root.vnm-theme-dark {
-  --vnm-bg: #0f172a;
-  --vnm-surface: #1b2438;
-  --vnm-surface-raised: #232e46;
-  --vnm-surface-sunken: #151d2f;
-  --vnm-fg: #e5e9f0;
-  --vnm-fg-subtle: #9db3d4;
-  --vnm-fg-muted: #7c92b2;
-  --vnm-fg-inverted: #0f172a;
-  --vnm-border: #2e3a52;
-  --vnm-border-strong: #435170;
+.vam-root.vam-theme-dark {
+  --vam-bg: #0f172a;
+  --vam-surface: #1b2438;
+  --vam-surface-raised: #232e46;
+  --vam-surface-sunken: #151d2f;
+  --vam-fg: #e5e9f0;
+  --vam-fg-subtle: #9db3d4;
+  --vam-fg-muted: #7c92b2;
+  --vam-fg-inverted: #0f172a;
+  --vam-border: #2e3a52;
+  --vam-border-strong: #435170;
 
-  --vnm-accent: #7c9fd4;
-  --vnm-accent-fg: #0f172a;
-  --vnm-accent-soft: rgba(124, 159, 212, 0.18);
-  --vnm-focus-ring: #9db3d4;
-  --vnm-selection: #7c9fd4;
-  --vnm-highlight: #e0a256;
-  --vnm-highlight-soft: rgba(224, 162, 86, 0.22);
+  --vam-accent: #7c9fd4;
+  --vam-accent-fg: #0f172a;
+  --vam-accent-soft: rgba(124, 159, 212, 0.18);
+  --vam-focus-ring: #9db3d4;
+  --vam-selection: #7c9fd4;
+  --vam-highlight: #e0a256;
+  --vam-highlight-soft: rgba(224, 162, 86, 0.22);
 
-  --vnm-edge: #55637f;
-  --vnm-edge-active: #8b8ef2;
-  --vnm-edge-dimmed: #2b3550;
-  --vnm-edge-label-bg: #1b2438;
+  --vam-edge: #55637f;
+  --vam-edge-active: #8b8ef2;
+  --vam-edge-dimmed: #2b3550;
+  --vam-edge-label-bg: #1b2438;
 
   /* On a dark background a light fill glares, so the infection fill is darker. */
-  --vnm-infected-bg: #3a2226;
-  --vnm-infected-border: #e57373;
-  --vnm-infected-fg: #e57373;
-  --vnm-infected-edge: #e57373;
+  --vam-infected-bg: #3a2226;
+  --vam-infected-border: #e57373;
+  --vam-infected-fg: #e57373;
+  --vam-infected-edge: #e57373;
 
   /* Status colors are lighter here: a saturated hue reads as muddy on dark. */
-  --vnm-status-online: #74c281;
-  --vnm-status-offline: #e57373;
-  --vnm-status-warning: #e0a256;
-  --vnm-status-unknown: #55637f;
+  --vam-status-online: #74c281;
+  --vam-status-offline: #e57373;
+  --vam-status-warning: #e0a256;
+  --vam-status-unknown: #55637f;
 
-  --vnm-node-label-color: #e5e9f0;
-  --vnm-node-sublabel-color: #7c92b2;
-  --vnm-node-overlay-color: #8b8ef2;
+  --vam-node-label-color: #e5e9f0;
+  --vam-node-sublabel-color: #7c92b2;
+  --vam-node-overlay-color: #8b8ef2;
 
-  --vnm-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --vnm-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.45);
-  --vnm-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.55);
+  --vam-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --vam-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.45);
+  --vam-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.55);
 
-  --vnm-canvas-dot: #2b3852;
+  --vam-canvas-dot: #2b3852;
 }

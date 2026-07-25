@@ -1,5 +1,5 @@
-import type { EntityId, NetworkEntity } from './entity'
-import type { NetworkLink } from './link'
+import type { EntityId, AssetEntity } from './entity'
+import type { AssetLink } from './link'
 
 /** When to fold a set of siblings into one group node, and how to bucket them. */
 export interface CollapseRule {
@@ -15,9 +15,9 @@ export interface CollapseRule {
    *
    * @default entity kind
    */
-  groupBy?: (entity: NetworkEntity) => string | null
+  groupBy?: (entity: AssetEntity) => string | null
   /** Overrides the threshold decision entirely. */
-  shouldCollapse?: (parentId: EntityId | null, children: readonly NetworkEntity[]) => boolean
+  shouldCollapse?: (parentId: EntityId | null, children: readonly AssetEntity[]) => boolean
 }
 
 /** A group node standing in for several hidden siblings. */
@@ -32,7 +32,7 @@ export interface CollapsedGroup {
 }
 
 /** Several original links bundled into one edge between the same two nodes. */
-export interface AggregatedLink<L = unknown> extends NetworkLink<L> {
+export interface AggregatedLink<L = unknown> extends AssetLink<L> {
   aggregated: true
   /** How many original links this edge stands for. */
   count: number
@@ -40,7 +40,7 @@ export interface AggregatedLink<L = unknown> extends NetworkLink<L> {
 }
 
 /** Edge of the collapsed graph: either a re-homed original or an aggregate. */
-export type CollapsedLink<L = unknown> = NetworkLink<L> | AggregatedLink<L>
+export type CollapsedLink<L = unknown> = AssetLink<L> | AggregatedLink<L>
 
 /** Output of `collapseGraph`: the graph layout and rendering actually receive. */
 export interface CollapseResult<L = unknown> {

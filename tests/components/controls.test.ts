@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
-import NetworkMap from '../../src/components/NetworkMap.vue'
+import AssetMap from '../../src/components/AssetMap.vue'
 import SearchInput from '../../src/components/controls/SearchInput.vue'
 import ViewSwitcher from '../../src/components/controls/ViewSwitcher.vue'
 import FilterMenu from '../../src/components/controls/FilterMenu.vue'
@@ -10,7 +10,7 @@ import type { FacetCounts, FilterState } from '../../src/types/filter'
 import { entities, links, statusColors, views } from '../../fixtures/infra'
 
 describe('SearchInput отдельно от карты', () => {
-  it('работает вне <NetworkMap> и берёт строки из встроенной локали', () => {
+  it('работает вне <AssetMap> и берёт строки из встроенной локали', () => {
     const wrapper = mount(SearchInput, { props: { modelValue: '' } })
 
     expect(wrapper.find('input').attributes('aria-label')).toBe('Поиск по карте')
@@ -28,12 +28,12 @@ describe('SearchInput отдельно от карты', () => {
 
   it('кнопка очистки появляется только при непустом запросе', async () => {
     const wrapper = mount(SearchInput, { props: { modelValue: '' } })
-    expect(wrapper.find('.vnm-search__clear').exists()).toBe(false)
+    expect(wrapper.find('.vam-search__clear').exists()).toBe(false)
 
     await wrapper.setProps({ modelValue: 'dmitry' })
-    expect(wrapper.find('.vnm-search__clear').exists()).toBe(true)
+    expect(wrapper.find('.vam-search__clear').exists()).toBe(true)
 
-    await wrapper.find('.vnm-search__clear').trigger('click')
+    await wrapper.find('.vam-search__clear').trigger('click')
     expect(wrapper.emitted('update:modelValue')?.at(-1)?.[0]).toBe('')
 
     wrapper.unmount()
@@ -42,19 +42,19 @@ describe('SearchInput отдельно от карты', () => {
   it('счётчик совпадений показывается в live-области', async () => {
     const wrapper = mount(SearchInput, { props: { modelValue: 'ws', resultCount: 5 } })
 
-    const summary = wrapper.find('.vnm-search__summary')
+    const summary = wrapper.find('.vam-search__summary')
     expect(summary.text()).toBe('Найдено: 5')
     expect(summary.attributes('aria-live')).toBe('polite')
 
     await wrapper.setProps({ resultCount: 0 })
-    expect(wrapper.find('.vnm-search__summary').text()).toBe('Ничего не найдено')
+    expect(wrapper.find('.vam-search__summary').text()).toBe('Ничего не найдено')
 
     wrapper.unmount()
   })
 
   it('без запроса счётчик не показывается', () => {
     const wrapper = mount(SearchInput, { props: { modelValue: '', resultCount: 0 } })
-    expect(wrapper.find('.vnm-search__summary').exists()).toBe(false)
+    expect(wrapper.find('.vam-search__summary').exists()).toBe(false)
     wrapper.unmount()
   })
 })
@@ -63,10 +63,10 @@ describe('ViewSwitcher', () => {
   it('рисует кнопку на каждый вид и помечает активный', () => {
     const wrapper = mount(ViewSwitcher, { props: { views, modelValue: 'logical' } })
 
-    const buttons = wrapper.findAll('.vnm-views__button')
+    const buttons = wrapper.findAll('.vam-views__button')
     // Подпись читаем из видимого элемента: рядом лежит невидимая жирная копия,
     // резервирующая ширину, и `button.text()` вернул бы текст дважды.
-    expect(wrapper.findAll('.vnm-views__label').map((node) => node.text())).toEqual([
+    expect(wrapper.findAll('.vam-views__label').map((node) => node.text())).toEqual([
       'Физическая топология',
       'VPN-оверлей',
     ])
@@ -79,7 +79,7 @@ describe('ViewSwitcher', () => {
   it('клик переключает вид', async () => {
     const wrapper = mount(ViewSwitcher, { props: { views, modelValue: 'physical' } })
 
-    await wrapper.findAll('.vnm-views__button')[1]?.trigger('click')
+    await wrapper.findAll('.vam-views__button')[1]?.trigger('click')
 
     expect(wrapper.emitted('update:modelValue')?.at(-1)?.[0]).toBe('logical')
     wrapper.unmount()
@@ -88,7 +88,7 @@ describe('ViewSwitcher', () => {
   it('повторный клик по активному виду ничего не эмитит', async () => {
     const wrapper = mount(ViewSwitcher, { props: { views, modelValue: 'physical' } })
 
-    await wrapper.findAll('.vnm-views__button')[0]?.trigger('click')
+    await wrapper.findAll('.vam-views__button')[0]?.trigger('click')
 
     expect(wrapper.emitted('update:modelValue')).toBeUndefined()
     wrapper.unmount()
@@ -97,14 +97,14 @@ describe('ViewSwitcher', () => {
   it('без выбранного вида активен первый', () => {
     const wrapper = mount(ViewSwitcher, { props: { views, modelValue: undefined } })
 
-    expect(wrapper.findAll('.vnm-views__button')[0]?.attributes('aria-pressed')).toBe('true')
+    expect(wrapper.findAll('.vam-views__button')[0]?.attributes('aria-pressed')).toBe('true')
     wrapper.unmount()
   })
 
   it('неизвестный id сводится к первому виду, как и в проекции', () => {
     const wrapper = mount(ViewSwitcher, { props: { views, modelValue: 'ghost' } })
 
-    expect(wrapper.findAll('.vnm-views__button')[0]?.attributes('aria-pressed')).toBe('true')
+    expect(wrapper.findAll('.vam-views__button')[0]?.attributes('aria-pressed')).toBe('true')
     wrapper.unmount()
   })
 })
@@ -113,7 +113,7 @@ describe('ViewSwitcher', () => {
 async function openFilters(wrapper: {
   find: (selector: string) => { trigger: (event: string) => Promise<void> }
 }) {
-  await wrapper.find('.vnm-filter__button').trigger('click')
+  await wrapper.find('.vam-filter__button').trigger('click')
 }
 
 describe('FilterMenu', () => {
@@ -137,7 +137,7 @@ describe('FilterMenu', () => {
     const wrapper = mount(FilterMenu, { props: { facets, modelValue: state() } })
     await openFilters(wrapper)
 
-    const options = wrapper.findAll('.vnm-filter__option')
+    const options = wrapper.findAll('.vam-filter__option')
     expect(options).toHaveLength(3)
     expect(options[0]?.text()).toContain('router')
     expect(options[0]?.text()).toContain('2')
@@ -181,7 +181,7 @@ describe('FilterMenu', () => {
     })
     await openFilters(wrapper)
 
-    expect(wrapper.find('.vnm-filter__badge').text()).toBe('2')
+    expect(wrapper.find('.vam-filter__badge').text()).toBe('2')
     wrapper.unmount()
   })
 
@@ -191,7 +191,7 @@ describe('FilterMenu', () => {
     })
     await openFilters(wrapper)
 
-    await wrapper.find('.vnm-filter__reset').trigger('click')
+    await wrapper.find('.vam-filter__reset').trigger('click')
 
     const emitted = wrapper.emitted('update:modelValue')?.at(-1)?.[0] as FilterState
     expect(emitted.kinds).toEqual([])
@@ -203,7 +203,7 @@ describe('FilterMenu', () => {
   it('кнопка сброса заблокирована, когда нечего сбрасывать', async () => {
     const wrapper = mount(FilterMenu, { props: { facets, modelValue: state() } })
     await openFilters(wrapper)
-    expect(wrapper.find('.vnm-filter__reset').attributes('disabled')).toBeDefined()
+    expect(wrapper.find('.vam-filter__reset').attributes('disabled')).toBeDefined()
     wrapper.unmount()
   })
 
@@ -213,14 +213,14 @@ describe('FilterMenu', () => {
     })
     await openFilters(wrapper)
 
-    expect(wrapper.findAll('.vnm-filter__empty')).toHaveLength(2)
+    expect(wrapper.findAll('.vam-filter__empty')).toHaveLength(2)
     wrapper.unmount()
   })
 })
 
-describe('контролы внутри <NetworkMap>', () => {
+describe('контролы внутри <AssetMap>', () => {
   async function mountMap(props: Record<string, unknown> = {}) {
-    const wrapper = mount(NetworkMap, {
+    const wrapper = mount(AssetMap, {
       props: {
         entities,
         links,
@@ -241,9 +241,9 @@ describe('контролы внутри <NetworkMap>', () => {
   it('тулбар показывает все три контрола', async () => {
     const wrapper = await mountMap()
 
-    expect(wrapper.find('.vnm-views').exists()).toBe(true)
-    expect(wrapper.find('.vnm-search').exists()).toBe(true)
-    expect(wrapper.find('.vnm-filter').exists()).toBe(true)
+    expect(wrapper.find('.vam-views').exists()).toBe(true)
+    expect(wrapper.find('.vam-search').exists()).toBe(true)
+    expect(wrapper.find('.vam-filter').exists()).toBe(true)
 
     wrapper.unmount()
   })
@@ -251,8 +251,8 @@ describe('контролы внутри <NetworkMap>', () => {
   it('showToolbar: false убирает тулбар целиком', async () => {
     const wrapper = await mountMap({ showToolbar: false })
 
-    expect(wrapper.find('.vnm-toolbar').exists()).toBe(false)
-    expect(wrapper.find('.vnm-search').exists()).toBe(false)
+    expect(wrapper.find('.vam-toolbar').exists()).toBe(false)
+    expect(wrapper.find('.vam-search').exists()).toBe(false)
 
     wrapper.unmount()
   })
@@ -260,19 +260,19 @@ describe('контролы внутри <NetworkMap>', () => {
   it('переключатель видов не рисуется, когда вид один', async () => {
     const wrapper = await mountMap({ views: [views[0]] })
 
-    expect(wrapper.find('.vnm-views').exists()).toBe(false)
+    expect(wrapper.find('.vam-views').exists()).toBe(false)
     wrapper.unmount()
   })
 
   it('поиск из тулбара подсвечивает совпадения на карте', async () => {
     const wrapper = await mountMap()
 
-    await wrapper.find('.vnm-search__input').setValue('Dmitry')
+    await wrapper.find('.vam-search__input').setValue('Dmitry')
     await flushPromises()
     await nextTick()
 
-    expect(wrapper.findAll('.vnm-node--matched')).toHaveLength(1)
-    expect(wrapper.find('.vnm-search__summary').text()).toBe('Найдено: 1')
+    expect(wrapper.findAll('.vam-node--matched')).toHaveLength(1)
+    expect(wrapper.find('.vam-search__summary').text()).toBe('Найдено: 1')
 
     wrapper.unmount()
   })
@@ -280,7 +280,7 @@ describe('контролы внутри <NetworkMap>', () => {
   it('поиск не разрывает граф: соседи совпадения остаются на карте', async () => {
     const wrapper = await mountMap()
 
-    await wrapper.find('.vnm-search__input').setValue('web-07')
+    await wrapper.find('.vam-search__input').setValue('web-07')
     await flushPromises()
     await nextTick()
 
@@ -295,32 +295,32 @@ describe('контролы внутри <NetworkMap>', () => {
 
   it('очистка поиска возвращает карту целиком', async () => {
     const wrapper = await mountMap()
-    const before = wrapper.findAll('.vnm-node').length
+    const before = wrapper.findAll('.vam-node').length
 
-    await wrapper.find('.vnm-search__input').setValue('Dmitry')
+    await wrapper.find('.vam-search__input').setValue('Dmitry')
     await flushPromises()
     await nextTick()
-    expect(wrapper.findAll('.vnm-node').length).toBeLessThan(before)
+    expect(wrapper.findAll('.vam-node').length).toBeLessThan(before)
 
-    await wrapper.find('.vnm-search__clear').trigger('click')
+    await wrapper.find('.vam-search__clear').trigger('click')
     await flushPromises()
     await nextTick()
 
-    expect(wrapper.findAll('.vnm-node').length).toBe(before)
+    expect(wrapper.findAll('.vam-node').length).toBe(before)
     wrapper.unmount()
   })
 
   it('фасеты собраны из данных и сужаются проекцией вида', async () => {
     const physical = await mountMap({ view: 'physical' })
     await openFilters(physical)
-    const physicalKinds = physical.findAll('.vnm-filter__option-label').map((node) => node.text())
+    const physicalKinds = physical.findAll('.vam-filter__option-label').map((node) => node.text())
     expect(physicalKinds).toContain('cloud')
     expect(physicalKinds).toContain('container')
     physical.unmount()
 
     const logical = await mountMap({ view: 'logical' })
     await openFilters(logical)
-    const logicalKinds = logical.findAll('.vnm-filter__option-label').map((node) => node.text())
+    const logicalKinds = logical.findAll('.vam-filter__option-label').map((node) => node.text())
     // В оверлее нет ни облаков, ни контейнеров.
     expect(logicalKinds).not.toContain('cloud')
     expect(logicalKinds).not.toContain('container')
@@ -332,7 +332,7 @@ describe('контролы внутри <NetworkMap>', () => {
     await openFilters(wrapper)
 
     const routerCheckbox = wrapper
-      .findAll('.vnm-filter__option')
+      .findAll('.vam-filter__option')
       .find((option) => option.text().includes('router'))
       ?.find('input')
 
@@ -340,7 +340,7 @@ describe('контролы внутри <NetworkMap>', () => {
     await flushPromises()
     await nextTick()
 
-    expect(wrapper.findAll('.vnm-node--matched')).toHaveLength(2)
+    expect(wrapper.findAll('.vam-node--matched')).toHaveLength(2)
     wrapper.unmount()
   })
 
@@ -350,8 +350,8 @@ describe('контролы внутри <NetworkMap>', () => {
     expect(wrapper.find('[aria-label^="Интернет"]').exists()).toBe(true)
 
     const logicalButton = wrapper
-      .findAll('.vnm-views__button')
-      .find((button) => button.find('.vnm-views__label').text() === 'VPN-оверлей')
+      .findAll('.vam-views__button')
+      .find((button) => button.find('.vam-views__label').text() === 'VPN-оверлей')
     await logicalButton?.trigger('click')
     await flushPromises()
     await nextTick()
@@ -366,7 +366,7 @@ describe('контролы внутри <NetworkMap>', () => {
   it('v-model:filters получает обновления от контролов', async () => {
     const wrapper = await mountMap({ filters: { query: '', kinds: [], statuses: [] } })
 
-    await wrapper.find('.vnm-search__input').setValue('vlad')
+    await wrapper.find('.vam-search__input').setValue('vlad')
     await flushPromises()
 
     const emitted = wrapper.emitted('update:filters')?.at(-1)?.[0] as FilterState

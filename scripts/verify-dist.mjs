@@ -30,7 +30,7 @@ function check(name, condition, detail = '') {
 
 console.log('main entry (vue-asset-map)')
 const main = await import(new URL('index.js', dist).href)
-check('экспортирует <NetworkMap>', typeof main.NetworkMap === 'object')
+check('экспортирует <AssetMap>', typeof main.AssetMap === 'object')
 check('экспортирует buildGraph', typeof main.buildGraph === 'function')
 check('экспортирует встроенные движки', Object.keys(main.builtinLayoutEngines ?? {}).length === 2)
 check('экспортирует локали ru и en', typeof main.ru === 'object' && typeof main.en === 'object')
@@ -79,9 +79,9 @@ check(
 
 console.log('стили')
 const css = readFileSync(fileURLToPath(new URL('style.css', dist)), 'utf8')
-check('style.css содержит токены', css.includes('--vnm-status-online'))
-check('style.css содержит тёмную тему', css.includes('.vnm-theme-dark'))
-check('style.css содержит правила компонентов', css.includes('.vnm-node'))
+check('style.css содержит токены', css.includes('--vam-status-online'))
+check('style.css содержит тёмную тему', css.includes('.vam-theme-dark'))
+check('style.css содержит правила компонентов', css.includes('.vam-node'))
 
 console.log('энтрипоинты не импортируют CSS из JS')
 for (const entry of ['index.js', 'core/index.js', 'layout/dagre.js']) {

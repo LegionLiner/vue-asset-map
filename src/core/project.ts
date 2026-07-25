@@ -1,10 +1,10 @@
 import type { EntityId } from '../types/entity'
-import type { NetworkGraph } from '../types/graph'
-import type { NetworkLink } from '../types/link'
-import type { NetworkView, ProjectionResult } from '../types/view'
+import type { AssetGraph } from '../types/graph'
+import type { AssetLink } from '../types/link'
+import type { AssetView, ProjectionResult } from '../types/view'
 
 /** Default link filter of a view: the link carries a layer named like the view. */
-export function defaultLinkFilter(view: NetworkView): (link: NetworkLink) => boolean {
+export function defaultLinkFilter(view: AssetView): (link: AssetLink) => boolean {
   return (link) => link.layers.includes(view.id)
 }
 
@@ -23,7 +23,7 @@ export function defaultLinkFilter(view: NetworkView): (link: NetworkLink) => boo
  *
  * With no view everything is visible.
  */
-export function projectGraph<E, L>(graph: NetworkGraph<E, L>, view?: NetworkView): ProjectionResult {
+export function projectGraph<E, L>(graph: AssetGraph<E, L>, view?: AssetView): ProjectionResult {
   const entityIds = new Set<EntityId>()
   for (const entity of graph.entities.values()) {
     if (view?.entityFilter && !view.entityFilter(entity)) continue
@@ -55,9 +55,9 @@ export function projectGraph<E, L>(graph: NetworkGraph<E, L>, view?: NetworkView
  * view: the map must always render something, even when handed a bad id.
  */
 export function resolveView(
-  views: readonly NetworkView[] | undefined,
+  views: readonly AssetView[] | undefined,
   viewId: string | undefined,
-): NetworkView | undefined {
+): AssetView | undefined {
   if (!views || views.length === 0) return undefined
   if (viewId === undefined) return views[0]
   return views.find((view) => view.id === viewId) ?? views[0]

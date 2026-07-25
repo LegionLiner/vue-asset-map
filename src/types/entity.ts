@@ -22,7 +22,7 @@ export interface Badge {
  *
  * @typeParam M - shape of the consumer's own payload in `meta`.
  */
-export interface NetworkEntity<M = unknown> {
+export interface AssetEntity<M = unknown> {
   id: EntityId
   /**
    * Selects the icon and the render component. An open string union: any value

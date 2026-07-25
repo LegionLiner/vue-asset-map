@@ -1,9 +1,9 @@
 import { computed, onScopeDispose, ref, shallowRef, watch, type ComputedRef, type Ref } from 'vue'
 import type { EntityId, XY } from '../types/entity'
-import type { NetworkGraph } from '../types/graph'
+import type { AssetGraph } from '../types/graph'
 import type { CollapseResult } from '../types/collapse'
-import type { NetworkView } from '../types/view'
-import type { NetworkMapLayoutSpec } from '../types/props'
+import type { AssetView } from '../types/view'
+import type { AssetMapLayoutSpec } from '../types/props'
 import { isLayoutAborted, type LayoutEngine, type LayoutGraph, type LayoutNode } from '../layout/types'
 import { resolveLayoutEngine } from '../layout/index'
 import { manualLayout } from '../layout/manual'
@@ -16,11 +16,11 @@ export interface NodeSize {
 
 /** Parameters of {@link useLayout}. */
 export interface UseLayoutParams<E, L> {
-  graph: ComputedRef<NetworkGraph<E, L>>
+  graph: ComputedRef<AssetGraph<E, L>>
   collapsed: ComputedRef<CollapseResult<unknown>>
   /** Layout from props; outranks the view's own layout. */
-  spec: Ref<NetworkMapLayoutSpec | undefined>
-  view: ComputedRef<NetworkView | undefined>
+  spec: Ref<AssetMapLayoutSpec | undefined>
+  view: ComputedRef<AssetView | undefined>
   /** Extra engines registered by the consumer, addressable by name. */
   engines?: Ref<Readonly<Record<string, LayoutEngine>> | undefined>
   sizeOf: (nodeId: string) => NodeSize
@@ -67,7 +67,7 @@ export function useLayout<E, L>(params: UseLayoutParams<E, L>): UseLayoutReturn 
   let controller: AbortController | undefined
 
   // Props outrank the view: props sit closer to the consumer.
-  const activeSpec = computed<NetworkMapLayoutSpec | undefined>(() => spec.value ?? view.value?.layout)
+  const activeSpec = computed<AssetMapLayoutSpec | undefined>(() => spec.value ?? view.value?.layout)
 
   const engine = computed<LayoutEngine>(() => {
     const requested = activeSpec.value?.engine

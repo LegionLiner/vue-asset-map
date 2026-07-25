@@ -1,5 +1,5 @@
-import type { EntityId, NetworkEntity } from './entity'
-import type { NetworkGraph } from './graph'
+import type { EntityId, AssetEntity } from './entity'
+import type { AssetGraph } from './graph'
 
 /**
  * A membership marker — the dot drawn under a node's label.
@@ -23,9 +23,9 @@ export interface NodeMarkerDef {
   /** Screen-reader label and tooltip. Falls back to `id`. */
   label?: string
   /** The full member set. Called once per graph change. */
-  members?: (graph: NetworkGraph) => Iterable<EntityId>
+  members?: (graph: AssetGraph) => Iterable<EntityId>
   /** Whether an entity carries this marker. Called once per entity. */
-  match?: (entity: NetworkEntity, graph: NetworkGraph) => boolean
+  match?: (entity: AssetEntity, graph: AssetGraph) => boolean
 }
 
 /** A marker with its color already picked — what a node actually renders. */

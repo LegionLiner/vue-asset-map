@@ -1,9 +1,9 @@
 import type { Component } from 'vue'
-import type { Badge, EntityId, NetworkEntity, XY } from './entity'
-import type { NetworkLink } from './link'
-import type { NetworkView } from './view'
+import type { Badge, EntityId, AssetEntity, XY } from './entity'
+import type { AssetLink } from './link'
+import type { AssetView } from './view'
 import type { CollapsedGroup, CollapseRule } from './collapse'
-import type { NetworkGraph } from './graph'
+import type { AssetGraph } from './graph'
 import type { NodeMarkerDef } from './marker'
 import type { FilterOptions, FilterState } from './filter'
 import type { PartialLocaleMessages } from './locale'
@@ -11,7 +11,7 @@ import type { ThemeConfig, ThemeMode } from './theme'
 import type { LayoutEngine } from '../layout/types'
 
 /** Which layout engine to run, by registered name or as an instance. */
-export interface NetworkMapLayoutSpec {
+export interface AssetMapLayoutSpec {
   engine: string | LayoutEngine
   options?: unknown
 }
@@ -44,24 +44,24 @@ export interface Viewport extends XY {
 }
 
 /**
- * Every input of `<NetworkMap>`.
+ * Every input of `<AssetMap>`.
  *
  * @typeParam E - payload type of `entity.meta`.
  * @typeParam L - payload type of `link.meta`.
  */
-export interface NetworkMapProps<E = unknown, L = unknown> {
+export interface AssetMapProps<E = unknown, L = unknown> {
   /** Read-only: the map never mutates the array or the entities in it. */
-  entities: NetworkEntity<E>[]
+  entities: AssetEntity<E>[]
   /** Read-only, same as `entities`. */
-  links: NetworkLink<L>[]
+  links: AssetLink<L>[]
   /** Available projections. With none, every entity and link is drawn. */
-  views?: NetworkView[]
+  views?: AssetView[]
 
   /** Node component registry: `kind` → component. Merged over the built-in one. */
   nodeTypes?: Record<string, Component>
   edgeTypes?: Record<string, Component>
 
-  layout?: NetworkMapLayoutSpec
+  layout?: AssetMapLayoutSpec
   /** `false` turns collapsing off; omitted means the default rule applies. */
   collapse?: CollapseRule | false
   filterOptions?: FilterOptions
@@ -144,7 +144,7 @@ export interface NetworkMapProps<E = unknown, L = unknown> {
 }
 
 /** Two-way bindings. Without a `v-model` the component owns the state itself. */
-export interface NetworkMapModels {
+export interface AssetMapModels {
   view?: string
   selection?: EntityId[]
   expanded?: Set<string>
@@ -155,7 +155,7 @@ export interface NetworkMapModels {
 /** Payload of the node events. Exactly one of `entity` / `group` is set. */
 export interface NodeEventPayload {
   id: string
-  entity: NetworkEntity<unknown> | undefined
+  entity: AssetEntity<unknown> | undefined
   group: CollapsedGroup | undefined
   event: MouseEvent
 }
@@ -193,7 +193,7 @@ export type EmptySlotProps = Record<string, never>
  * signature TypeScript rejects an arbitrary slot name such as `#node-router`.
  */
 export interface NodeSlotProps<E = unknown> {
-  entity: NetworkEntity<E> | undefined
+  entity: AssetEntity<E> | undefined
   nodeId: string
   /** `true` when zoom is below the LOD threshold and the node renders simplified. */
   simplified: boolean
@@ -203,7 +203,7 @@ export interface NodeSlotProps<E = unknown> {
 
 /** Parameters of the `details` slot: the body of a details window. */
 export interface DetailsSlotProps<E = unknown> {
-  entity: NetworkEntity<E>
+  entity: AssetEntity<E>
   close: () => void
   /** Id of the active tab. */
   tab: string
@@ -211,13 +211,13 @@ export interface DetailsSlotProps<E = unknown> {
 
 /** Parameters of the `details-header` slot: the window's title bar. */
 export interface DetailsHeaderSlotProps<E = unknown> {
-  entity: NetworkEntity<E>
+  entity: AssetEntity<E>
   close: () => void
 }
 
 /** Parameters of the `edge-label` slot; `count` is `1` unless `aggregated`. */
 export interface EdgeLabelSlotProps<L = unknown> {
-  link: NetworkLink<L> | undefined
+  link: AssetLink<L> | undefined
   aggregated: boolean
   count: number
 }
@@ -227,9 +227,9 @@ export interface EdgeLabelSlotProps<L = unknown> {
  *
  * Declared through `defineSlots` rather than inferred from the template: nodes
  * and edges render inside VueFlow and pull slots out of the map context, so
- * `NetworkMap`'s own markup does not mention them.
+ * `AssetMap`'s own markup does not mention them.
  */
-export type NetworkMapSlots<E = unknown, L = unknown> = {
+export type AssetMapSlots<E = unknown, L = unknown> = {
   'toolbar-left'?(props: EmptySlotProps): unknown
   'toolbar-right'?(props: EmptySlotProps): unknown
   empty?(props: EmptySlotProps): unknown
@@ -252,14 +252,14 @@ export type NetworkMapSlots<E = unknown, L = unknown> = {
  * The component's imperative API — what `defineExpose` returns.
  *
  * Kept as a standalone type so consumers can annotate a template ref:
- * `InstanceType<typeof NetworkMap>` is not usable on a generic component.
+ * `InstanceType<typeof AssetMap>` is not usable on a generic component.
  */
-export interface NetworkMapExposed<E = unknown, L = unknown> {
+export interface AssetMapExposed<E = unknown, L = unknown> {
   fitView: () => Promise<void>
   focus: (id: EntityId, options?: FocusOptions) => Promise<void>
   relayout: () => Promise<void>
   /** Returns the path in original entity ids, or an empty array if there is none. */
   highlightPath: (from: EntityId, to: EntityId) => EntityId[]
   clearHighlight: () => void
-  getGraph: () => NetworkGraph<E, L>
+  getGraph: () => AssetGraph<E, L>
 }

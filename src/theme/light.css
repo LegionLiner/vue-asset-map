@@ -2,52 +2,52 @@
  * Light theme.
  *
  * The values match the base ones in `tokens.css` but are restated explicitly:
- * when a page puts `.vnm-theme-light` on a map nested inside a dark container,
+ * when a page puts `.vam-theme-light` on a map nested inside a dark container,
  * the theme has to beat inheritance, and that needs a block of its own with
  * higher specificity rather than reliance on the base tokens.
  */
-.vnm-root.vnm-theme-light {
-  --vnm-bg: #f7f8fa;
-  --vnm-surface: #ffffff;
-  --vnm-surface-raised: #ffffff;
-  --vnm-surface-sunken: #edf0f5;
-  --vnm-fg: #1b2636;
-  --vnm-fg-subtle: #4d6d9a;
-  --vnm-fg-muted: #7c92b2;
-  --vnm-fg-inverted: #ffffff;
-  --vnm-border: #dfe5ee;
-  --vnm-border-strong: #7c92b2;
+.vam-root.vam-theme-light {
+  --vam-bg: #f7f8fa;
+  --vam-surface: #ffffff;
+  --vam-surface-raised: #ffffff;
+  --vam-surface-sunken: #edf0f5;
+  --vam-fg: #1b2636;
+  --vam-fg-subtle: #4d6d9a;
+  --vam-fg-muted: #7c92b2;
+  --vam-fg-inverted: #ffffff;
+  --vam-border: #dfe5ee;
+  --vam-border-strong: #7c92b2;
 
-  --vnm-accent: #4d6d9a;
-  --vnm-accent-fg: #ffffff;
-  --vnm-accent-soft: rgba(77, 109, 154, 0.1);
-  --vnm-focus-ring: #4d6d9a;
-  --vnm-selection: #4d6d9a;
-  --vnm-highlight: #d9822b;
-  --vnm-highlight-soft: rgba(217, 130, 43, 0.16);
+  --vam-accent: #4d6d9a;
+  --vam-accent-fg: #ffffff;
+  --vam-accent-soft: rgba(77, 109, 154, 0.1);
+  --vam-focus-ring: #4d6d9a;
+  --vam-selection: #4d6d9a;
+  --vam-highlight: #d9822b;
+  --vam-highlight-soft: rgba(217, 130, 43, 0.16);
 
-  --vnm-edge: #b9c5d6;
-  --vnm-edge-active: #5a5ee7;
-  --vnm-edge-dimmed: #e4e9f1;
-  --vnm-edge-label-bg: #ffffff;
+  --vam-edge: #b9c5d6;
+  --vam-edge-active: #5a5ee7;
+  --vam-edge-dimmed: #e4e9f1;
+  --vam-edge-label-bg: #ffffff;
 
-  --vnm-infected-bg: #f9eeee;
-  --vnm-infected-border: #cb5555;
-  --vnm-infected-fg: #cb5555;
-  --vnm-infected-edge: #cb5555;
+  --vam-infected-bg: #f9eeee;
+  --vam-infected-border: #cb5555;
+  --vam-infected-fg: #cb5555;
+  --vam-infected-edge: #cb5555;
 
-  --vnm-status-online: #5fab6b;
-  --vnm-status-offline: #d05353;
-  --vnm-status-warning: #d9822b;
-  --vnm-status-unknown: #b9c5d6;
+  --vam-status-online: #5fab6b;
+  --vam-status-offline: #d05353;
+  --vam-status-warning: #d9822b;
+  --vam-status-unknown: #b9c5d6;
 
-  --vnm-node-label-color: #1b2636;
-  --vnm-node-sublabel-color: #7c92b2;
-  --vnm-node-overlay-color: #5a5ee7;
+  --vam-node-label-color: #1b2636;
+  --vam-node-sublabel-color: #7c92b2;
+  --vam-node-overlay-color: #5a5ee7;
 
-  --vnm-shadow-sm: 0 1px 2px rgba(27, 38, 54, 0.06);
-  --vnm-shadow-md: 0 2px 8px rgba(27, 38, 54, 0.1);
-  --vnm-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.16);
+  --vam-shadow-sm: 0 1px 2px rgba(27, 38, 54, 0.06);
+  --vam-shadow-md: 0 2px 8px rgba(27, 38, 54, 0.1);
+  --vam-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.16);
 
-  --vnm-canvas-dot: #dfe5ee;
+  --vam-canvas-dot: #dfe5ee;
 }

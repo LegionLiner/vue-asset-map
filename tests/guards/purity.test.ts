@@ -97,7 +97,7 @@ describe('SSR-безопасность', () => {
     // верхнем уровне падает ещё до рендера.
     for (const { path, content } of allSources) {
       // Блок <template> — разметка, а не исполняемый верхний уровень модуля:
-      // класс `vnm-window` в нём не имеет отношения к объекту `window`.
+      // класс `vam-window` в нём не имеет отношения к объекту `window`.
       const code = stripComments(stripTemplateBlock(content))
       for (const line of topLevelStatements(code)) {
         expect(

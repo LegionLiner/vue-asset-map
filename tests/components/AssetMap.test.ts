@@ -2,11 +2,11 @@
 import { describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { h, nextTick } from 'vue'
-import NetworkMap from '../../src/components/NetworkMap.vue'
+import AssetMap from '../../src/components/AssetMap.vue'
 import { groupIdFor } from '../../src/core/collapse'
 import type { LayoutEngine } from '../../src/layout/types'
 import type { XY } from '../../src/types/entity'
-import type { NetworkMapSlots } from '../../src/types/props'
+import type { AssetMapSlots } from '../../src/types/props'
 import { entities, links, statusColors, views } from '../../fixtures/infra'
 
 /** Движок-шпион: считает вызовы и раскладывает узлы в предсказуемый ряд. */
@@ -28,8 +28,8 @@ function spyEngine(): LayoutEngine & { calls: number } {
  * Слоты типизируются публичным контрактом компонента: так тест заодно проверяет,
  * что `#node-{kind}` с произвольным именем вообще проходит проверку типов.
  */
-async function mountMap(props: Record<string, unknown> = {}, slots: NetworkMapSlots = {}) {
-  const wrapper = mount(NetworkMap, {
+async function mountMap(props: Record<string, unknown> = {}, slots: AssetMapSlots = {}) {
+  const wrapper = mount(AssetMap, {
     props: {
       entities,
       links,
@@ -53,11 +53,11 @@ async function mountMap(props: Record<string, unknown> = {}, slots: NetworkMapSl
 
 const GROUP_ID = groupIdFor('pve-beelink', 'container')
 
-describe('<NetworkMap> рендер', () => {
+describe('<AssetMap> рендер', () => {
   it('рисует узлы из фикстуры', async () => {
     const wrapper = await mountMap()
 
-    const nodes = wrapper.findAll('.vnm-node')
+    const nodes = wrapper.findAll('.vam-node')
     expect(nodes.length).toBeGreaterThan(10)
     expect(wrapper.text()).toContain('Интернет')
     expect(wrapper.text()).toContain('Tailscale VPS')
@@ -67,11 +67,11 @@ describe('<NetworkMap> рендер', () => {
 
   it('ставит класс темы на корневой элемент', async () => {
     const light = await mountMap({ theme: 'light' })
-    expect(light.find('.vnm-root').classes()).toContain('vnm-theme-light')
+    expect(light.find('.vam-root').classes()).toContain('vam-theme-light')
     light.unmount()
 
     const dark = await mountMap({ theme: 'dark' })
-    expect(dark.find('.vnm-root').classes()).toContain('vnm-theme-dark')
+    expect(dark.find('.vam-root').classes()).toContain('vam-theme-dark')
     dark.unmount()
   })
 
@@ -98,20 +98,20 @@ describe('<NetworkMap> рендер', () => {
   })
 })
 
-describe('<NetworkMap> выделение и панель', () => {
+describe('<AssetMap> выделение и панель', () => {
   it('клик по узлу выделяет его и открывает панель подробностей', async () => {
     const wrapper = await mountMap()
 
-    expect(wrapper.find('.vnm-window').exists()).toBe(false)
+    expect(wrapper.find('.vam-window').exists()).toBe(false)
 
     const node = wrapper.find('[aria-label^="Tailscale VPS"]')
     expect(node.exists()).toBe(true)
     await node.trigger('click')
     await nextTick()
 
-    expect(node.classes()).toContain('vnm-node--selected')
-    expect(wrapper.find('.vnm-window').exists()).toBe(true)
-    expect(wrapper.find('.vnm-window').text()).toContain('Tailscale VPS')
+    expect(node.classes()).toContain('vam-node--selected')
+    expect(wrapper.find('.vam-window').exists()).toBe(true)
+    expect(wrapper.find('.vam-window').text()).toContain('Tailscale VPS')
 
     const events = wrapper.emitted('node-click')
     expect(events).toHaveLength(1)
@@ -127,8 +127,8 @@ describe('<NetworkMap> выделение и панель', () => {
     await nextTick()
 
     // Ни одного v-model не передано, а выделение и панель всё равно работают.
-    expect(wrapper.find('.vnm-window').exists()).toBe(true)
-    expect(wrapper.find('[aria-label^="Keenetic 1"]').classes()).toContain('vnm-node--selected')
+    expect(wrapper.find('.vam-window').exists()).toBe(true)
+    expect(wrapper.find('[aria-label^="Keenetic 1"]').classes()).toContain('vam-node--selected')
 
     wrapper.unmount()
   })
@@ -155,7 +155,7 @@ describe('<NetworkMap> выделение и панель', () => {
     await node.trigger('keydown', { key: 'Enter' })
     await nextTick()
 
-    expect(node.classes()).toContain('vnm-node--selected')
+    expect(node.classes()).toContain('vam-node--selected')
     wrapper.unmount()
   })
 
@@ -164,15 +164,15 @@ describe('<NetworkMap> выделение и панель', () => {
 
     await wrapper.find('[aria-label^="Dmitry"]').trigger('click')
     await nextTick()
-    expect(wrapper.find('.vnm-window').exists()).toBe(true)
+    expect(wrapper.find('.vam-window').exists()).toBe(true)
 
-    await wrapper.find('.vnm-root').trigger('keydown', { key: 'Escape' })
+    await wrapper.find('.vam-root').trigger('keydown', { key: 'Escape' })
     await nextTick()
-    expect(wrapper.find('.vnm-window').exists()).toBe(false)
+    expect(wrapper.find('.vam-window').exists()).toBe(false)
 
     await wrapper.find('[aria-label^="Vlad"]').trigger('click')
     await nextTick()
-    expect(wrapper.find('.vnm-window').exists()).toBe(true)
+    expect(wrapper.find('.vam-window').exists()).toBe(true)
 
     wrapper.unmount()
   })
@@ -183,10 +183,10 @@ describe('<NetworkMap> выделение и панель', () => {
     await wrapper.find('[aria-label^="Dmitry"]').trigger('click')
     await nextTick()
 
-    await wrapper.findAll('.vnm-window__button')[0]!.trigger('click')
+    await wrapper.findAll('.vam-window__button')[0]!.trigger('click')
     await nextTick()
 
-    expect(wrapper.find('.vnm-window').exists()).toBe(false)
+    expect(wrapper.find('.vam-window').exists()).toBe(false)
     wrapper.unmount()
   })
 
@@ -196,16 +196,16 @@ describe('<NetworkMap> выделение и панель', () => {
     await wrapper.find('[aria-label^="Dmitry"]').trigger('click')
     await nextTick()
 
-    expect(wrapper.find('.vnm-window').exists()).toBe(false)
+    expect(wrapper.find('.vam-window').exists()).toBe(false)
     wrapper.unmount()
   })
 })
 
-describe('<NetworkMap> свёртка групп', () => {
+describe('<AssetMap> свёртка групп', () => {
   it('14 однотипных детей показаны одним групповым узлом', async () => {
     const wrapper = await mountMap()
 
-    const group = wrapper.find('.vnm-group')
+    const group = wrapper.find('.vam-group')
     expect(group.exists()).toBe(true)
     expect(group.text()).toContain('14')
     // Участники группы на карте не отрисованы.
@@ -217,7 +217,7 @@ describe('<NetworkMap> свёртка групп', () => {
   it('клик по групповому узлу эмитит expand и раскрывает участников', async () => {
     const wrapper = await mountMap()
 
-    await wrapper.find('.vnm-group').trigger('click')
+    await wrapper.find('.vam-group').trigger('click')
     await flushPromises()
     await nextTick()
 
@@ -225,7 +225,7 @@ describe('<NetworkMap> свёртка групп', () => {
     expect(expandEvents).toHaveLength(1)
     expect(expandEvents?.[0]?.[0]).toMatchObject({ groupId: GROUP_ID })
 
-    expect(wrapper.find('.vnm-group').exists()).toBe(false)
+    expect(wrapper.find('.vam-group').exists()).toBe(false)
     expect(wrapper.find('[aria-label^="web-01"]').exists()).toBe(true)
 
     wrapper.unmount()
@@ -234,7 +234,7 @@ describe('<NetworkMap> свёртка групп', () => {
   it('повторный клик сворачивает группу и эмитит collapse', async () => {
     const wrapper = await mountMap()
 
-    await wrapper.find('.vnm-group').trigger('click')
+    await wrapper.find('.vam-group').trigger('click')
     await flushPromises()
     await nextTick()
 
@@ -245,14 +245,14 @@ describe('<NetworkMap> свёртка групп', () => {
     await flushPromises()
     await nextTick()
 
-    expect(wrapper.find('.vnm-group').exists()).toBe(true)
+    expect(wrapper.find('.vam-group').exists()).toBe(true)
     wrapper.unmount()
   })
 
   it('collapse: false выключает свёртку — все 14 узлов на карте', async () => {
     const wrapper = await mountMap({ collapse: false })
 
-    expect(wrapper.find('.vnm-group').exists()).toBe(false)
+    expect(wrapper.find('.vam-group').exists()).toBe(false)
     expect(wrapper.find('[aria-label^="web-01"]').exists()).toBe(true)
     expect(wrapper.find('[aria-label^="web-14"]').exists()).toBe(true)
 
@@ -263,12 +263,12 @@ describe('<NetworkMap> свёртка групп', () => {
     const wrapper = await mountMap({ collapse: { threshold: 2 } })
 
     // При пороге 2 сворачиваются и рабочие станции, и гипервизоры.
-    expect(wrapper.findAll('.vnm-group').length).toBeGreaterThan(1)
+    expect(wrapper.findAll('.vam-group').length).toBeGreaterThan(1)
     wrapper.unmount()
   })
 })
 
-describe('<NetworkMap> раскладка', () => {
+describe('<AssetMap> раскладка', () => {
   it('смена вида вызывает пересчёт раскладки', async () => {
     const engine = spyEngine()
     const wrapper = await mountMap({ layout: { engine } })
@@ -301,7 +301,7 @@ describe('<NetworkMap> раскладка', () => {
     const wrapper = await mountMap({ layout: { engine: 'no-such-engine' } })
 
     expect(wrapper.emitted('error')?.length).toBeGreaterThan(0)
-    expect(wrapper.findAll('.vnm-node').length).toBeGreaterThan(10)
+    expect(wrapper.findAll('.vam-node').length).toBeGreaterThan(10)
     expect(wrapper.emitted('layout-done')?.[0]?.[0]).toMatchObject({ engine: 'manual' })
 
     wrapper.unmount()
@@ -320,7 +320,7 @@ describe('<NetworkMap> раскладка', () => {
   })
 })
 
-describe('<NetworkMap> слоты', () => {
+describe('<AssetMap> слоты', () => {
   it('слот #node-{kind} подменяет рендер узлов этого типа', async () => {
     const wrapper = await mountMap(
       {},
@@ -391,7 +391,7 @@ describe('<NetworkMap> слоты', () => {
   })
 })
 
-describe('<NetworkMap> вид и фильтр', () => {
+describe('<AssetMap> вид и фильтр', () => {
   it('логический вид скрывает узлы без оверлейных связей', async () => {
     const wrapper = await mountMap({ view: 'logical' })
 
@@ -419,11 +419,11 @@ describe('<NetworkMap> вид и фильтр', () => {
     await nextTick()
 
     const match = wrapper.find('[aria-label^="Dmitry"]')
-    expect(match.classes()).toContain('vnm-node--matched')
+    expect(match.classes()).toContain('vam-node--matched')
 
     // Сосед остаётся видимым — граф не рассыпался на изолят.
     expect(wrapper.find('[aria-label^="Keenetic 2"]').exists()).toBe(true)
-    expect(wrapper.find('[aria-label^="Keenetic 2"]').classes()).toContain('vnm-node--dimmed')
+    expect(wrapper.find('[aria-label^="Keenetic 2"]').classes()).toContain('vam-node--dimmed')
     // Несвязанный узел скрыт.
     expect(wrapper.find('[aria-label^="Cloudflare"]').exists()).toBe(false)
 
@@ -437,12 +437,12 @@ describe('<NetworkMap> вид и фильтр', () => {
     await flushPromises()
     await nextTick()
 
-    expect(wrapper.findAll('.vnm-node--matched')).toHaveLength(5)
+    expect(wrapper.findAll('.vam-node--matched')).toHaveLength(5)
     wrapper.unmount()
   })
 })
 
-describe('<NetworkMap> императивный API', () => {
+describe('<AssetMap> императивный API', () => {
   it('highlightPath подсвечивает узлы найденного пути', async () => {
     const wrapper = await mountMap({ view: 'logical' })
     const api = wrapper.vm as unknown as {
@@ -454,11 +454,11 @@ describe('<NetworkMap> императивный API', () => {
     await nextTick()
 
     expect(path.length).toBeGreaterThan(1)
-    expect(wrapper.findAll('.vnm-node--highlighted').length).toBeGreaterThan(1)
+    expect(wrapper.findAll('.vam-node--highlighted').length).toBeGreaterThan(1)
 
     api.clearHighlight()
     await nextTick()
-    expect(wrapper.findAll('.vnm-node--highlighted')).toHaveLength(0)
+    expect(wrapper.findAll('.vam-node--highlighted')).toHaveLength(0)
 
     wrapper.unmount()
   })
@@ -469,7 +469,7 @@ describe('<NetworkMap> императивный API', () => {
 
     expect(api.highlightPath('ws-artjom', 'internet')).toEqual([])
     await nextTick()
-    expect(wrapper.findAll('.vnm-node--highlighted')).toHaveLength(0)
+    expect(wrapper.findAll('.vam-node--highlighted')).toHaveLength(0)
 
     wrapper.unmount()
   })
@@ -497,10 +497,10 @@ describe('<NetworkMap> императивный API', () => {
   })
 })
 
-describe('<NetworkMap> устойчивость', () => {
+describe('<AssetMap> устойчивость', () => {
   it('пустой граф не падает', async () => {
     const wrapper = await mountMap({ entities: [], links: [] })
-    expect(wrapper.find('.vnm-root').exists()).toBe(true)
+    expect(wrapper.find('.vam-root').exists()).toBe(true)
     wrapper.unmount()
   })
 
@@ -526,9 +526,9 @@ describe('<NetworkMap> устойчивость', () => {
   it('statusColors красит индикатор состояния', async () => {
     const wrapper = await mountMap()
     const node = wrapper.find('[aria-label^="Vlad"]')
-    const indicator = node.find('.vnm-node__status')
+    const indicator = node.find('.vam-node__status')
 
-    expect(indicator.attributes('style')).toContain('var(--vnm-status-offline)')
+    expect(indicator.attributes('style')).toContain('var(--vam-status-offline)')
     wrapper.unmount()
   })
 
@@ -537,7 +537,7 @@ describe('<NetworkMap> устойчивость', () => {
     const linksCopy = structuredClone(links)
 
     const wrapper = await mountMap({ entities: entitiesCopy, links: linksCopy })
-    await wrapper.find('.vnm-group').trigger('click')
+    await wrapper.find('.vam-group').trigger('click')
     await flushPromises()
 
     expect(entitiesCopy).toEqual(structuredClone(entities))
@@ -547,7 +547,7 @@ describe('<NetworkMap> устойчивость', () => {
   })
 })
 
-describe('<NetworkMap> ошибки движка', () => {
+describe('<AssetMap> ошибки движка', () => {
   it('падение движка раскладки эмитит error, а не роняет компонент', async () => {
     const failing: LayoutEngine = {
       name: 'boom',
@@ -560,7 +560,7 @@ describe('<NetworkMap> ошибки движка', () => {
 
     const errors = wrapper.emitted('error')
     expect(errors?.length).toBeGreaterThan(0)
-    expect(wrapper.find('.vnm-root').exists()).toBe(true)
+    expect(wrapper.find('.vam-root').exists()).toBe(true)
 
     wrapper.unmount()
   })

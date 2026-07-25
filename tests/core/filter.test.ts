@@ -10,8 +10,8 @@ import {
   projectGraph,
 } from '../../src/core/index'
 import type { FilterState } from '../../src/types/filter'
-import type { NetworkEntity } from '../../src/types/entity'
-import type { NetworkLink } from '../../src/types/link'
+import type { AssetEntity } from '../../src/types/entity'
+import type { AssetLink } from '../../src/types/link'
 import { entities, links, views } from '../../fixtures/infra'
 
 const graph = buildGraph(entities, links)
@@ -21,14 +21,14 @@ const state = (partial: Partial<FilterState> = {}): FilterState => ({
   ...partial,
 })
 
-const e = (id: string, extra: Partial<NetworkEntity> = {}): NetworkEntity => ({
+const e = (id: string, extra: Partial<AssetEntity> = {}): AssetEntity => ({
   id,
   kind: 'host',
   label: id,
   ...extra,
 })
 
-const l = (id: string, source: string, target: string): NetworkLink => ({
+const l = (id: string, source: string, target: string): AssetLink => ({
   id,
   source,
   target,

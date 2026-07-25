@@ -2,7 +2,7 @@ import { computed, type ComputedRef, type Ref } from 'vue'
 import { collapseGraph } from '../core/collapse'
 import type { EntityId } from '../types/entity'
 import type { CollapsedGroup, CollapseResult, CollapseRule } from '../types/collapse'
-import type { NetworkGraph } from '../types/graph'
+import type { AssetGraph } from '../types/graph'
 import type { ProjectionResult } from '../types/view'
 
 /** Return value of {@link useCollapse}. */
@@ -32,7 +32,7 @@ export interface UseCollapseReturn {
  * plain set out of their own store, so a new `Set` always goes back out.
  */
 export function useCollapse<E, L>(
-  graph: Ref<NetworkGraph<E, L>> | ComputedRef<NetworkGraph<E, L>>,
+  graph: Ref<AssetGraph<E, L>> | ComputedRef<AssetGraph<E, L>>,
   visibleIds: Ref<ReadonlySet<EntityId>> | ComputedRef<ReadonlySet<EntityId>>,
   projection: Ref<ProjectionResult> | ComputedRef<ProjectionResult>,
   rule: Ref<CollapseRule | false | undefined>,
