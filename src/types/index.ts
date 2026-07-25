@@ -13,4 +13,5 @@ export type {
 } from './filter'
 export type { ResolvedTheme, ThemeConfig, ThemeMode } from './theme'
 export type { LocaleKey, LocaleMessages, PartialLocaleMessages, Translate } from './locale'
-export type { InfectionOptions, NodeMarkerDef, ResolvedNodeMarker } from './props'
+export type { InfectionOptions } from './props'
+export type { ConnectionMarkerOptions, MarkerAnchor, NodeMarkerDef, ResolvedNodeMarker } from './marker'

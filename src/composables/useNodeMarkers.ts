@@ -1,7 +1,7 @@
 import { computed, onScopeDispose, ref, type ComputedRef, type Ref } from 'vue'
 import type { EntityId, NetworkEntity } from '../types/entity'
 import type { NetworkGraph } from '../types/graph'
-import type { NodeMarkerDef, ResolvedNodeMarker } from '../types/props'
+import type { NodeMarkerDef, ResolvedNodeMarker } from '../types/marker'
 
 export interface UseNodeMarkersReturn {
   /** Маркеры сущности в порядке объявления. */
@@ -47,20 +47,43 @@ export function useNodeMarkers<E, L>(
     })),
   )
 
+  /**
+   * Индекс «сущность → её маркеры».
+   *
+   * Обход идёт по маркерам, а не по сущностям: маркер с `members` считает свой
+   * состав одним проходом по графу, тогда как предикат `match` пришлось бы
+   * вызывать сущности × маркеры раз. Порядок кружков у узла — порядок объявления
+   * маркеров, потому что внешний цикл идёт по ним.
+   */
   const byEntity = computed(() => {
     const index = new Map<EntityId, ResolvedNodeMarker[]>()
     const defs = markers.value
     if (!defs || defs.length === 0) return index
 
-    for (const entity of graph.value.entities.values()) {
-      const own: ResolvedNodeMarker[] = []
-      defs.forEach((def, position) => {
-        if (!def.match(entity as NetworkEntity)) return
-        const withColor = resolved.value[position]
-        if (withColor) own.push(withColor)
-      })
-      if (own.length > 0) index.set(entity.id, own)
+    const attach = (entityId: EntityId, marker: ResolvedNodeMarker): void => {
+      const own = index.get(entityId)
+      if (own) own.push(marker)
+      else index.set(entityId, [marker])
     }
+
+    defs.forEach((def, position) => {
+      const marker = resolved.value[position]
+      if (!marker) return
+
+      if (def.members) {
+        for (const entityId of def.members(graph.value)) {
+          // Маркер мог назвать узел, которого в данных уже нет.
+          if (graph.value.entities.has(entityId)) attach(entityId, marker)
+        }
+        return
+      }
+
+      const match = def.match
+      if (!match) return
+      for (const entity of graph.value.entities.values()) {
+        if (match(entity as NetworkEntity, graph.value)) attach(entity.id, marker)
+      }
+    })
 
     return index
   })

@@ -10,7 +10,10 @@ import type {
   NetworkLink,
   NetworkView,
   NodeMarkerDef,
+  MarkerAnchor,
 } from '../src/types/index'
+// Помощник из ядра: собирает маркеры по связям вокруг опорных узлов.
+import { connectionMarkers } from '../src/core/markers'
 
 /** Метаданные активов в этом демо. Потребитель задаёт свою форму. */
 export interface AssetMeta {
@@ -410,29 +413,26 @@ export const filterGroups: FilterGroupDef[] = [
 ]
 
 /**
- * Маркеры принадлежности этого демо: подсеть актива.
+ * Опорные узлы маркеров этого демо: центры, к которым сходятся связи.
  *
- * Цвета не заданы — библиотека раздаёт их из палитры по порядку объявления.
- * Своих цветов у маркеров быть не обязано: если у потребителя они есть, он
- * передаёт `color` и палитра не используется.
+ * Порядок задаёт цвета: библиотека раздаёт палитру по нему.
  */
-export const nodeMarkers: NodeMarkerDef[] = [
-  {
-    id: 'internet',
-    label: 'Интернет',
-    match: (entity) => (entity.meta as AssetMeta | undefined)?.subnet === 'internet',
-  },
-  {
-    id: 'vpn',
-    label: 'VPN',
-    match: (entity) => (entity.meta as AssetMeta | undefined)?.subnet === 'vpn',
-  },
-  {
-    id: 'docker',
-    label: 'Docker Bridge',
-    match: (entity) => (entity.meta as AssetMeta | undefined)?.subnet === 'docker',
-  },
+export const markerAnchors: MarkerAnchor[] = [
+  { id: 'keenetic-1', label: 'Keenetic 1' },
+  { id: 'keenetic-2', label: 'Keenetic 2' },
+  { id: 'vps-tailscale', label: 'Tailscale VPS' },
 ]
+
+/**
+ * Маркеры принадлежности этого демо — по связям графа.
+ *
+ * Слои не ограничены намеренно: рабочая станция подключена к роутеру физически и
+ * к координатору VPN логически, и оба кружка должны быть видны в любом виде.
+ * Поэтому у `Artjom` их два — за `Keenetic 1` и за `Tailscale VPS`.
+ *
+ * Цвета не заданы: библиотека раздаст их из палитры по порядку опорных узлов.
+ */
+export const nodeMarkers: NodeMarkerDef[] = connectionMarkers(markerAnchors)
 
 export const statusColors: Record<string, string> = {
   online: 'var(--vnm-status-online)',

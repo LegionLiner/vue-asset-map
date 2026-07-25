@@ -47,10 +47,10 @@ describe('маркеры принадлежности', () => {
   it('узел получает кружок того маркера, которому принадлежит', async () => {
     const wrapper = await mountMap()
 
-    // Координатор VPN — в подсети vpn, роутер — в internet.
-    expect(marker(wrapper, 'Tailscale VPS', 'VPN')).toBeDefined()
-    expect(marker(wrapper, 'Tailscale VPS', 'Интернет')).toBeUndefined()
-    expect(marker(wrapper, 'Keenetic 1', 'Интернет')).toBeDefined()
+    // Координатор связан с Интернетом, но не с роутером офиса A.
+    expect(marker(wrapper, 'Tailscale VPS', 'Tailscale VPS')).toBeDefined()
+    expect(marker(wrapper, 'Tailscale VPS', 'Keenetic 1')).toBeUndefined()
+    expect(marker(wrapper, 'Keenetic 1', 'Keenetic 1')).toBeDefined()
 
     wrapper.unmount()
   })
@@ -58,11 +58,12 @@ describe('маркеры принадлежности', () => {
   it('цвета раздаются из палитры по порядку объявления', async () => {
     const wrapper = await mountMap()
 
-    const internet = marker(wrapper, 'Keenetic 1', 'Интернет')
-    const vpn = marker(wrapper, 'Tailscale VPS', 'VPN')
+    const ownRouter = marker(wrapper, 'Keenetic 1', 'Keenetic 1')
+    const coordinator = marker(wrapper, 'Tailscale VPS', 'Tailscale VPS')
 
-    expect(internet?.find('.vnm-node__marker-dot').attributes('style')).toContain('--vnm-marker-1')
-    expect(vpn?.find('.vnm-node__marker-dot').attributes('style')).toContain('--vnm-marker-2')
+    // Опорные узлы объявлены в порядке keenetic-1, keenetic-2, vps-tailscale.
+    expect(ownRouter?.find('.vnm-node__marker-dot').attributes('style')).toContain('--vnm-marker-1')
+    expect(coordinator?.find('.vnm-node__marker-dot').attributes('style')).toContain('--vnm-marker-3')
 
     wrapper.unmount()
   })
@@ -84,12 +85,12 @@ describe('маркеры принадлежности', () => {
       infectionOptions: { maxDepth: 0 },
     })
 
-    const infectedDot = marker(wrapper, 'Tailscale VPS', 'VPN')?.find('.vnm-node__marker-dot')
+    const infectedDot = marker(wrapper, 'Tailscale VPS', 'Tailscale VPS')?.find('.vnm-node__marker-dot')
     expect(infectedDot?.attributes('style')).toContain('--vnm-marker-infected')
 
     // Незаражённый сосед сохраняет свой цвет из палитры.
-    const cleanDot = marker(wrapper, 'Dmitry', 'VPN')?.find('.vnm-node__marker-dot')
-    expect(cleanDot?.attributes('style')).toContain('--vnm-marker-2')
+    const cleanDot = marker(wrapper, 'Dmitry', 'Tailscale VPS')?.find('.vnm-node__marker-dot')
+    expect(cleanDot?.attributes('style')).toContain('--vnm-marker-3')
 
     wrapper.unmount()
   })
@@ -97,7 +98,9 @@ describe('маркеры принадлежности', () => {
   it('кружок подписан для screen reader', async () => {
     const wrapper = await mountMap()
 
-    expect(marker(wrapper, 'Tailscale VPS', 'VPN')?.attributes('aria-label')).toBe('Принадлежность: VPN')
+    expect(marker(wrapper, 'Tailscale VPS', 'Tailscale VPS')?.attributes('aria-label')).toBe(
+      'Принадлежность: Tailscale VPS',
+    )
     wrapper.unmount()
   })
 
@@ -113,7 +116,7 @@ describe('маркеры принадлежности', () => {
   it('клик по кружку не выделяет узел', async () => {
     const wrapper = await mountMap()
 
-    await marker(wrapper, 'Tailscale VPS', 'VPN')?.trigger('click')
+    await marker(wrapper, 'Tailscale VPS', 'Tailscale VPS')?.trigger('click')
     await nextTick()
 
     expect(wrapper.emitted('node-click')).toBeUndefined()
@@ -147,7 +150,7 @@ describe('подсветка по наведению на маркер', () => {
   it('до истечения задержки ничего не подсвечивается', async () => {
     const wrapper = await mountMap()
 
-    await hover(wrapper, 'Tailscale VPS', 'VPN', 400)
+    await hover(wrapper, 'Tailscale VPS', 'Tailscale VPS', 400)
 
     expect(wrapper.findAll('.vnm-node--dimmed')).toHaveLength(0)
     wrapper.unmount()
@@ -156,15 +159,16 @@ describe('подсветка по наведению на маркер', () => {
   it('после задержки подсвечиваются узлы того же маркера, остальные гаснут', async () => {
     const wrapper = await mountMap()
 
-    await hover(wrapper, 'Tailscale VPS', 'VPN', 500)
+    await hover(wrapper, 'Tailscale VPS', 'Tailscale VPS', 500)
 
-    // Вся подсеть vpn яркая.
+    // Всё, что связано с координатором, остаётся ярким.
     expect(node(wrapper, 'Tailscale VPS').classes()).not.toContain('vnm-node--dimmed')
     expect(node(wrapper, 'Dmitry').classes()).not.toContain('vnm-node--dimmed')
     expect(node(wrapper, 'Proxmox Beelink').classes()).not.toContain('vnm-node--dimmed')
-    // Всё, что вне подсети, затемнено.
+    // Роутеры и Cloudflare с координатором напрямую не связаны — гаснут.
     expect(node(wrapper, 'Keenetic 1').classes()).toContain('vnm-node--dimmed')
-    expect(node(wrapper, 'Интернет').classes()).toContain('vnm-node--dimmed')
+    expect(node(wrapper, 'Keenetic 2').classes()).toContain('vnm-node--dimmed')
+    expect(node(wrapper, 'Cloudflare').classes()).toContain('vnm-node--dimmed')
 
     wrapper.unmount()
   })
@@ -172,10 +176,10 @@ describe('подсветка по наведению на маркер', () => {
   it('уход курсора снимает подсветку', async () => {
     const wrapper = await mountMap()
 
-    await hover(wrapper, 'Tailscale VPS', 'VPN', 500)
+    await hover(wrapper, 'Tailscale VPS', 'Tailscale VPS', 500)
     expect(wrapper.findAll('.vnm-node--dimmed').length).toBeGreaterThan(0)
 
-    await marker(wrapper, 'Tailscale VPS', 'VPN')?.trigger('mouseleave')
+    await marker(wrapper, 'Tailscale VPS', 'Tailscale VPS')?.trigger('mouseleave')
     await nextTick()
 
     expect(wrapper.findAll('.vnm-node--dimmed')).toHaveLength(0)
@@ -185,9 +189,9 @@ describe('подсветка по наведению на маркер', () => {
   it('уход курсора до задержки отменяет ожидание', async () => {
     const wrapper = await mountMap()
 
-    await marker(wrapper, 'Tailscale VPS', 'VPN')?.trigger('mouseenter')
+    await marker(wrapper, 'Tailscale VPS', 'Tailscale VPS')?.trigger('mouseenter')
     vi.advanceTimersByTime(300)
-    await marker(wrapper, 'Tailscale VPS', 'VPN')?.trigger('mouseleave')
+    await marker(wrapper, 'Tailscale VPS', 'Tailscale VPS')?.trigger('mouseleave')
     vi.advanceTimersByTime(1000)
     await nextTick()
 
@@ -198,7 +202,7 @@ describe('подсветка по наведению на маркер', () => {
   it('задержка настраивается', async () => {
     const wrapper = await mountMap({ markerHoverDelay: 1200 })
 
-    await hover(wrapper, 'Tailscale VPS', 'VPN', 500)
+    await hover(wrapper, 'Tailscale VPS', 'Tailscale VPS', 500)
     expect(wrapper.findAll('.vnm-node--dimmed')).toHaveLength(0)
 
     vi.advanceTimersByTime(700)
@@ -211,7 +215,7 @@ describe('подсветка по наведению на маркер', () => {
   it('нулевая задержка подсвечивает сразу', async () => {
     const wrapper = await mountMap({ markerHoverDelay: 0 })
 
-    await marker(wrapper, 'Tailscale VPS', 'VPN')?.trigger('mouseenter')
+    await marker(wrapper, 'Tailscale VPS', 'Tailscale VPS')?.trigger('mouseenter')
     await nextTick()
 
     expect(wrapper.findAll('.vnm-node--dimmed').length).toBeGreaterThan(0)
@@ -221,12 +225,12 @@ describe('подсветка по наведению на маркер', () => {
   it('фокус с клавиатуры подсвечивает без задержки', async () => {
     const wrapper = await mountMap()
 
-    await marker(wrapper, 'Tailscale VPS', 'VPN')?.trigger('focus')
+    await marker(wrapper, 'Tailscale VPS', 'Tailscale VPS')?.trigger('focus')
     await nextTick()
 
     expect(wrapper.findAll('.vnm-node--dimmed').length).toBeGreaterThan(0)
 
-    await marker(wrapper, 'Tailscale VPS', 'VPN')?.trigger('blur')
+    await marker(wrapper, 'Tailscale VPS', 'Tailscale VPS')?.trigger('blur')
     await nextTick()
     expect(wrapper.findAll('.vnm-node--dimmed')).toHaveLength(0)
 
@@ -234,25 +238,26 @@ describe('подсветка по наведению на маркер', () => {
   })
 
   it('наведение главнее выделения', async () => {
-    const wrapper = await mountMap({ view: 'logical' })
+    const wrapper = await mountMap({ view: 'physical' })
 
-    // Выделяем узел: включается подсветка его связей.
-    await node(wrapper, 'Vlad').trigger('click')
+    // Выделяем Cloudflare: подсвечиваются он и его связи.
+    await node(wrapper, 'Cloudflare').trigger('click')
     await nextTick()
-    expect(node(wrapper, 'Tailscale VPS').classes()).not.toContain('vnm-node--dimmed')
+    expect(node(wrapper, 'Cloudflare').classes()).not.toContain('vnm-node--dimmed')
 
-    // Наводим на маркер интернета — от выделения ничего не остаётся.
-    await hover(wrapper, 'NGINX VPS', 'Интернет', 500)
+    // Наводим на маркер координатора: Cloudflare с ним не связан и гаснет,
+    // хотя только что был выделен.
+    await hover(wrapper, 'NGINX VPS', 'Tailscale VPS', 500)
     expect(node(wrapper, 'NGINX VPS').classes()).not.toContain('vnm-node--dimmed')
-    expect(node(wrapper, 'Vlad').classes()).toContain('vnm-node--dimmed')
+    expect(node(wrapper, 'Cloudflare').classes()).toContain('vnm-node--dimmed')
 
     wrapper.unmount()
   })
 
   it('связи внутри маркера остаются яркими, наружу — гаснут', async () => {
-    const wrapper = await mountMap({ view: 'logical' })
+    const wrapper = await mountMap({ view: 'physical' })
 
-    await hover(wrapper, 'Tailscale VPS', 'VPN', 500)
+    await hover(wrapper, 'Dmitry', 'Tailscale VPS', 500)
 
     const dimmed = wrapper.findAll('.vnm-edge--dimmed').length
     const total = wrapper.findAll('.vnm-edge').length

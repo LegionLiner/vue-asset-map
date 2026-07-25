@@ -24,6 +24,8 @@ export { collapseGraph, groupIdFor, isAggregatedLink } from './collapse'
 export type { CollapseOptions } from './collapse'
 
 export { blastRadius, findPaths, neighbors } from './traverse'
+
+export { connectionMarkers, topAnchors } from './markers'
 export type { BlastRadiusOptions, FindPathsOptions } from './traverse'
 
 export {
@@ -53,3 +55,9 @@ export type {
   CollapseRule,
 } from '../types/collapse'
 export type { FacetCounts, FilterOptions, FilterResult, FilterState } from '../types/filter'
+export type {
+  ConnectionMarkerOptions,
+  MarkerAnchor,
+  NodeMarkerDef,
+  ResolvedNodeMarker,
+} from '../types/marker'

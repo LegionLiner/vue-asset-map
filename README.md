@@ -371,17 +371,55 @@ const map = useMapContext()
 ## Маркеры принадлежности
 
 Кружки под подписью узла показывают те же группировки, что и связи, но читаются
-взглядом — нажимать на узел не нужно:
+взглядом — нажимать на узел не нужно.
+
+Обычный случай — принадлежность к «центрам»: роутерам, координаторам, кластерам.
+Она выводится из связей графа, поэтому `connectionMarkers` считает её за вас:
+
+```ts
+import { connectionMarkers } from 'network-map/core'
+
+const markers = connectionMarkers([
+  { id: 'keenetic-1', label: 'Keenetic 1' },
+  { id: 'keenetic-2', label: 'Keenetic 2' },
+  { id: 'vps-tailscale', label: 'Tailscale VPS' },
+])
+```
+
+Узел получает кружок каждого центра, с которым связан, — и **сразу несколько**,
+если связан с несколькими. Рабочая станция, подключённая к роутеру физически и к
+координатору VPN логически, получит два кружка. Слои по умолчанию не
+ограничиваются именно поэтому: смысл кружков — показать полную принадлежность, не
+переключая вид.
+
+Опорные узлы можно не перечислять руками, а взять самые связанные:
+
+```ts
+import { buildGraph, connectionMarkers, topAnchors } from 'network-map/core'
+
+const graph = buildGraph(entities, links)
+const markers = connectionMarkers(topAnchors(graph, 3))
+```
+
+| Опция           | Дефолт | Описание                                          |
+| --------------- | ------ | ------------------------------------------------- |
+| `depth`         | `1`    | На сколько шагов от центра считать принадлежность |
+| `layers`        | все    | Ограничить слоями связей                          |
+| `includeAnchor` | `true` | Включать сам центр в свой маркер                  |
+
+Если принадлежность видна из самой сущности, а не из связей, вместо `members`
+задаётся предикат:
 
 ```ts
 import type { NodeMarkerDef } from 'network-map'
 
 const markers: NodeMarkerDef[] = [
-  { id: 'internet', label: 'Интернет', match: (e) => e.meta?.subnet === 'internet' },
-  { id: 'vpn', label: 'VPN', match: (e) => e.meta?.subnet === 'vpn' },
-  { id: 'docker', label: 'Docker Bridge', match: (e) => e.meta?.subnet === 'docker' },
+  { id: 'critical', label: 'Критичные', match: (entity) => entity.meta?.severity === 'critical' },
 ]
 ```
+
+`members` дешевле: он вызывается один раз на смену графа, тогда как `match` — на
+каждую сущность.
 
 ```vue
 <NetworkMap :markers="markers" :marker-hover-delay="500" :entities="entities" :links="links" />

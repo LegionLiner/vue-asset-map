@@ -4,6 +4,7 @@ import type { NetworkLink } from './link'
 import type { NetworkView } from './view'
 import type { CollapsedGroup, CollapseRule } from './collapse'
 import type { NetworkGraph } from './graph'
+import type { NodeMarkerDef } from './marker'
 import type { FilterOptions, FilterState } from './filter'
 import type { PartialLocaleMessages } from './locale'
 import type { ThemeConfig, ThemeMode } from './theme'
@@ -12,30 +13,6 @@ import type { LayoutEngine } from '../layout/types'
 export interface NetworkMapLayoutSpec {
   engine: string | LayoutEngine
   options?: unknown
-}
-
-/**
- * Маркер принадлежности — кружок под подписью узла.
- *
- * Показывает те же группировки, что и связи, но читается взглядом: не нужно
- * ничего нажимать, чтобы понять, что к чему относится. Наведение на кружок
- * подсвечивает всех, у кого он есть.
- */
-export interface NodeMarkerDef {
-  id: string
-  /** Цвет заполнения. Без него берётся из палитры токенов по порядку. */
-  color?: string
-  /** Подпись для screen reader и подсказки. Без неё используется `id`. */
-  label?: string
-  /** Есть ли этот маркер у сущности. */
-  match: (entity: NetworkEntity) => boolean
-}
-
-/** Маркер с уже выбранным цветом — то, что получает узел. */
-export interface ResolvedNodeMarker {
-  id: string
-  color: string
-  label: string
 }
 
 /** Как считать распространение «заражения» от помеченных сущностей. */
