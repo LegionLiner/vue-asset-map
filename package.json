@@ -1,16 +1,40 @@
 {
   "name": "vue-asset-map",
-  "version": "0.1.0",
-  "description": "Interactive network infrastructure map for Vue 3, built on VueFlow: projections, search, collapse, details panel, theming.",
+  "version": "1.0.0",
+  "description": "Interactive infrastructure asset map for Vue 3, built on Vue Flow",
+  "keywords": [
+    "vue",
+    "vue3",
+    "vue-flow",
+    "network-map",
+    "topology",
+    "asset-map",
+    "infrastructure",
+    "graph",
+    "visualization",
+    "typescript"
+  ],
   "license": "MIT",
+  "author": "Dmitriy Korolev <diptimus@gmail.com>",
+  "homepage": "https://LegionLiner.github.io/vue-asset-map/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LegionLiner/vue-asset-map.git"
+  },
+  "bugs": {
+    "url": "https://github.com/LegionLiner/vue-asset-map/issues"
+  },
   "type": "module",
   "sideEffects": [
     "**/*.css"
   ],
+  "engines": {
+    "node": ">=20"
+  },
   "files": [
     "dist",
     "README.md",
-    "DECISIONS.md"
+    "LICENSE"
   ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -43,10 +67,11 @@
     "format:check": "prettier --check \"**/*.{ts,vue,css,json,md}\"",
     "dev": "vite --config playground/vite.config.ts",
     "build:playground": "vite build --config playground/vite.config.ts",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs",
     "verify:dist": "node scripts/verify-dist.mjs",
-    "verify": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build && pnpm run verify:dist",
-    "changeset": "changeset",
-    "release": "pnpm run build && changeset publish"
+    "verify": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build && pnpm run verify:dist"
   },
   "peerDependencies": {
     "@vue-flow/core": "^1.42.0",
@@ -56,7 +81,6 @@
     "@dagrejs/dagre": "^1.1.0"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.27.9",
     "@dagrejs/dagre": "^1.1.4",
     "@types/node": "^22.9.0",
     "@vitejs/plugin-vue": "^5.2.0",
@@ -71,22 +95,13 @@
     "typescript": "^5.6.3",
     "vite": "^5.4.11",
     "vite-plugin-dts": "^4.3.0",
+    "vitepress": "^1.5.0",
     "vitest": "^2.1.5",
     "vue": "^3.5.12",
     "vue-tsc": "^2.1.10"
   },
-  "keywords": [
-    "vue",
-    "vue3",
-    "vue-flow",
-    "network",
-    "topology",
-    "graph",
-    "infrastructure",
-    "map"
-  ],
-  "engines": {
-    "node": ">=20"
+  "publishConfig": {
+    "access": "public"
   },
   "packageManager": "pnpm@10.30.1",
   "pnpm": {
