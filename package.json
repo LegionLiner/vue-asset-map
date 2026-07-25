@@ -1,0 +1,94 @@
+{
+  "name": "network-map",
+  "version": "0.1.0",
+  "description": "Interactive network infrastructure map for Vue 3, built on VueFlow: projections, search, collapse, details panel, theming.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "DECISIONS.md"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./core": {
+      "types": "./dist/core/index.d.ts",
+      "import": "./dist/core/index.js"
+    },
+    "./layout-dagre": {
+      "types": "./dist/layout/dagre.d.ts",
+      "import": "./dist/layout/dagre.js"
+    },
+    "./style.css": "./dist/style.css",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "vue-tsc --build --force",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"**/*.{ts,vue,css,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,vue,css,json,md}\"",
+    "dev": "vite --config playground/vite.config.ts",
+    "build:playground": "vite build --config playground/vite.config.ts",
+    "verify": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build",
+    "changeset": "changeset",
+    "release": "pnpm run build && changeset publish"
+  },
+  "peerDependencies": {
+    "@vue-flow/core": "^1.42.0",
+    "vue": "^3.4.0"
+  },
+  "optionalDependencies": {
+    "@dagrejs/dagre": "^1.1.0"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.9",
+    "@dagrejs/dagre": "^1.1.4",
+    "@types/node": "^22.9.0",
+    "@vitejs/plugin-vue": "^5.2.0",
+    "@vitest/coverage-v8": "^2.1.5",
+    "@vue-flow/core": "^1.42.0",
+    "@vue/eslint-config-typescript": "^14.1.3",
+    "@vue/test-utils": "^2.4.6",
+    "eslint": "^9.14.0",
+    "eslint-plugin-vue": "^9.30.0",
+    "jsdom": "^25.0.1",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11",
+    "vite-plugin-dts": "^4.3.0",
+    "vitest": "^2.1.5",
+    "vue": "^3.5.12",
+    "vue-tsc": "^2.1.10"
+  },
+  "keywords": [
+    "vue",
+    "vue3",
+    "vue-flow",
+    "network",
+    "topology",
+    "graph",
+    "infrastructure",
+    "map"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@10.30.1",
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild", "vue-demi"]
+  }
+}

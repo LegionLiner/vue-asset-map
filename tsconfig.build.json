@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.lib.json",
+  "compilerOptions": {
+    "composite": false,
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "types": []
+  },
+  "include": ["src/**/*.ts", "src/**/*.vue"],
+  "exclude": ["tests/**/*", "playground/**/*"]
+}
