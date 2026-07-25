@@ -12,6 +12,15 @@ export interface UseDraggableWindowReturn {
 }
 
 /**
+ * Интерактивные элементы, с которых перетаскивание не начинается.
+ *
+ * Без этого исключения кнопки в шапке перестают нажиматься: `preventDefault()`
+ * на `pointerdown` запрещает браузеру синтезировать `click`, а
+ * `setPointerCapture` увозит последующий `pointerup` на шапку вместо кнопки.
+ */
+const NON_DRAGGABLE = 'button, a, input, select, textarea, [role="button"]'
+
+/**
  * Перетаскивание плавающего окна за шапку.
  *
  * На Pointer Events, а не на mouse/touch: один код на мышь, тач и стилус, а
@@ -47,6 +56,10 @@ export function useDraggableWindow(initial: XY = { x: 0, y: 0 }): UseDraggableWi
   const onPointerDown = (event: PointerEvent): void => {
     // Тянуть окно должна только основная кнопка: правый клик — контекстное меню.
     if (event.button !== 0) return
+
+    // Нажатие на кнопку внутри шапки — это нажатие на кнопку, а не начало
+    // перетаскивания. Иначе кнопки закрытия и сжатия окна не работают вовсе.
+    if (event.target instanceof Element && event.target.closest(NON_DRAGGABLE)) return
 
     const element = event.currentTarget
     if (!(element instanceof Element)) return

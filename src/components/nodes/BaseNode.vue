@@ -166,32 +166,32 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
       >
         {{ sublabel }}
       </span>
-
-      <span
-        v-if="badges.length > 0"
-        class="vnm-node__badges"
-        :aria-label="map.t('node.badges', { count: badges.length })"
-      >
-        <template v-for="badge in badges" :key="badge.id">
-          <component
-            :is="badgeSlot"
-            v-if="badgeSlot"
-            :badge="badge"
-            :entity="entity"
-            :node-id="id"
-            :simplified="map.simplified.value"
-          />
-          <span
-            v-else
-            class="vnm-node__badge"
-            :style="badge.color ? { backgroundColor: badge.color } : undefined"
-            :title="badge.tooltip"
-          >
-            {{ badge.id }}
-          </span>
-        </template>
-      </span>
     </div>
+
+    <span
+      v-if="!map.simplified.value && badges.length > 0"
+      class="vnm-node__badges"
+      :aria-label="map.t('node.badges', { count: badges.length })"
+    >
+      <template v-for="badge in badges" :key="badge.id">
+        <component
+          :is="badgeSlot"
+          v-if="badgeSlot"
+          :badge="badge"
+          :entity="entity"
+          :node-id="id"
+          :simplified="map.simplified.value"
+        />
+        <span
+          v-else
+          class="vnm-node__badge"
+          :style="badge.color ? { backgroundColor: badge.color } : undefined"
+          :title="badge.tooltip"
+        >
+          {{ badge.id }}
+        </span>
+      </template>
+    </span>
   </div>
 </template>
 
@@ -202,36 +202,40 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
   align-items: center;
   gap: var(--vnm-node-label-gap);
   width: var(--vnm-node-label-width);
-  padding: var(--vnm-space-1);
-  /* Рамка есть всегда, но прозрачная: при выделении она не должна сдвигать
-     содержимое узла на пиксель. */
-  border: 1px solid transparent;
-  border-radius: var(--vnm-node-radius);
   color: var(--vnm-fg);
   font-family: var(--vnm-font);
   font-size: var(--vnm-font-size-sm);
   line-height: var(--vnm-line-height-sm);
   text-align: center;
   cursor: pointer;
-  transition:
-    border-color var(--vnm-transition),
-    opacity var(--vnm-transition);
+  transition: opacity var(--vnm-transition);
 }
 
+/* Обводка идёт по кругу и по плашке подписей отдельно, а не одним
+   прямоугольником вокруг узла: между ними пустое место, и общая рамка обводила
+   бы в том числе его. */
 .vnm-node:focus-visible {
+  outline: none;
+}
+
+.vnm-node:focus-visible .vnm-node__circle,
+.vnm-node:focus-visible .vnm-node__info {
   outline: 2px solid var(--vnm-focus-ring);
   outline-offset: 2px;
 }
 
-.vnm-node--selected {
+.vnm-node--selected .vnm-node__circle,
+.vnm-node--selected .vnm-node__info {
   border-color: var(--vnm-selection);
 }
 
-.vnm-node--matched {
+.vnm-node--matched .vnm-node__circle,
+.vnm-node--matched .vnm-node__info {
   border-color: var(--vnm-highlight);
 }
 
-.vnm-node--highlighted {
+.vnm-node--highlighted .vnm-node__circle,
+.vnm-node--highlighted .vnm-node__info {
   border-color: var(--vnm-edge-active);
 }
 
@@ -335,15 +339,27 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
   outline-offset: 1px;
 }
 
+/* Плашка подписей: белый прямоугольник фиксированного размера под кругом. */
 .vnm-node__info {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  width: 100%;
-  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: var(--vnm-node-label-width);
+  height: var(--vnm-node-label-height);
+  padding: var(--vnm-node-label-padding);
+  /* Рамка есть всегда, но прозрачная: при выделении она не должна сдвигать
+     содержимое на пиксель. */
+  border: 1px solid transparent;
+  border-radius: var(--vnm-node-label-radius);
+  background: var(--vnm-surface);
+  overflow: hidden;
+  transition: border-color var(--vnm-transition);
 }
 
 .vnm-node__label {
+  max-width: 100%;
   overflow: hidden;
   color: var(--vnm-node-label-color);
   text-overflow: ellipsis;
@@ -352,7 +368,9 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
 
 .vnm-node__sublabel,
 .vnm-node__sublabel-overlay {
+  max-width: 100%;
   overflow: hidden;
+  line-height: var(--vnm-node-sublabel-line);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -367,11 +385,11 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
   color: var(--vnm-node-overlay-color);
 }
 
+/* Бейджи — под плашкой, а не внутри: внутри места ровно под три строки. */
 .vnm-node__badges {
   display: flex;
   justify-content: center;
   gap: var(--vnm-space-1);
-  margin-top: 2px;
 }
 
 .vnm-node__badge {

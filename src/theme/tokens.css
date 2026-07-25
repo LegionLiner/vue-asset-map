@@ -48,7 +48,14 @@
   --vnm-node-size: 36px;
   --vnm-node-size-root: 60px;
   --vnm-node-label-gap: 6px;
-  --vnm-node-label-width: 132px;
+  /* Блок подписей — плашка фиксированного размера: при смене вида подписи
+     появляются и исчезают, и «дышащая» высота дёргала бы всю раскладку. */
+  --vnm-node-label-width: 127.5px;
+  --vnm-node-label-height: 42px;
+  --vnm-node-label-padding: 3px 4.5px;
+  --vnm-node-label-radius: 4.5px;
+  /* 16 + 13 + 13 = 42: имя и два адреса ровно укладываются в высоту плашки. */
+  --vnm-node-sublabel-line: 13px;
   --vnm-node-radius: 4px;
   --vnm-node-toggle-size: 18px;
   --vnm-node-status-size: 9px;

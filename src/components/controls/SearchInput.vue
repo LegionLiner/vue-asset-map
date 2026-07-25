@@ -33,6 +33,9 @@ const summary = computed(() => {
 
 <template>
   <div class="vnm-search">
+    <!-- Иконка слева, поле — на всю оставшуюся ширину. -->
+    <IconSearch class="vnm-search__icon" />
+
     <input
       v-model="model"
       type="search"
@@ -40,6 +43,12 @@ const summary = computed(() => {
       :aria-label="t('search.label')"
       :placeholder="t('search.placeholder')"
     />
+
+    <!-- Счётчик в live-области: пользователь клавиатуры узнаёт результат, не
+         уходя из поля. -->
+    <span v-if="summary" class="vnm-search__summary" role="status" aria-live="polite">
+      {{ summary }}
+    </span>
 
     <button
       v-if="hasQuery"
@@ -50,20 +59,13 @@ const summary = computed(() => {
     >
       <span aria-hidden="true">×</span>
     </button>
-
-    <IconSearch v-else class="vnm-search__icon" />
-
-    <!-- Счётчик в live-области: пользователь клавиатуры узнаёт результат, не
-         уходя из поля. -->
-    <span v-if="summary" class="vnm-search__summary" role="status" aria-live="polite">
-      {{ summary }}
-    </span>
   </div>
 </template>
 
 <style>
 .vnm-search {
   display: flex;
+  flex: 1 1 auto;
   align-items: center;
   gap: var(--vnm-space-2);
   align-self: stretch;

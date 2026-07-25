@@ -267,8 +267,11 @@ defineExpose({ groupValuesOf })
   gap: var(--vnm-space-2);
   box-sizing: border-box;
   width: var(--vnm-filter-width);
-  max-height: var(--vnm-filter-height);
+  /* Высота ограничена и полотном: панель раскрывается внутри карты, и вылезать
+     за её пределы ей нельзя — иначе появлялся бы скролл. */
+  max-height: min(var(--vnm-filter-height), 80vh);
   padding: var(--vnm-space-4);
+  overflow: hidden;
   border-radius: var(--vnm-radius-md);
   background: var(--vnm-surface);
   box-shadow: var(--vnm-shadow-lg);

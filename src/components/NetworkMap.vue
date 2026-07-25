@@ -127,24 +127,25 @@ const collapseState = useCollapse(
 /**
  * Габариты узла для раскладки.
  *
- * Узел — круг с подписью под ним, поэтому высота зависит от размера круга и
- * числа строк подписи, а ширина берётся по подписи: она шире круга и именно она
- * определяет, когда узлы начнут наезжать друг на друга.
+ * Узел — круг плюс плашка подписей фиксированного размера, поэтому от вида и от
+ * числа подписей высота не зависит: иначе переключение вида, скрывающего
+ * подписи, меняло бы габариты всех узлов и раскладка «прыгала» бы.
+ *
+ * Значения повторяют токены `--vnm-node-*`. Читать их из CSS во время раскладки
+ * нельзя: раскладка считается и без DOM, в том числе в тестах ядра.
  */
-const NODE_LABEL_WIDTH = 132
+const NODE_LABEL_WIDTH = 127.5
+const NODE_LABEL_HEIGHT = 42
+const NODE_LABEL_GAP = 6
 const NODE_CIRCLE = 36
 const NODE_CIRCLE_ROOT = 60
-const NODE_LABEL_GAP = 6
-const NODE_LINE_HEIGHT = 16
 
 function sizeOf(nodeId: string): NodeSize {
-  const entity = graph.value.entities.get(nodeId)
   const circle = graph.value.parentOf.get(nodeId) === null ? NODE_CIRCLE_ROOT : NODE_CIRCLE
-  const lines = 1 + (showSublabels.value ? (entity?.sublabels?.length ?? 0) : 0)
 
   return {
     width: NODE_LABEL_WIDTH,
-    height: circle + NODE_LABEL_GAP + lines * NODE_LINE_HEIGHT,
+    height: circle + NODE_LABEL_GAP + NODE_LABEL_HEIGHT,
   }
 }
 
@@ -625,6 +626,11 @@ defineExpose({
   font-family: var(--vnm-font);
   font-size: var(--vnm-font-size);
   line-height: var(--vnm-line-height);
+  /* Полосы прокрутки у карты не появляются никогда: всё, что лежит поверх
+     полотна — тулбар, панель фильтров, окно подробностей — позиционировано
+     абсолютно и в момент раскрытия может выйти за границы. Без обрезки это
+     давало бы кратковременный скролл у карты и у страницы. */
+  overflow: hidden;
 }
 
 /* Тулбар лежит поверх полотна и своего фона не имеет: фон только у контролов.
@@ -673,12 +679,14 @@ defineExpose({
   display: flex;
   flex: 1 1 auto;
   min-height: 0;
+  overflow: hidden;
 }
 
 .vnm-canvas {
   position: relative;
   flex: 1 1 auto;
   min-width: 0;
+  overflow: hidden;
   background-color: var(--vnm-bg);
   /* Точечная сетка полотна: своим фоном, без пакета @vue-flow/background. */
   background-image: radial-gradient(var(--vnm-canvas-dot) var(--vnm-canvas-dot-size), transparent 0);

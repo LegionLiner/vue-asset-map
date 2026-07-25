@@ -64,7 +64,12 @@ describe('ViewSwitcher', () => {
     const wrapper = mount(ViewSwitcher, { props: { views, modelValue: 'logical' } })
 
     const buttons = wrapper.findAll('.vnm-views__button')
-    expect(buttons.map((button) => button.text())).toEqual(['Физическая топология', 'VPN-оверлей'])
+    // Подпись читаем из видимого элемента: рядом лежит невидимая жирная копия,
+    // резервирующая ширину, и `button.text()` вернул бы текст дважды.
+    expect(wrapper.findAll('.vnm-views__label').map((node) => node.text())).toEqual([
+      'Физическая топология',
+      'VPN-оверлей',
+    ])
     expect(buttons[1]?.attributes('aria-pressed')).toBe('true')
     expect(buttons[0]?.attributes('aria-pressed')).toBe('false')
 
@@ -346,7 +351,7 @@ describe('контролы внутри <NetworkMap>', () => {
 
     const logicalButton = wrapper
       .findAll('.vnm-views__button')
-      .find((button) => button.text() === 'VPN-оверлей')
+      .find((button) => button.find('.vnm-views__label').text() === 'VPN-оверлей')
     await logicalButton?.trigger('click')
     await flushPromises()
     await nextTick()

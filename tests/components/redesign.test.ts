@@ -67,6 +67,61 @@ describe('узел: круг с подписью под ним', () => {
     wrapper.unmount()
   })
 
+  it('высота узла не зависит от вида: плашка подписей фиксирована', async () => {
+    // Раскладка получает габариты узлов; при скрытых подписях они не должны
+    // меняться, иначе переключение вида «дёргало» бы всю карту.
+    const sizes: number[][] = []
+    const engine = {
+      name: 'probe',
+      async run(graph: { nodes: { id: string; width: number; height: number }[] }) {
+        sizes.push(graph.nodes.map((node) => node.height))
+        return new Map(graph.nodes.map((node, index) => [node.id, { x: index * 200, y: 0 }]))
+      },
+    }
+
+    const wrapper = await mountMap({ view: 'physical', layout: { engine } })
+    const physical = sizes.at(-1)
+
+    await wrapper.setProps({ view: 'logical' })
+    await flushPromises()
+    await nextTick()
+    await flushPromises()
+
+    const logical = sizes.at(-1)
+    expect(physical?.length).toBeGreaterThan(0)
+    // Физический вид скрывает подписи, логический показывает — высоты те же.
+    expect(new Set(physical)).toEqual(new Set([42 + 6 + 36, 42 + 6 + 60]))
+    expect(new Set(logical).size).toBeLessThanOrEqual(2)
+
+    wrapper.unmount()
+  })
+
+  it('выделение обводит круг и плашку по отдельности, а не узел целиком', async () => {
+    const wrapper = await mountMap()
+    const node = wrapper.find('[aria-label^="Dmitry"]')
+
+    await node.trigger('click')
+    await nextTick()
+
+    // Класс выделения на корне, но рамку по CSS получают круг и плашка —
+    // проверяем, что оба элемента на месте и корень не рисует свою рамку.
+    expect(node.classes()).toContain('vnm-node--selected')
+    expect(node.find('.vnm-node__circle').exists()).toBe(true)
+    expect(node.find('.vnm-node__info').exists()).toBe(true)
+
+    wrapper.unmount()
+  })
+
+  it('бейджи лежат вне плашки подписей, чтобы её не распирать', async () => {
+    const wrapper = await mountMap({ view: 'logical' })
+    const node = wrapper.find('[aria-label^="Tailscale VPS"]')
+
+    expect(node.find('.vnm-node__badges').exists()).toBe(true)
+    expect(node.find('.vnm-node__info .vnm-node__badges').exists()).toBe(false)
+
+    wrapper.unmount()
+  })
+
   it('иконка типа приходит из themeConfig.kindIcons', async () => {
     const wrapper = await mountMap({
       themeConfig: { statusColors, kindIcons: { cloud: () => h('i', { class: 'cloud-icon' }) } },
@@ -213,6 +268,70 @@ describe('окно подробностей', () => {
     expect(buttons[0]?.attributes('aria-label')).toBe('Закрыть панель')
     expect(buttons[1]?.attributes('aria-label')).toBe('Свернуть окно')
 
+    wrapper.unmount()
+  })
+
+  /**
+   * Кнопки шапки нажимаются через настоящую цепочку событий.
+   *
+   * Именно здесь пряталась поломка: перетаскивание вызывало `preventDefault()` на
+   * `pointerdown` и забирало указатель себе, из-за чего браузер не синтезировал
+   * `click` и кнопки не работали. Одиночный `trigger('click')` этого не видит —
+   * он отправляет клик напрямую.
+   */
+  async function pressHeaderButton(
+    wrapper: Awaited<ReturnType<typeof mountMap>>,
+    index: number,
+  ): Promise<void> {
+    const button = wrapper.findAll('.vnm-window__button')[index]
+    if (!button) throw new Error(`нет кнопки шапки #${index}`)
+
+    await button.trigger('pointerdown', { button: 0, clientX: 10, clientY: 10, pointerId: 1 })
+    // Перетаскивание не должно было начаться: иначе клик будет съеден.
+    expect(wrapper.find('.vnm-window').classes()).not.toContain('vnm-window--dragging')
+
+    await button.trigger('pointerup', { pointerId: 1 })
+    await button.trigger('click')
+    await nextTick()
+  }
+
+  it('кнопка закрытия работает при нажатии, а не только при синтетическом клике', async () => {
+    const wrapper = await mountMap()
+    await wrapper.find('[aria-label^="Dmitry"]').trigger('click')
+    await nextTick()
+    expect(wrapper.find('.vnm-window').exists()).toBe(true)
+
+    await pressHeaderButton(wrapper, 0)
+
+    expect(wrapper.find('.vnm-window').exists()).toBe(false)
+    wrapper.unmount()
+  })
+
+  it('кнопка сжатия работает при нажатии и не тянет окно', async () => {
+    const wrapper = await mountMap()
+    await wrapper.find('[aria-label^="Dmitry"]').trigger('click')
+    await nextTick()
+
+    await pressHeaderButton(wrapper, 1)
+
+    expect(wrapper.find('.vnm-window').classes()).toContain('vnm-window--collapsed')
+    // Окно осталось на месте: нажатие на кнопку не считается перетаскиванием.
+    expect(wrapper.find('.vnm-window').attributes('style')).toContain('translate(0px, 0px)')
+
+    wrapper.unmount()
+  })
+
+  it('движение указателя после нажатия на кнопку окно не сдвигает', async () => {
+    const wrapper = await mountMap()
+    await wrapper.find('[aria-label^="Dmitry"]').trigger('click')
+    await nextTick()
+
+    const button = wrapper.findAll('.vnm-window__button')[1]
+    await button?.trigger('pointerdown', { button: 0, clientX: 10, clientY: 10, pointerId: 1 })
+    await wrapper.find('.vnm-window__header').trigger('pointermove', { clientX: 200, clientY: 200 })
+    await nextTick()
+
+    expect(wrapper.find('.vnm-window').attributes('style')).toContain('translate(0px, 0px)')
     wrapper.unmount()
   })
 

@@ -43,7 +43,11 @@ function select(viewId: string): void {
       :aria-pressed="view.id === activeId"
       @click="select(view.id)"
     >
-      {{ view.label }}
+      <span class="vnm-views__label">{{ view.label }}</span>
+      <!-- Невидимая копия жирным задаёт ширину кнопки. Активный режим по макету
+           набран 700, обычный — 400, и без резерва под жирный текст кнопки (а с
+           ними и весь переключатель) меняли бы размер при каждом переключении. -->
+      <span class="vnm-views__sizer" aria-hidden="true">{{ view.label }}</span>
     </button>
   </div>
 </template>
@@ -60,11 +64,13 @@ function select(viewId: string): void {
   background: var(--vnm-surface);
 }
 
+/* Grid в одну клетку: подпись и невидимая жирная копия лежат друг на друге,
+   поэтому ширина кнопки всегда рассчитана по жирному варианту. */
 .vnm-views__button {
-  display: flex;
+  display: grid;
   align-self: stretch;
   align-items: center;
-  justify-content: center;
+  justify-items: center;
   padding: 2px var(--vnm-space-2);
   border: 0;
   border-radius: var(--vnm-radius-md);
@@ -76,6 +82,17 @@ function select(viewId: string): void {
   line-height: var(--vnm-line-height);
   white-space: nowrap;
   cursor: pointer;
+}
+
+.vnm-views__label,
+.vnm-views__sizer {
+  grid-area: 1 / 1;
+}
+
+.vnm-views__sizer {
+  font-weight: var(--vnm-font-weight-bold);
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .vnm-views__button--active {
