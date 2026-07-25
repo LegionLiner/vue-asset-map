@@ -37,6 +37,13 @@ export interface MapContext {
   groupById: (groupId: string) => CollapsedGroup | undefined
   entityById: (id: EntityId) => NetworkEntity<unknown> | undefined
 
+  /** Корневая сущность рисуется крупнее дочерней. */
+  isRootNode: (id: string) => boolean
+  /** Есть ли у узла потомки — только у таких показывается кнопка свёртки. */
+  hasChildren: (id: string) => boolean
+  isSubtreeCollapsed: (id: string) => boolean
+  onToggleSubtree: (id: string) => void
+
   isSelected: (id: string) => boolean
   isMatched: (id: string) => boolean
   isDimmed: (id: string) => boolean

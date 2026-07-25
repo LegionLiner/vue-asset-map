@@ -102,7 +102,7 @@ describe('<NetworkMap> выделение и панель', () => {
   it('клик по узлу выделяет его и открывает панель подробностей', async () => {
     const wrapper = await mountMap()
 
-    expect(wrapper.find('.vnm-panel').exists()).toBe(false)
+    expect(wrapper.find('.vnm-window').exists()).toBe(false)
 
     const node = wrapper.find('[aria-label^="Tailscale VPS"]')
     expect(node.exists()).toBe(true)
@@ -110,8 +110,8 @@ describe('<NetworkMap> выделение и панель', () => {
     await nextTick()
 
     expect(node.classes()).toContain('vnm-node--selected')
-    expect(wrapper.find('.vnm-panel').exists()).toBe(true)
-    expect(wrapper.find('.vnm-panel').text()).toContain('Tailscale VPS')
+    expect(wrapper.find('.vnm-window').exists()).toBe(true)
+    expect(wrapper.find('.vnm-window').text()).toContain('Tailscale VPS')
 
     const events = wrapper.emitted('node-click')
     expect(events).toHaveLength(1)
@@ -127,7 +127,7 @@ describe('<NetworkMap> выделение и панель', () => {
     await nextTick()
 
     // Ни одного v-model не передано, а выделение и панель всё равно работают.
-    expect(wrapper.find('.vnm-panel').exists()).toBe(true)
+    expect(wrapper.find('.vnm-window').exists()).toBe(true)
     expect(wrapper.find('[aria-label^="Keenetic 1"]').classes()).toContain('vnm-node--selected')
 
     wrapper.unmount()
@@ -164,15 +164,15 @@ describe('<NetworkMap> выделение и панель', () => {
 
     await wrapper.find('[aria-label^="Dmitry"]').trigger('click')
     await nextTick()
-    expect(wrapper.find('.vnm-panel').exists()).toBe(true)
+    expect(wrapper.find('.vnm-window').exists()).toBe(true)
 
     await wrapper.find('.vnm-root').trigger('keydown', { key: 'Escape' })
     await nextTick()
-    expect(wrapper.find('.vnm-panel').exists()).toBe(false)
+    expect(wrapper.find('.vnm-window').exists()).toBe(false)
 
     await wrapper.find('[aria-label^="Vlad"]').trigger('click')
     await nextTick()
-    expect(wrapper.find('.vnm-panel').exists()).toBe(true)
+    expect(wrapper.find('.vnm-window').exists()).toBe(true)
 
     wrapper.unmount()
   })
@@ -183,10 +183,10 @@ describe('<NetworkMap> выделение и панель', () => {
     await wrapper.find('[aria-label^="Dmitry"]').trigger('click')
     await nextTick()
 
-    await wrapper.find('.vnm-panel__close').trigger('click')
+    await wrapper.findAll('.vnm-window__button')[0]!.trigger('click')
     await nextTick()
 
-    expect(wrapper.find('.vnm-panel').exists()).toBe(false)
+    expect(wrapper.find('.vnm-window').exists()).toBe(false)
     wrapper.unmount()
   })
 
@@ -196,7 +196,7 @@ describe('<NetworkMap> выделение и панель', () => {
     await wrapper.find('[aria-label^="Dmitry"]').trigger('click')
     await nextTick()
 
-    expect(wrapper.find('.vnm-panel').exists()).toBe(false)
+    expect(wrapper.find('.vnm-window').exists()).toBe(false)
     wrapper.unmount()
   })
 })

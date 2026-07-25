@@ -13,6 +13,9 @@ export interface UseCollapseReturn {
   expand: (groupId: string) => void
   collapse: (groupId: string) => void
   toggle: (groupId: string) => boolean
+  /** Скрыто ли поддерево этой сущности кнопкой на самом узле. */
+  isSubtreeCollapsed: (id: EntityId) => boolean
+  toggleSubtree: (id: EntityId) => boolean
 }
 
 /**
@@ -31,6 +34,7 @@ export function useCollapse<E, L>(
   projection: Ref<ProjectionResult> | ComputedRef<ProjectionResult>,
   rule: Ref<CollapseRule | false | undefined>,
   expanded: Ref<Set<string>>,
+  collapsedParents?: Ref<Set<EntityId>>,
 ): UseCollapseReturn {
   const collapsed: ComputedRef<CollapseResult<unknown>> = computed(() =>
     collapseGraph(graph.value, {
@@ -38,6 +42,7 @@ export function useCollapse<E, L>(
       expandedIds: expanded.value,
       visibleEntityIds: visibleIds.value,
       visibleLinkIds: projection.value.linkIds,
+      ...(collapsedParents ? { collapsedParentIds: collapsedParents.value } : {}),
     }),
   )
 
@@ -70,5 +75,30 @@ export function useCollapse<E, L>(
     return true
   }
 
-  return { collapsed, groups, groupById, isExpanded, expand, collapse, toggle }
+  const isSubtreeCollapsed = (id: EntityId): boolean => collapsedParents?.value.has(id) === true
+
+  /** Возвращает новое состояние: `true` — поддерево скрыто. */
+  const toggleSubtree = (id: EntityId): boolean => {
+    if (!collapsedParents) return false
+
+    const next = new Set(collapsedParents.value)
+    const nowCollapsed = !next.has(id)
+    if (nowCollapsed) next.add(id)
+    else next.delete(id)
+
+    collapsedParents.value = next
+    return nowCollapsed
+  }
+
+  return {
+    collapsed,
+    groups,
+    groupById,
+    isExpanded,
+    expand,
+    collapse,
+    toggle,
+    isSubtreeCollapsed,
+    toggleSubtree,
+  }
 }

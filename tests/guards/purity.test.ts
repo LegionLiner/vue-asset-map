@@ -96,7 +96,9 @@ describe('SSR-безопасность', () => {
     // Модуль обязан импортироваться в SSR: обращение к браузерному API на
     // верхнем уровне падает ещё до рендера.
     for (const { path, content } of allSources) {
-      const code = stripComments(content)
+      // Блок <template> — разметка, а не исполняемый верхний уровень модуля:
+      // класс `vnm-window` в нём не имеет отношения к объекту `window`.
+      const code = stripComments(stripTemplateBlock(content))
       for (const line of topLevelStatements(code)) {
         expect(
           /\b(?:window|document|localStorage|sessionStorage)\b/.test(line),
@@ -115,6 +117,13 @@ describe('SSR-безопасность', () => {
     }
   })
 })
+
+/** Убирает `<template>` и `<style>` из SFC, оставляя только скрипт. */
+function stripTemplateBlock(source: string): string {
+  return source
+    .replace(/<template[^>]*>[\s\S]*?<\/template>\s*$/m, '')
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/g, '')
+}
 
 /**
  * Строки нулевого уровня вложенности.

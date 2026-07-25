@@ -4,7 +4,7 @@ import { useTranslate } from '../../composables/useTranslate'
 import type { NetworkView } from '../../types/view'
 
 /**
- * Переключатель проекций.
+ * Переключатель проекций: сегментированный контрол на белой плашке.
  *
  * Кнопки с `aria-pressed`, а не `<select>`: видов обычно два-три, и переключение
  * в один клик важнее компактности. Названия видов приходят из данных — пакет не
@@ -52,33 +52,35 @@ function select(viewId: string): void {
 .vnm-views {
   display: flex;
   flex: 0 0 auto;
-  padding: 2px;
-  border: 1px solid var(--vnm-border);
+  align-items: center;
+  gap: var(--vnm-space-2);
+  height: var(--vnm-toolbar-height);
+  padding: var(--vnm-space-1);
   border-radius: var(--vnm-radius-md);
-  background: var(--vnm-surface-sunken);
+  background: var(--vnm-surface);
 }
 
 .vnm-views__button {
-  padding: var(--vnm-space-1) var(--vnm-space-3);
+  display: flex;
+  align-self: stretch;
+  align-items: center;
+  justify-content: center;
+  padding: 2px var(--vnm-space-2);
   border: 0;
-  border-radius: var(--vnm-radius-sm);
+  border-radius: var(--vnm-radius-md);
   background: transparent;
-  color: var(--vnm-fg-muted);
+  color: var(--vnm-fg);
   font-family: var(--vnm-font);
   font-size: var(--vnm-font-size);
+  font-weight: 400;
+  line-height: var(--vnm-line-height);
   white-space: nowrap;
   cursor: pointer;
 }
 
-.vnm-views__button:hover {
-  color: var(--vnm-fg);
-}
-
 .vnm-views__button--active {
-  background: var(--vnm-surface);
-  box-shadow: var(--vnm-shadow-sm);
-  color: var(--vnm-fg);
-  font-weight: var(--vnm-font-weight-medium);
+  background: var(--vnm-accent-soft);
+  font-weight: var(--vnm-font-weight-bold);
 }
 
 .vnm-views__button:focus-visible {

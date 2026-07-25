@@ -4,7 +4,7 @@
  * Лежит вне `src/`, потому что не должна попадать в публикуемый пакет: это
  * данные примера, а не часть API библиотеки.
  */
-import type { NetworkEntity, NetworkLink, NetworkView } from '../src/types/index'
+import type { FilterGroupDef, NetworkEntity, NetworkLink, NetworkView } from '../src/types/index'
 
 /** Метаданные активов в этом демо. Потребитель задаёт свою форму. */
 export interface AssetMeta {
@@ -17,6 +17,12 @@ export interface AssetMeta {
   ramGb?: number
   location?: string
   tags?: string[]
+  /** Подсеть актива — по ней фильтрует группа «Подсеть». */
+  subnet?: 'internet' | 'vpn' | 'docker'
+  /** Тип актива в терминах инвентаризации, а не в терминах отрисовки. */
+  assetType?: 'device' | 'vm' | 'container' | 'database' | 'service'
+  /** Критичность актива. */
+  severity?: 'critical' | 'high' | 'medium' | 'low'
 }
 
 export type DemoEntity = NetworkEntity<AssetMeta>
@@ -44,12 +50,18 @@ export const entities: DemoEntity[] = [
   // --- Облака -------------------------------------------------------------
   entity('internet', KIND_CLOUD, 'Интернет', {
     status: 'online',
-    meta: { location: 'WAN' },
+    meta: { subnet: 'internet', assetType: 'service', severity: 'critical', location: 'WAN' },
   }),
   entity('cloudflare', KIND_CLOUD, 'Cloudflare', {
     status: 'online',
     sublabels: ['1.1.1.1'],
-    meta: { location: 'Anycast', tags: ['cdn', 'dns'] },
+    meta: {
+      subnet: 'internet',
+      assetType: 'service',
+      severity: 'high',
+      location: 'Anycast',
+      tags: ['cdn', 'dns'],
+    },
   }),
 
   // --- VPS ----------------------------------------------------------------
@@ -58,6 +70,9 @@ export const entities: DemoEntity[] = [
     sublabels: ['46.8.158.127', '100.64.0.2'],
     badges: [{ id: 'vpn', color: 'var(--vnm-accent)', tooltip: 'Координатор VPN' }],
     meta: {
+      subnet: 'vpn',
+      assetType: 'vm',
+      severity: 'critical',
       externalIp: '46.8.158.127',
       overlayIp: '100.64.0.2',
       os: 'Debian 12',
@@ -71,6 +86,9 @@ export const entities: DemoEntity[] = [
     status: 'online',
     sublabels: ['91.242.163.141', '100.64.0.3'],
     meta: {
+      subnet: 'vpn',
+      assetType: 'vm',
+      severity: 'high',
       externalIp: '91.242.163.141',
       overlayIp: '100.64.0.3',
       os: 'Ubuntu 24.04',
@@ -83,25 +101,55 @@ export const entities: DemoEntity[] = [
   entity('vps-160-usa', KIND_VPS, 'VPS 160 (USA)', {
     status: 'degraded',
     sublabels: ['23.152.0.160'],
-    meta: { externalIp: '23.152.0.160', os: 'Ubuntu 22.04', location: 'US', cpu: 2, ramGb: 2 },
+    meta: {
+      subnet: 'internet',
+      assetType: 'vm',
+      severity: 'medium',
+      externalIp: '23.152.0.160',
+      os: 'Ubuntu 22.04',
+      location: 'US',
+      cpu: 2,
+      ramGb: 2,
+    },
   }),
   entity('vps-nginx', KIND_VPS, 'NGINX VPS', {
     status: 'online',
     sublabels: ['46.8.158.122'],
     badges: [{ id: 'tls', tooltip: 'Терминация TLS' }],
-    meta: { externalIp: '46.8.158.122', os: 'Alpine 3.20', location: 'RU', cpu: 1, ramGb: 1 },
+    meta: {
+      subnet: 'internet',
+      assetType: 'vm',
+      severity: 'high',
+      externalIp: '46.8.158.122',
+      os: 'Alpine 3.20',
+      location: 'RU',
+      cpu: 1,
+      ramGb: 1,
+    },
   }),
 
   // --- Роутеры ------------------------------------------------------------
   entity('keenetic-1', KIND_ROUTER, 'Keenetic 1', {
     status: 'online',
     sublabels: ['pteam.keenetic.pro', '192.168.1.1'],
-    meta: { fqdn: 'pteam.keenetic.pro', location: 'Office A' },
+    meta: {
+      subnet: 'internet',
+      assetType: 'device',
+      severity: 'high',
+      fqdn: 'pteam.keenetic.pro',
+      location: 'Office A',
+    },
   }),
   entity('keenetic-2', KIND_ROUTER, 'Keenetic 2', {
     status: 'online',
     sublabels: ['pteam2.netcraze.pro', '192.168.2.1'],
-    meta: { fqdn: 'pteam2.netcraze.pro', location: 'Office B' },
+    meta: {
+      subnet: 'internet',
+      assetType: 'device',
+      severity: 'high',
+      fqdn: 'pteam2.netcraze.pro',
+      location: 'Office B',
+    },
   }),
 
   // --- Гипервизоры --------------------------------------------------------
@@ -109,19 +157,45 @@ export const entities: DemoEntity[] = [
     status: 'online',
     sublabels: ['192.168.1.10'],
     parentId: 'keenetic-1',
-    meta: { os: 'Proxmox VE 8', owner: 'Artjom', cpu: 8, ramGb: 32, location: 'Home' },
+    meta: {
+      subnet: 'vpn',
+      assetType: 'device',
+      severity: 'medium',
+      os: 'Proxmox VE 8',
+      owner: 'Artjom',
+      cpu: 8,
+      ramGb: 32,
+      location: 'Home',
+    },
   }),
   entity('pve-beelink', KIND_HYPERVISOR, 'Proxmox Beelink', {
     status: 'online',
     sublabels: ['192.168.2.10'],
     parentId: 'keenetic-2',
-    meta: { os: 'Proxmox VE 8', cpu: 8, ramGb: 16, location: 'Office B' },
+    meta: {
+      subnet: 'vpn',
+      assetType: 'device',
+      severity: 'high',
+      os: 'Proxmox VE 8',
+      cpu: 8,
+      ramGb: 16,
+      location: 'Office B',
+    },
   }),
   entity('pve-gpu', KIND_HYPERVISOR, 'Proxmox GPU server', {
     status: 'degraded',
     sublabels: ['192.168.2.11'],
     parentId: 'keenetic-2',
-    meta: { os: 'Proxmox VE 8', cpu: 32, ramGb: 128, location: 'Office B', tags: ['gpu'] },
+    meta: {
+      subnet: 'vpn',
+      assetType: 'device',
+      severity: 'critical',
+      os: 'Proxmox VE 8',
+      cpu: 32,
+      ramGb: 128,
+      location: 'Office B',
+      tags: ['gpu'],
+    },
   }),
 
   // --- Рабочие станции ----------------------------------------------------
@@ -129,31 +203,66 @@ export const entities: DemoEntity[] = [
     status: 'online',
     sublabels: ['10.38.24.70', '100.64.0.70'],
     parentId: 'keenetic-1',
-    meta: { overlayIp: '100.64.0.70', owner: 'Artjom', os: 'Windows 11' },
+    meta: {
+      subnet: 'vpn',
+      assetType: 'device',
+      severity: 'low',
+      overlayIp: '100.64.0.70',
+      owner: 'Artjom',
+      os: 'Windows 11',
+    },
   }),
   entity('ws-sergey', KIND_WORKSTATION, 'Sergey', {
     status: 'online',
     sublabels: ['10.38.24.71', '100.64.0.71'],
     parentId: 'keenetic-1',
-    meta: { overlayIp: '100.64.0.71', owner: 'Sergey', os: 'macOS 15' },
+    meta: {
+      subnet: 'vpn',
+      assetType: 'device',
+      severity: 'low',
+      overlayIp: '100.64.0.71',
+      owner: 'Sergey',
+      os: 'macOS 15',
+    },
   }),
   entity('ws-dmitry', KIND_WORKSTATION, 'Dmitry', {
     status: 'online',
     sublabels: ['10.38.24.72', '100.64.0.72'],
     parentId: 'keenetic-2',
-    meta: { overlayIp: '100.64.0.72', owner: 'Dmitry', os: 'Fedora 41' },
+    meta: {
+      subnet: 'vpn',
+      assetType: 'device',
+      severity: 'medium',
+      overlayIp: '100.64.0.72',
+      owner: 'Dmitry',
+      os: 'Fedora 41',
+    },
   }),
   entity('ws-vlad', KIND_WORKSTATION, 'Vlad', {
     status: 'offline',
     sublabels: ['10.38.24.73', '100.64.0.73'],
     parentId: 'keenetic-2',
-    meta: { overlayIp: '100.64.0.73', owner: 'Vlad', os: 'Windows 11' },
+    meta: {
+      subnet: 'vpn',
+      assetType: 'device',
+      severity: 'low',
+      overlayIp: '100.64.0.73',
+      owner: 'Vlad',
+      os: 'Windows 11',
+    },
   }),
   entity('ws-andrey', KIND_WORKSTATION, 'Andrey', {
     status: 'online',
     sublabels: ['10.38.24.74', '100.64.0.74'],
     parentId: 'keenetic-2',
-    meta: { overlayIp: '100.64.0.74', owner: 'Andrey', os: 'Ubuntu 24.04' },
+    meta: {
+      subnet: 'vpn',
+      assetType: 'device',
+      severity: 'low',
+      overlayIp: '100.64.0.74',
+      owner: 'Andrey',
+      os: 'Ubuntu 24.04',
+    },
   }),
 
   // --- 14 однотипных контейнеров: проверка автоматической свёртки ----------
@@ -162,7 +271,14 @@ export const entities: DemoEntity[] = [
       status: index === 3 ? 'offline' : 'online',
       sublabels: [`10.38.99.${index + 1}`],
       parentId: 'pve-beelink',
-      meta: { os: 'Debian 12', owner: 'web-farm', tags: ['lxc'] },
+      meta: {
+        os: 'Debian 12',
+        owner: 'web-farm',
+        tags: ['lxc'],
+        subnet: 'docker',
+        assetType: 'container',
+        severity: index % 4 === 0 ? 'medium' : 'low',
+      },
     }),
   ),
 ]
@@ -239,6 +355,51 @@ export const views: NetworkView[] = [
     // В оверлее не участвуют облака и контейнеры — их нечего показывать пустыми.
     hideIsolated: true,
     layout: { engine: 'radial', options: { rootId: 'vps-tailscale' } },
+  },
+]
+
+/**
+ * Списки фильтров этого демо.
+ *
+ * Библиотека не знает ни про «подсеть», ни про «критичность»: она умеет только
+ * собрать значения через `valuesOf` и сопоставить с ними выбор. Подписи и порядок
+ * значений задаёт потребитель — здесь порядок по возрастанию критичности, а не
+ * алфавитный.
+ */
+export const filterGroups: FilterGroupDef[] = [
+  {
+    id: 'subnet',
+    label: 'Подсеть',
+    valuesOf: (entity) => [(entity.meta as AssetMeta | undefined)?.subnet ?? ''],
+    options: [
+      { value: 'internet', label: 'Интернет' },
+      { value: 'vpn', label: 'VPN' },
+      { value: 'docker', label: 'Docker Bridge' },
+    ],
+  },
+  {
+    id: 'assetType',
+    label: 'Тип актива',
+    valuesOf: (entity) => [(entity.meta as AssetMeta | undefined)?.assetType ?? ''],
+    options: [
+      { value: 'device', label: 'Физическое устройство' },
+      { value: 'vm', label: 'Виртуальная машина' },
+      { value: 'container', label: 'Контейнер' },
+      { value: 'database', label: 'База данных' },
+      { value: 'service', label: 'Сервис' },
+    ],
+  },
+  {
+    id: 'severity',
+    label: 'Критичность',
+    valuesOf: (entity) => [(entity.meta as AssetMeta | undefined)?.severity ?? ''],
+    options: [
+      { value: 'critical', label: 'Критический' },
+      { value: 'high', label: 'Высокий' },
+      { value: 'medium', label: 'Средний' },
+      { value: 'low', label: 'Низкий' },
+    ],
+    defaultOpen: false,
   },
 ]
 

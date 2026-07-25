@@ -18,6 +18,8 @@ export interface LocaleMessages {
   'filter.reset': string
   'filter.empty': string
   'filter.active': string
+  'filter.search': string
+  'filter.close': string
 
   'details.title': string
   'details.close': string
@@ -30,6 +32,8 @@ export interface LocaleMessages {
   'details.tab.overview': string
   'details.tab.links': string
   'details.empty': string
+  'details.collapseWindow': string
+  'details.expandWindow': string
 
   'group.label': string
   'group.expand': string

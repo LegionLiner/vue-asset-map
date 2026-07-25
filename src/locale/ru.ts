@@ -16,6 +16,8 @@ export const ru: LocaleMessages = {
   'filter.reset': 'Сбросить фильтры',
   'filter.empty': 'Нет доступных значений',
   'filter.active': 'Активных фильтров: {count}',
+  'filter.search': 'Поиск по фильтрам',
+  'filter.close': 'Закрыть фильтры',
 
   'details.title': 'Сведения',
   'details.close': 'Закрыть панель',
@@ -28,6 +30,8 @@ export const ru: LocaleMessages = {
   'details.tab.overview': 'Обзор',
   'details.tab.links': 'Связи',
   'details.empty': 'Выберите узел на карте',
+  'details.collapseWindow': 'Свернуть окно',
+  'details.expandWindow': 'Развернуть окно',
 
   'group.label': '{bucket}',
   'group.expand': 'Раскрыть группу',

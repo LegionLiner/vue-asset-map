@@ -1,7 +1,7 @@
 <script setup lang="ts" generic="E = unknown, L = unknown">
 import { computed, ref, shallowRef, useSlots, watch, type Slot } from 'vue'
 import { VueFlow, useVueFlow, type NodeDragEvent } from '@vue-flow/core'
-import type { EntityId, XY } from '../types/entity'
+import type { EntityId, NetworkEntity, XY } from '../types/entity'
 import type { CollapsedGroup } from '../types/collapse'
 import type { FilterState } from '../types/filter'
 import type { NetworkGraph } from '../types/graph'
@@ -53,6 +53,8 @@ const emit = defineEmits<{
   'pane-click': [event: MouseEvent]
   expand: [payload: { groupId: string; group: CollapsedGroup | undefined }]
   collapse: [payload: { groupId: string; group: CollapsedGroup | undefined }]
+  'node-expand': [payload: { id: EntityId; entity: NetworkEntity<E> | undefined }]
+  'node-collapse': [payload: { id: EntityId; entity: NetworkEntity<E> | undefined }]
   'selection-change': [ids: EntityId[]]
   'layout-start': [engine: string]
   'layout-done': [payload: { engine: string; positions: number }]
@@ -73,6 +75,10 @@ const filters = defineModel<FilterState>('filters', {
   default: (): FilterState => ({ query: '', kinds: [], statuses: [] }),
 })
 const viewport = defineModel<Viewport>('viewport', { default: () => ({ x: 0, y: 0, zoom: 1 }) })
+/** Узлы, чьи потомки скрыты кнопкой на самом узле. */
+const collapsedNodes = defineModel<Set<EntityId>>('collapsedNodes', {
+  default: () => new Set<EntityId>(),
+})
 
 defineSlots<NetworkMapSlots<E, L>>()
 
@@ -115,10 +121,32 @@ const collapseState = useCollapse(
   projection,
   computed(() => props.collapse),
   expanded,
+  collapsedNodes,
 )
 
-const NODE_SIZE: NodeSize = { width: 180, height: 72 }
-const sizeOf = (): NodeSize => NODE_SIZE
+/**
+ * Габариты узла для раскладки.
+ *
+ * Узел — круг с подписью под ним, поэтому высота зависит от размера круга и
+ * числа строк подписи, а ширина берётся по подписи: она шире круга и именно она
+ * определяет, когда узлы начнут наезжать друг на друга.
+ */
+const NODE_LABEL_WIDTH = 132
+const NODE_CIRCLE = 36
+const NODE_CIRCLE_ROOT = 60
+const NODE_LABEL_GAP = 6
+const NODE_LINE_HEIGHT = 16
+
+function sizeOf(nodeId: string): NodeSize {
+  const entity = graph.value.entities.get(nodeId)
+  const circle = graph.value.parentOf.get(nodeId) === null ? NODE_CIRCLE_ROOT : NODE_CIRCLE
+  const lines = 1 + (showSublabels.value ? (entity?.sublabels?.length ?? 0) : 0)
+
+  return {
+    width: NODE_LABEL_WIDTH,
+    height: circle + NODE_LABEL_GAP + lines * NODE_LINE_HEIGHT,
+  }
+}
 
 const layoutState = useLayout({
   graph,
@@ -178,15 +206,18 @@ const {
 const minimapNodes = computed<MiniMapNode[]>(() =>
   nodes.value
     .filter((node) => node.hidden !== true)
-    .map((node) => ({
-      id: node.id,
-      x: node.position.x,
-      y: node.position.y,
-      width: NODE_SIZE.width,
-      height: NODE_SIZE.height,
-      matched: filterState.matchedIds.value.has(node.id),
-      selected: selectionState.isSelected(node.id),
-    })),
+    .map((node) => {
+      const size = sizeOf(node.id)
+      return {
+        id: node.id,
+        x: node.position.x,
+        y: node.position.y,
+        width: size.width,
+        height: size.height,
+        matched: filterState.matchedIds.value.has(node.id),
+        selected: selectionState.isSelected(node.id),
+      }
+    }),
 )
 
 /** Клик по обзорной карте: центрируем полотно на выбранной точке. */
@@ -304,6 +335,14 @@ function onEdgeClick(id: string, event: MouseEvent): void {
   emit('edge-click', { id, event })
 }
 
+/** Кнопка на самом узле: прячет и возвращает его поддерево. */
+function onToggleSubtree(id: EntityId): void {
+  const entity = graph.value.entities.get(id)
+  const collapsedNow = collapseState.toggleSubtree(id)
+  if (collapsedNow) emit('node-collapse', { id, entity })
+  else emit('node-expand', { id, entity })
+}
+
 function onPaneClick(event: MouseEvent): void {
   selectionState.clear()
   clearHighlight()
@@ -378,6 +417,17 @@ function onRootKeydown(event: KeyboardEvent): void {
 
 const panelClosed = ref(false)
 
+/**
+ * Раскрытые списки в панели фильтров.
+ *
+ * Состояние компонента, а не `localStorage`: пакет не пишет в хранилище
+ * браузера. Наружу уходит через `v-model:openFilterGroups` — сохранять его между
+ * сессиями решает приложение.
+ */
+const openFilterGroups = defineModel<string[] | undefined>('openFilterGroups', {
+  default: undefined,
+})
+
 function closePanel(): void {
   panelClosed.value = true
 }
@@ -412,6 +462,10 @@ const context: MapContext = {
   iconFor: (kind) => props.themeConfig?.kindIcons?.[kind],
   groupById: (groupId) => collapseState.groupById.value.get(groupId),
   entityById: (id) => graph.value.entities.get(id),
+  isRootNode: (id) => graph.value.parentOf.get(id) === null,
+  hasChildren: (id) => (graph.value.childrenOf.get(id)?.length ?? 0) > 0,
+  isSubtreeCollapsed: (id) => collapseState.isSubtreeCollapsed(id),
+  onToggleSubtree,
   isSelected: (id) => selectionState.isSelected(id),
   isMatched: (id) => filterState.matchedIds.value.has(id),
   isDimmed: (id) => filterState.active.value && !filterState.matchedIds.value.has(id),
@@ -445,7 +499,8 @@ async function focus(id: EntityId, options?: FocusOptions): Promise<void> {
 
   if (options?.select !== false) selectionState.select(id)
 
-  await setCenter(position.x + NODE_SIZE.width / 2, position.y + NODE_SIZE.height / 2, {
+  const size = sizeOf(id)
+  await setCenter(position.x + size.width / 2, position.y + size.height / 2, {
     zoom: options?.zoom ?? flowViewport.value.zoom,
     duration: options?.duration ?? 400,
   })
@@ -463,34 +518,45 @@ defineExpose({
 
 <template>
   <div :class="['vnm-root', `vnm-theme-${theme}`]" @keydown="onRootKeydown">
-    <div v-if="showToolbar" class="vnm-toolbar">
-      <div class="vnm-toolbar__group">
-        <slot name="toolbar-left" />
-        <!-- Один вид переключать не нужно, и место в тулбаре не бесконечное. -->
-        <ViewSwitcher
-          v-if="views && views.length > 1"
-          :model-value="viewId"
-          :views="views"
-          @update:model-value="viewId = $event"
-        />
-        <SearchInput
-          :model-value="filters.query"
-          :result-count="filterState.matchedIds.value.size"
-          @update:model-value="patchFilters({ query: $event })"
-        />
-        <FilterMenu
-          :model-value="filters"
-          :facets="filterState.facets.value"
-          @update:model-value="filters = $event"
-        />
-      </div>
-      <div class="vnm-toolbar__group vnm-toolbar__group--end">
-        <slot name="toolbar-right" />
-      </div>
-    </div>
-
     <div class="vnm-body">
       <div class="vnm-canvas" role="application" :aria-label="t('canvas.label')">
+        <!-- Тулбар висит над полотном и своего фона не имеет: фон есть только у
+             самих контролов. Так карта не теряет вертикального места. -->
+        <div v-if="showToolbar" class="vnm-toolbar">
+          <div class="vnm-toolbar__group">
+            <slot name="toolbar-left" />
+
+            <FilterMenu
+              :model-value="filters"
+              :facets="filterState.facets.value"
+              :groups="filterOptions?.groups"
+              :open-groups="openFilterGroups"
+              @update:model-value="filters = $event"
+              @update:open-groups="openFilterGroups = $event"
+            />
+
+            <div class="vnm-toolbar__search">
+              <SearchInput
+                :model-value="filters.query"
+                :result-count="filterState.matchedIds.value.size"
+                @update:model-value="patchFilters({ query: $event })"
+              />
+            </div>
+
+            <!-- Один вид переключать не нужно, и место в тулбаре не бесконечное. -->
+            <ViewSwitcher
+              v-if="views && views.length > 1"
+              :model-value="viewId"
+              :views="views"
+              @update:model-value="viewId = $event"
+            />
+          </div>
+
+          <div class="vnm-toolbar__group vnm-toolbar__group--end">
+            <slot name="toolbar-right" />
+          </div>
+        </div>
+
         <VueFlow
           :nodes="nodes"
           :edges="edges"
@@ -522,16 +588,16 @@ defineExpose({
         <div v-else-if="isEmpty" class="vnm-overlay">
           <slot name="empty">{{ t('canvas.empty') }}</slot>
         </div>
-      </div>
 
-      <!-- Панель сама достаёт слоты `details` и `details-header` из контекста
-           карты: пробрасывать их вручную пришлось бы с `v-if` на каждый, чтобы
-           не забить дефолтную реализацию пустым слотом. -->
-      <DetailsPanel
-        v-if="showDetailsPanel && detailsEntity && !panelClosed"
-        :entity="detailsEntity"
-        @close="closePanel"
-      />
+        <!-- Окно само достаёт слоты `details` и `details-header` из контекста
+             карты: пробрасывать их вручную пришлось бы с `v-if` на каждый, чтобы
+             не забить дефолтную реализацию пустым слотом. -->
+        <DetailsPanel
+          v-if="showDetailsPanel && detailsEntity && !panelClosed"
+          :entity="detailsEntity"
+          @close="closePanel"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -561,27 +627,46 @@ defineExpose({
   line-height: var(--vnm-line-height);
 }
 
+/* Тулбар лежит поверх полотна и своего фона не имеет: фон только у контролов.
+   `pointer-events` возвращаются самим контролам, чтобы полотно можно было тянуть
+   в промежутках между ними. */
 .vnm-toolbar {
+  position: absolute;
+  z-index: 10;
+  top: var(--vnm-space-3);
+  right: var(--vnm-space-3);
+  left: var(--vnm-space-3);
   display: flex;
-  flex: 0 0 auto;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--vnm-space-3);
-  min-height: var(--vnm-toolbar-height);
-  padding: var(--vnm-space-2) var(--vnm-space-3);
-  border-bottom: 1px solid var(--vnm-border);
-  background: var(--vnm-surface);
+  pointer-events: none;
 }
 
 .vnm-toolbar__group {
   display: flex;
   align-items: center;
-  gap: var(--vnm-space-2);
+  gap: var(--vnm-space-1);
   min-width: 0;
+}
+
+.vnm-toolbar__group > * {
+  pointer-events: auto;
 }
 
 .vnm-toolbar__group--end {
   justify-content: flex-end;
+}
+
+/* Поле поиска — единственный контрол с фиксированной шириной по макету. */
+.vnm-toolbar__search {
+  display: flex;
+  width: 350px;
+  max-width: 100%;
+  align-items: center;
+  height: var(--vnm-toolbar-height);
+  border-radius: var(--vnm-radius-md);
+  background: var(--vnm-surface);
 }
 
 .vnm-body {

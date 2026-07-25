@@ -13,7 +13,10 @@ body,
 }
 
 body {
+  /* Шрифт макета. Пакет не везёт файлы шрифтов, а объявляет его в токене с
+     системным запасом — подключить сам шрифт задача приложения. */
   font-family:
+    'Nunito Sans',
     system-ui,
     -apple-system,
     'Segoe UI',
@@ -81,6 +84,108 @@ body {
 .pg-map {
   flex: 1 1 auto;
   min-height: 0;
+}
+
+/* Кнопка в правом слоте шапки карты. */
+.pg-add {
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 6px;
+  background: #4d6d9a;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pg-add:hover {
+  background: #3f5c85;
+}
+
+/* Модалка добавления актива. */
+.pg-modal {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(27, 38, 54, 0.45);
+}
+
+.pg-modal__box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 360px;
+  max-height: 90vh;
+  padding: 16px;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16);
+  overflow-y: auto;
+}
+
+.pg-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #1b2636;
+}
+
+.pg-modal__head button {
+  border: 0;
+  background: transparent;
+  color: #7c92b2;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.pg-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: #4d6d9a;
+  font-size: 12px;
+}
+
+.pg-field input,
+.pg-field select {
+  padding: 6px 8px;
+  border: 1px solid #dfe5ee;
+  border-radius: 6px;
+  color: #1b2636;
+  font: inherit;
+  font-size: 14px;
+}
+
+.pg-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.pg-modal__actions button {
+  padding: 7px 14px;
+  border: 1px solid #dfe5ee;
+  border-radius: 6px;
+  background: #fff;
+  color: #1b2636;
+  font: inherit;
+  cursor: pointer;
+}
+
+.pg-modal__actions button:last-child {
+  border-color: #4d6d9a;
+  background: #4d6d9a;
+  color: #fff;
+  font-weight: 700;
+}
+
+.pg-modal__actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Кастомное содержимое панели подробностей — тоже часть демо, не библиотеки. */

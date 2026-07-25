@@ -76,8 +76,8 @@ export function useFilters<E, L>(
 
   // Фасеты считаются по проекции, а не по результату фильтра: иначе выбор
   // «offline» обнулил бы счётчики всех остальных значений, и вернуться было бы
-  // некуда.
-  const facets = computed(() => facetCounts(graph.value, projection.value.entityIds))
+  // некуда. Описания групп передаются сюда же — по ним собираются их значения.
+  const facets = computed(() => facetCounts(graph.value, projection.value.entityIds, options.value?.groups))
 
   const active = computed(() => isFilterActive(effectiveState.value))
 

@@ -10,78 +10,99 @@
  */
 .vnm-root {
   /* Поверхности и текст */
-  --vnm-bg: #f1f3f8;
+  --vnm-bg: #f7f8fa;
   --vnm-surface: #ffffff;
   --vnm-surface-raised: #ffffff;
-  --vnm-surface-sunken: #e9edf5;
-  --vnm-fg: #1f2937;
-  --vnm-fg-muted: #6b7280;
+  --vnm-surface-sunken: #edf0f5;
+  --vnm-fg: #1b2636;
+  --vnm-fg-subtle: #4d6d9a;
+  --vnm-fg-muted: #7c92b2;
   --vnm-fg-inverted: #ffffff;
-  --vnm-border: #e5e7eb;
-  --vnm-border-strong: #cbd5e1;
+  --vnm-border: #dfe5ee;
+  --vnm-border-strong: #7c92b2;
 
   /* Акцент и выделение */
-  --vnm-accent: #3b82f6;
+  --vnm-accent: #4d6d9a;
   --vnm-accent-fg: #ffffff;
-  --vnm-accent-soft: rgba(59, 130, 246, 0.12);
-  --vnm-focus-ring: #2563eb;
-  --vnm-selection: rgba(59, 130, 246, 0.18);
-  --vnm-highlight: #f59e0b;
-  --vnm-highlight-soft: rgba(245, 158, 11, 0.18);
+  --vnm-accent-soft: rgba(77, 109, 154, 0.1);
+  --vnm-focus-ring: #4d6d9a;
+  --vnm-selection: #4d6d9a;
+  --vnm-highlight: #d9822b;
+  --vnm-highlight-soft: rgba(217, 130, 43, 0.16);
 
   /* Рёбра */
-  --vnm-edge: #94a3b8;
-  --vnm-edge-active: #6366f1;
-  --vnm-edge-dimmed: #cbd5e1;
+  --vnm-edge: #b9c5d6;
+  --vnm-edge-active: #5a5ee7;
+  --vnm-edge-dimmed: #e4e9f1;
   --vnm-edge-label-bg: #ffffff;
-  --vnm-edge-width: 1.5px;
-  --vnm-edge-width-active: 2.5px;
+  --vnm-edge-width: 1px;
+  --vnm-edge-width-active: 2px;
 
   /* Состояния узлов. Ключи — значения `entity.status` у потребителя. */
-  --vnm-status-online: #22c55e;
-  --vnm-status-offline: #ef4444;
-  --vnm-status-warning: #f59e0b;
-  --vnm-status-unknown: #9ca3af;
+  --vnm-status-online: #5fab6b;
+  --vnm-status-offline: #d05353;
+  --vnm-status-warning: #d9822b;
+  --vnm-status-unknown: #b9c5d6;
+
+  /* Узел: круг с подписью под ним */
+  --vnm-node-size: 36px;
+  --vnm-node-size-root: 60px;
+  --vnm-node-label-gap: 6px;
+  --vnm-node-label-width: 132px;
+  --vnm-node-radius: 4px;
+  --vnm-node-toggle-size: 18px;
+  --vnm-node-status-size: 9px;
+
+  /* Подписи узла: внешний адрес и оверлейный различаются цветом */
+  --vnm-node-label-color: #1b2636;
+  --vnm-node-sublabel-color: #7c92b2;
+  --vnm-node-overlay-color: #5a5ee7;
 
   /* Геометрия */
-  --vnm-node-radius: 8px;
-  --vnm-node-size: 44px;
-  --vnm-node-width: 180px;
-  --vnm-node-padding: 10px;
   --vnm-radius-sm: 4px;
-  --vnm-radius-md: 8px;
-  --vnm-radius-lg: 12px;
+  --vnm-radius-md: 6px;
+  --vnm-radius-lg: 8px;
   --vnm-space-1: 4px;
   --vnm-space-2: 8px;
   --vnm-space-3: 12px;
   --vnm-space-4: 16px;
   --vnm-space-5: 24px;
 
-  /* Типографика */
-  --vnm-font: inherit;
+  /* Типографика. Шрифт задан с запасом системных: файлы шрифта пакет не везёт. */
+  --vnm-font: 'Nunito Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --vnm-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  --vnm-font-size: 13px;
-  --vnm-font-size-sm: 11px;
-  --vnm-font-size-lg: 15px;
-  --vnm-line-height: 1.4;
-  --vnm-font-weight-medium: 500;
-  --vnm-font-weight-bold: 600;
+  --vnm-font-size: 14px;
+  --vnm-font-size-sm: 12px;
+  --vnm-font-size-lg: 16px;
+  --vnm-line-height: 20px;
+  --vnm-line-height-sm: 16px;
+  --vnm-line-height-lg: 24px;
+  --vnm-font-weight-medium: 600;
+  --vnm-font-weight-bold: 700;
 
   /* Тени и слои */
-  --vnm-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.08);
-  --vnm-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.1);
-  --vnm-shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.16);
-  --vnm-panel-width: 340px;
-  --vnm-toolbar-height: 48px;
+  --vnm-shadow-sm: 0 1px 2px rgba(27, 38, 54, 0.06);
+  --vnm-shadow-md: 0 2px 8px rgba(27, 38, 54, 0.1);
+  --vnm-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.16);
+  --vnm-toolbar-height: 36px;
+
+  /* Плавающее окно подробностей */
+  --vnm-window-width: 480px;
+  --vnm-window-radius: 8px;
+  --vnm-window-header-height: 24px;
+
+  /* Панель фильтров */
+  --vnm-filter-width: 304px;
+  --vnm-filter-height: 684px;
 
   /* Полотно */
-  --vnm-canvas-dot: #d3dae6;
+  --vnm-canvas-dot: #dfe5ee;
   --vnm-canvas-dot-size: 1px;
   --vnm-canvas-grid: 20px;
 
   /* Анимация. Уважает prefers-reduced-motion ниже. */
   --vnm-transition: 120ms ease;
-  --vnm-dimmed-opacity: 0.25;
+  --vnm-dimmed-opacity: 0.3;
 }
 
 @media (prefers-reduced-motion: reduce) {

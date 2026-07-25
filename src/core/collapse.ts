@@ -19,6 +19,15 @@ export interface CollapseOptions {
   visibleEntityIds?: ReadonlySet<EntityId>
   /** Ограничение по связям (результат проекции). */
   visibleLinkIds?: ReadonlySet<string>
+  /**
+   * Родители, чьё поддерево скрыто кнопкой на самом узле.
+   *
+   * Отличается от `expandedIds`: там речь о синтетических групповых узлах, здесь —
+   * о настоящей сущности, которая остаётся на карте, а её потомки прячутся
+   * внутрь. Рёбра потомков переносятся на родителя по тем же правилам, что и на
+   * групповой узел.
+   */
+  collapsedParentIds?: ReadonlySet<EntityId>
 }
 
 const DEFAULT_THRESHOLD = 10
@@ -67,30 +76,42 @@ export function collapseGraph<E, L>(
   graph: NetworkGraph<E, L>,
   options: CollapseOptions = {},
 ): CollapseResult<L> {
-  const { rule, expandedIds, visibleEntityIds, visibleLinkIds } = options
+  const { rule, expandedIds, visibleEntityIds, visibleLinkIds, collapsedParentIds } = options
 
-  const isEntityVisible = (id: EntityId): boolean =>
-    visibleEntityIds === undefined || visibleEntityIds.has(id)
+  const inProjection = (id: EntityId): boolean => visibleEntityIds === undefined || visibleEntityIds.has(id)
+
+  // Потомки свёрнутых родителей выпадают из карты до всех остальных решений:
+  // они не должны ни группироваться, ни попадать в узлы.
+  const subtreeHidden = hiddenBySubtree(graph, collapsedParentIds, inProjection)
+
+  const isEntityVisible = (id: EntityId): boolean => inProjection(id) && !subtreeHidden.has(id)
 
   const visibleEntities: NetworkEntity<E>[] = []
   for (const entity of graph.entities.values()) {
     if (isEntityVisible(entity.id)) visibleEntities.push(entity)
   }
 
+  // Концы проверяются по проекции, а не по итоговой видимости: ребро скрытого
+  // потомка не выбрасывается, а переносится на свёрнутого родителя.
   const visibleLinks: NetworkLink<L>[] = []
   for (const link of graph.links.values()) {
     if (visibleLinkIds !== undefined && !visibleLinkIds.has(link.id)) continue
-    if (!isEntityVisible(link.source) || !isEntityVisible(link.target)) continue
+    if (!inProjection(link.source) || !inProjection(link.target)) continue
     visibleLinks.push(link)
   }
+
+  // Потомки свёрнутых родителей адресуются на самого родителя — так же, как
+  // участники группы адресуются на групповой узел.
+  const groupOf = new Map<EntityId, string>(subtreeHidden)
+  const hiddenIds = new Set<EntityId>(subtreeHidden.keys())
 
   if (rule === false) {
     return {
       groups: [],
-      groupOf: new Map(),
-      hiddenIds: new Set(),
+      groupOf,
+      hiddenIds,
       nodeIds: visibleEntities.map((entity) => entity.id),
-      links: visibleLinks,
+      links: remapLinks(visibleLinks, groupOf, new Set(), [], collapsedParentIds),
     }
   }
 
@@ -98,10 +119,10 @@ export function collapseGraph<E, L>(
   // так же читается prop `collapse` у <NetworkMap>.
   const groups = decideGroups(graph, visibleEntities, rule ?? {}, expandedIds, isEntityVisible)
   const groupIds = new Set(groups.map((group) => group.id))
-  const { groupOf, hiddenIds } = indexMembers(graph, groups)
+  indexMembers(graph, groups, groupOf, hiddenIds)
 
   const nodeIds = orderNodes(visibleEntities, groupOf, hiddenIds)
-  const links = remapLinks(visibleLinks, groupOf, groupIds, groups)
+  const links = remapLinks(visibleLinks, groupOf, groupIds, groups, collapsedParentIds)
 
   return { groups, groupOf, hiddenIds, nodeIds, links }
 }
@@ -201,13 +222,43 @@ function decideGroups<E, L>(
   return groups
 }
 
+/**
+ * Потомки свёрнутых родителей: потомок → id родителя, который его прячет.
+ *
+ * Порядок обхода — порядок сущностей во входных данных, поэтому при вложенных
+ * свёрнутых родителях побеждает тот, кто ближе к корню, и результат однозначен.
+ */
+function hiddenBySubtree<E, L>(
+  graph: NetworkGraph<E, L>,
+  collapsedParentIds: ReadonlySet<EntityId> | undefined,
+  inProjection: (id: EntityId) => boolean,
+): Map<EntityId, EntityId> {
+  const hidden = new Map<EntityId, EntityId>()
+  if (!collapsedParentIds || collapsedParentIds.size === 0) return hidden
+
+  for (const parentId of graph.entities.keys()) {
+    if (!collapsedParentIds.has(parentId)) continue
+    if (!inProjection(parentId)) continue
+    // Уже спрятанный родитель не прячет никого: его поддерево уже внутри
+    // предка, который свёрнут выше.
+    if (hidden.has(parentId)) continue
+
+    for (const descendant of descendantsOf(graph, parentId)) {
+      if (hidden.has(descendant)) continue
+      hidden.set(descendant, parentId)
+    }
+  }
+
+  return hidden
+}
+
+/** Дописывает в индексы участников групп и их поддеревья. */
 function indexMembers<E, L>(
   graph: NetworkGraph<E, L>,
   groups: readonly CollapsedGroup[],
-): { groupOf: Map<EntityId, string>; hiddenIds: Set<EntityId> } {
-  const groupOf = new Map<EntityId, string>()
-  const hiddenIds = new Set<EntityId>()
-
+  groupOf: Map<EntityId, string>,
+  hiddenIds: Set<EntityId>,
+): void {
   for (const group of groups) {
     for (const memberId of group.memberIds) {
       if (!groupOf.has(memberId)) {
@@ -221,8 +272,6 @@ function indexMembers<E, L>(
       }
     }
   }
-
-  return { groupOf, hiddenIds }
 }
 
 /**
@@ -262,6 +311,7 @@ function remapLinks<L>(
   groupOf: ReadonlyMap<EntityId, string>,
   groupIds: ReadonlySet<string>,
   groups: readonly CollapsedGroup[],
+  collapsedParentIds: ReadonlySet<EntityId> | undefined,
 ): CollapsedLink<L>[] {
   const groupById = new Map(groups.map((group) => [group.id, group]))
   const bundles = new Map<string, LinkBundle<L>>()
@@ -269,12 +319,17 @@ function remapLinks<L>(
   for (const link of visibleLinks) {
     const source = groupOf.get(link.source) ?? link.source
     const target = groupOf.get(link.target) ?? link.target
+    const remapped = groupOf.has(link.source) || groupOf.has(link.target)
 
-    if (source === target && groupIds.has(source)) {
-      // Ребро целиком внутри группы: не рисуем, но считаем.
-      const group = groupById.get(source)
-      if (group) group.internalLinkCount += 1
-      continue
+    if (source === target) {
+      if (remapped) {
+        // Оба конца оказались внутри одной группы или одного свёрнутого
+        // поддерева: петлю не рисуем. Для группы её ещё и считаем.
+        const group = groupById.get(source)
+        if (group) group.internalLinkCount += 1
+        continue
+      }
+      // Настоящая петля на обычном узле — остаётся ребром.
     }
 
     const key = bundleKey(source, target, link)
@@ -297,8 +352,15 @@ function remapLinks<L>(
       continue
     }
 
-    const touchesGroup = groupIds.has(bundle.source) || groupIds.has(bundle.target)
-    if (!touchesGroup) {
+    // Агрегируем только пучки, появившиеся из-за свёртки: и группа, и свёрнутый
+    // родитель собирают на себя рёбра спрятанных узлов.
+    const touchesCollapsed =
+      groupIds.has(bundle.source) ||
+      groupIds.has(bundle.target) ||
+      collapsedParentIds?.has(bundle.source) === true ||
+      collapsedParentIds?.has(bundle.target) === true
+
+    if (!touchesCollapsed) {
       // Настоящая кратность между обычными узлами — оставляем как есть.
       out.push(...bundle.links)
       continue

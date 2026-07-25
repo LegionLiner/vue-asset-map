@@ -1,11 +1,21 @@
 <script setup lang="ts">
-import { computed, ref, useTemplateRef } from 'vue'
+import { computed, reactive, ref, useTemplateRef } from 'vue'
 import { NetworkMap, type FilterState, type NetworkMapExposed, type ThemeMode } from 'network-map'
-import { entities, links, statusColors, views, type AssetMeta, type DemoLink } from '@fixtures/infra'
+import {
+  entities as fixtureEntities,
+  filterGroups,
+  links as fixtureLinks,
+  statusColors,
+  views,
+  type AssetMeta,
+  type DemoEntity,
+  type DemoLink,
+} from '@fixtures/infra'
+import { CloudIcon, ContainerIcon, RouterIcon, ServerIcon, VpsIcon, WorkstationIcon } from './icons'
 
 /**
- * Демо реального кейса: два вида одной инфраструктуры, поиск, свёртка фермы
- * контейнеров, кастомная панель подробностей и трассировка пути.
+ * Демо реального кейса: два вида одной инфраструктуры, встроенные контролы,
+ * свёртка фермы контейнеров, кастомная панель подробностей и трассировка пути.
  */
 
 const map = useTemplateRef<NetworkMapExposed>('map')
@@ -14,12 +24,29 @@ const theme = ref<ThemeMode>('light')
 const viewId = ref(views[0]?.id)
 const selection = ref<string[]>([])
 const expanded = ref(new Set<string>())
+const collapsedNodes = ref(new Set<string>())
 const filters = ref<FilterState>({ query: '', kinds: [], statuses: [] })
+/** Раскрытые списки фильтров: библиотека отдаёт их наружу, храним у себя. */
+const openFilterGroups = ref<string[] | undefined>(undefined)
+
+/** Свои узлы добавляются в те же массивы, что пришли из фикстуры. */
+const entities = ref<DemoEntity[]>([...fixtureEntities])
+const links = ref<DemoLink[]>([...fixtureLinks])
+
+const kindIcons = {
+  cloud: CloudIcon,
+  router: RouterIcon,
+  hypervisor: ServerIcon,
+  vps: VpsIcon,
+  workstation: WorkstationIcon,
+  container: ContainerIcon,
+}
 
 const currentView = computed(() => views.find((view) => view.id === viewId.value))
 
 /** «Показать путь» работает ровно между двумя выбранными узлами. */
 const canTracePath = computed(() => selection.value.length === 2)
+const lastPath = ref<string[] | undefined>(undefined)
 
 function tracePath(): void {
   const [from, to] = selection.value
@@ -28,16 +55,70 @@ function tracePath(): void {
   lastPath.value = path && path.length > 0 ? path : undefined
 }
 
-const lastPath = ref<string[] | undefined>(undefined)
-
 function clearPath(): void {
   map.value?.clearHighlight()
   lastPath.value = undefined
 }
 
-function toggleTheme(): void {
-  theme.value = theme.value === 'dark' ? 'light' : 'dark'
+// --- Модалка добавления актива --------------------------------------------
+
+const addOpen = ref(false)
+
+const draft = reactive({
+  label: '',
+  kind: 'workstation',
+  parentId: 'keenetic-2',
+  externalIp: '',
+  overlayIp: '',
+  subnet: 'vpn' as NonNullable<AssetMeta['subnet']>,
+  assetType: 'device' as NonNullable<AssetMeta['assetType']>,
+  severity: 'low' as NonNullable<AssetMeta['severity']>,
+})
+
+const canSubmit = computed(() => draft.label.trim().length > 0)
+
+function openAdd(): void {
+  addOpen.value = true
 }
+
+function submitAdd(): void {
+  if (!canSubmit.value) return
+
+  const id = `custom-${Date.now()}`
+  const sublabels = [draft.externalIp, draft.overlayIp].filter((value) => value.length > 0)
+
+  // Новые массивы, а не push: карта пересчитывает индексы по смене ссылки на
+  // массив — так работает и любое приложение с иммутабельным стором.
+  entities.value = [
+    ...entities.value,
+    {
+      id,
+      kind: draft.kind,
+      label: draft.label.trim(),
+      status: 'online',
+      parentId: draft.parentId,
+      ...(sublabels.length > 0 ? { sublabels } : {}),
+      meta: {
+        subnet: draft.subnet,
+        assetType: draft.assetType,
+        severity: draft.severity,
+        owner: 'demo',
+      },
+    },
+  ]
+
+  links.value = [
+    ...links.value,
+    { id: `l-${id}`, source: draft.parentId, target: id, layers: ['physical'], kind: 'solid' },
+  ]
+
+  addOpen.value = false
+  draft.label = ''
+  draft.externalIp = ''
+  draft.overlayIp = ''
+}
+
+// --- Кастомное содержимое панели подробностей ------------------------------
 
 /** Ярлыки для полей `meta` — это данные потребителя, библиотека их не знает. */
 const metaLabels: Record<keyof AssetMeta, string> = {
@@ -50,6 +131,9 @@ const metaLabels: Record<keyof AssetMeta, string> = {
   ramGb: 'RAM, ГБ',
   location: 'Размещение',
   tags: 'Метки',
+  subnet: 'Подсеть',
+  assetType: 'Тип актива',
+  severity: 'Критичность',
 }
 
 function metaRows(meta: AssetMeta | undefined): { key: string; label: string; value: string }[] {
@@ -64,7 +148,7 @@ function metaRows(meta: AssetMeta | undefined): { key: string; label: string; va
 }
 
 function neighborsOf(id: string): DemoLink[] {
-  return links.filter((link) => link.source === id || link.target === id)
+  return links.value.filter((link) => link.source === id || link.target === id)
 }
 </script>
 
@@ -73,11 +157,9 @@ function neighborsOf(id: string): DemoLink[] {
     <div class="pg-bar">
       <span class="pg-bar__title">network-map · плейграунд</span>
 
-      <span class="pg-bar__hint">
-        Переключатель видов, поиск и фильтры — встроенные контролы библиотеки в тулбаре ниже
-      </span>
-
-      <button type="button" @click="toggleTheme">Тема: {{ theme === 'dark' ? 'тёмная' : 'светлая' }}</button>
+      <button type="button" @click="theme = theme === 'dark' ? 'light' : 'dark'">
+        Тема: {{ theme === 'dark' ? 'тёмная' : 'светлая' }}
+      </button>
 
       <button type="button" :disabled="!canTracePath" @click="tracePath">Показать путь</button>
       <button type="button" :disabled="!lastPath" @click="clearPath">Сбросить путь</button>
@@ -96,16 +178,25 @@ function neighborsOf(id: string): DemoLink[] {
       v-model:view="viewId"
       v-model:selection="selection"
       v-model:expanded="expanded"
+      v-model:collapsed-nodes="collapsedNodes"
       v-model:filters="filters"
+      v-model:open-filter-groups="openFilterGroups"
       class="pg-map"
       :entities="entities"
       :links="links"
       :views="views"
       :theme="theme"
-      :theme-config="{ statusColors }"
+      :theme-config="{ statusColors, kindIcons }"
+      :filter-options="{ groups: filterGroups }"
+      show-minimap
     >
-      <!-- Панель подробностей: библиотека даёт контейнер, шапку, кнопку закрытия
-           и табы; наполнение — наше. Пакет не знает наших полей `meta`. -->
+      <!-- Правый слот шапки карты: место для действий приложения. -->
+      <template #toolbar-right>
+        <button type="button" class="pg-add" @click="openAdd">Добавить</button>
+      </template>
+
+      <!-- Панель подробностей: библиотека даёт окно, шапку, кнопки и табы;
+           наполнение — наше. Пакет не знает наших полей `meta`. -->
       <template #details="{ entity, tab }">
         <div v-if="tab === 'links'" class="pg-details">
           <div class="pg-details__section-title">Связи ({{ neighborsOf(entity.id).length }})</div>
@@ -156,5 +247,74 @@ function neighborsOf(id: string): DemoLink[] {
         </div>
       </template>
     </NetworkMap>
+
+    <!-- Модалка добавления — реализация приложения, а не библиотеки. -->
+    <div v-if="addOpen" class="pg-modal" role="dialog" aria-modal="true" aria-label="Добавить актив">
+      <div class="pg-modal__box">
+        <div class="pg-modal__head">
+          <strong>Добавить актив</strong>
+          <button type="button" @click="addOpen = false">×</button>
+        </div>
+
+        <label class="pg-field">
+          <span>Название</span>
+          <input v-model="draft.label" type="text" placeholder="Новый хост" />
+        </label>
+
+        <label class="pg-field">
+          <span>Тип узла</span>
+          <select v-model="draft.kind">
+            <option value="workstation">workstation</option>
+            <option value="vps">vps</option>
+            <option value="router">router</option>
+            <option value="hypervisor">hypervisor</option>
+            <option value="container">container</option>
+          </select>
+        </label>
+
+        <label class="pg-field">
+          <span>Родитель</span>
+          <select v-model="draft.parentId">
+            <option v-for="candidate in entities" :key="candidate.id" :value="candidate.id">
+              {{ candidate.label }}
+            </option>
+          </select>
+        </label>
+
+        <label class="pg-field">
+          <span>Внешний IP</span>
+          <input v-model="draft.externalIp" type="text" placeholder="10.38.24.80" />
+        </label>
+
+        <label class="pg-field">
+          <span>Оверлей IP</span>
+          <input v-model="draft.overlayIp" type="text" placeholder="100.64.0.80" />
+        </label>
+
+        <label class="pg-field">
+          <span>Подсеть</span>
+          <select v-model="draft.subnet">
+            <option value="internet">Интернет</option>
+            <option value="vpn">VPN</option>
+            <option value="docker">Docker Bridge</option>
+          </select>
+        </label>
+
+        <label class="pg-field">
+          <span>Критичность</span>
+          <select v-model="draft.severity">
+            <option value="critical">Критический</option>
+            <option value="high">Высокий</option>
+            <option value="medium">Средний</option>
+            <option value="low">Низкий</option>
+          </select>
+        </label>
+
+        <div class="pg-modal__actions">
+          <button type="button" @click="addOpen = false">Отмена</button>
+          <button type="button" :disabled="!canSubmit" @click="submitAdd">Добавить</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>

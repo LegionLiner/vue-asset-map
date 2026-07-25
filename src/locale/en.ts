@@ -16,6 +16,8 @@ export const en: LocaleMessages = {
   'filter.reset': 'Reset filters',
   'filter.empty': 'No values available',
   'filter.active': 'Active filters: {count}',
+  'filter.search': 'Search filters',
+  'filter.close': 'Close filters',
 
   'details.title': 'Details',
   'details.close': 'Close panel',
@@ -28,6 +30,8 @@ export const en: LocaleMessages = {
   'details.tab.overview': 'Overview',
   'details.tab.links': 'Links',
   'details.empty': 'Select a node on the map',
+  'details.collapseWindow': 'Collapse window',
+  'details.expandWindow': 'Expand window',
 
   'group.label': '{bucket}',
   'group.expand': 'Expand group',

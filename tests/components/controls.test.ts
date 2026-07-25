@@ -6,7 +6,7 @@ import NetworkMap from '../../src/components/NetworkMap.vue'
 import SearchInput from '../../src/components/controls/SearchInput.vue'
 import ViewSwitcher from '../../src/components/controls/ViewSwitcher.vue'
 import FilterMenu from '../../src/components/controls/FilterMenu.vue'
-import type { FilterState } from '../../src/types/filter'
+import type { FacetCounts, FilterState } from '../../src/types/filter'
 import { entities, links, statusColors, views } from '../../fixtures/infra'
 
 describe('SearchInput отдельно от карты', () => {
@@ -104,13 +104,21 @@ describe('ViewSwitcher', () => {
   })
 })
 
+/** Раскрывает панель фильтров: список значений спрятан за кнопкой. */
+async function openFilters(wrapper: {
+  find: (selector: string) => { trigger: (event: string) => Promise<void> }
+}) {
+  await wrapper.find('.vnm-filter__button').trigger('click')
+}
+
 describe('FilterMenu', () => {
-  const facets = {
+  const facets: FacetCounts = {
     kinds: new Map([
       ['router', 2],
       ['vps', 4],
     ]),
     statuses: new Map([['offline', 1]]),
+    groups: new Map(),
   }
 
   const state = (partial: Partial<FilterState> = {}): FilterState => ({
@@ -120,8 +128,9 @@ describe('FilterMenu', () => {
     ...partial,
   })
 
-  it('показывает значения фасетов со счётчиками', () => {
+  it('показывает значения фасетов со счётчиками', async () => {
     const wrapper = mount(FilterMenu, { props: { facets, modelValue: state() } })
+    await openFilters(wrapper)
 
     const options = wrapper.findAll('.vnm-filter__option')
     expect(options).toHaveLength(3)
@@ -134,6 +143,7 @@ describe('FilterMenu', () => {
   it('отметка фасета отдаёт новый объект состояния, не мутируя старый', async () => {
     const original = state()
     const wrapper = mount(FilterMenu, { props: { facets, modelValue: original } })
+    await openFilters(wrapper)
 
     await wrapper.findAll('input[type="checkbox"]')[0]?.setValue(true)
 
@@ -150,6 +160,7 @@ describe('FilterMenu', () => {
     const wrapper = mount(FilterMenu, {
       props: { facets, modelValue: state({ kinds: ['router'] }) },
     })
+    await openFilters(wrapper)
 
     await wrapper.findAll('input[type="checkbox"]')[0]?.setValue(false)
 
@@ -159,10 +170,11 @@ describe('FilterMenu', () => {
     wrapper.unmount()
   })
 
-  it('счётчик активных фильтров считает оба фасета', () => {
+  it('счётчик активных фильтров считает оба фасета', async () => {
     const wrapper = mount(FilterMenu, {
       props: { facets, modelValue: state({ kinds: ['router'], statuses: ['offline'] }) },
     })
+    await openFilters(wrapper)
 
     expect(wrapper.find('.vnm-filter__badge').text()).toBe('2')
     wrapper.unmount()
@@ -172,6 +184,7 @@ describe('FilterMenu', () => {
     const wrapper = mount(FilterMenu, {
       props: { facets, modelValue: state({ query: 'dmitry', kinds: ['router'] }) },
     })
+    await openFilters(wrapper)
 
     await wrapper.find('.vnm-filter__reset').trigger('click')
 
@@ -182,16 +195,18 @@ describe('FilterMenu', () => {
     wrapper.unmount()
   })
 
-  it('кнопка сброса заблокирована, когда нечего сбрасывать', () => {
+  it('кнопка сброса заблокирована, когда нечего сбрасывать', async () => {
     const wrapper = mount(FilterMenu, { props: { facets, modelValue: state() } })
+    await openFilters(wrapper)
     expect(wrapper.find('.vnm-filter__reset').attributes('disabled')).toBeDefined()
     wrapper.unmount()
   })
 
-  it('пустой фасет показывает подпись, а не пустоту', () => {
+  it('пустой фасет показывает подпись, а не пустоту', async () => {
     const wrapper = mount(FilterMenu, {
-      props: { facets: { kinds: new Map(), statuses: new Map() }, modelValue: state() },
+      props: { facets: { kinds: new Map(), statuses: new Map(), groups: new Map() }, modelValue: state() },
     })
+    await openFilters(wrapper)
 
     expect(wrapper.findAll('.vnm-filter__empty')).toHaveLength(2)
     wrapper.unmount()
@@ -292,12 +307,14 @@ describe('контролы внутри <NetworkMap>', () => {
 
   it('фасеты собраны из данных и сужаются проекцией вида', async () => {
     const physical = await mountMap({ view: 'physical' })
+    await openFilters(physical)
     const physicalKinds = physical.findAll('.vnm-filter__option-label').map((node) => node.text())
     expect(physicalKinds).toContain('cloud')
     expect(physicalKinds).toContain('container')
     physical.unmount()
 
     const logical = await mountMap({ view: 'logical' })
+    await openFilters(logical)
     const logicalKinds = logical.findAll('.vnm-filter__option-label').map((node) => node.text())
     // В оверлее нет ни облаков, ни контейнеров.
     expect(logicalKinds).not.toContain('cloud')
@@ -307,6 +324,7 @@ describe('контролы внутри <NetworkMap>', () => {
 
   it('фильтр по типу из меню применяется к карте', async () => {
     const wrapper = await mountMap()
+    await openFilters(wrapper)
 
     const routerCheckbox = wrapper
       .findAll('.vnm-filter__option')

@@ -12,6 +12,13 @@ import { fileNamed, readSources, stripComments } from './sources'
 const vueSources = readSources('src/components', ['.vue'])
 const themeSources = readSources('src/theme', ['.css'])
 
+/**
+ * Иконки лежат в `.ts`, но рисуют — значит на них распространяется тот же запрет
+ * на литеральные цвета: `fill` и `stroke` берут `currentColor`, иначе иконка не
+ * отреагировала бы на переключение темы.
+ */
+const componentSources = readSources('src/components', ['.vue', '.ts'])
+
 const COLOR_PATTERNS: readonly { name: string; pattern: RegExp }[] = [
   { name: 'hex', pattern: /#[0-9a-fA-F]{3,8}\b/ },
   { name: 'rgb()/rgba()', pattern: /\brgba?\s*\(/ },
@@ -28,14 +35,29 @@ describe('в .vue-файлах нет литеральных цветов', () =
   })
 
   it.each(COLOR_PATTERNS.map((entry) => [entry.name, entry.pattern] as const))(
-    'ни один компонент не содержит цвет в формате %s',
+    'ни один компонент или иконка не содержит цвет в формате %s',
     (name, pattern) => {
-      for (const { path, content } of vueSources) {
+      for (const { path, content } of componentSources) {
         const match = stripComments(content).match(pattern)
         expect(match, `${path}: найден цвет (${name}) → ${match?.[0]}`).toBeNull()
       }
     },
   )
+
+  it('иконки красятся currentColor, а не своим цветом', () => {
+    const icons = componentSources.filter((file) => file.path.includes('/icons/'))
+    expect(icons.length).toBeGreaterThan(0)
+
+    for (const { path, content } of icons) {
+      // Каждое объявление обводки/заливки должно ссылаться на currentColor или
+      // на токен темы — своих цветов у иконок быть не может.
+      for (const match of content.matchAll(/(?:stroke|fill):\s*'([^']+)'/g)) {
+        const value = match[1] ?? ''
+        if (value === 'none' || value === 'currentColor' || value.startsWith('var(--vnm-')) continue
+        expect.fail(`${path}: иконка задаёт свой цвет → ${value}`)
+      }
+    }
+  })
 
   it('цвета берутся из токенов через var(--vnm-*)', () => {
     // Обратная проверка: без неё предыдущий тест был бы зелёным просто потому,

@@ -7,9 +7,9 @@ import type { NetworkNodeData } from '../../composables/useFlowElements'
 /**
  * Свёрнутая группа однотипных узлов.
  *
- * Показывает, что именно спрятано (ведро, число участников, число внутренних
- * связей) и раскрывается по клику. Без этих чисел свёртка выглядела бы как
- * пропажа данных.
+ * Тот же круг с подписью, что и у обычного узла, но вместо иконки — число
+ * участников: свёртка не должна выглядеть как пропажа данных, поэтому счётчик
+ * стоит на самом заметном месте.
  */
 const props = defineProps<{
   id: string
@@ -42,6 +42,7 @@ const ariaLabel = computed(
 
 const classes = computed(() => [
   'vnm-node',
+  'vnm-node--child',
   'vnm-group',
   {
     'vnm-node--matched': map.isMatched(props.id),
@@ -74,95 +75,61 @@ function onKeydown(event: KeyboardEvent): void {
     <Handle type="target" :position="Position.Top" class="vnm-node__handle" />
     <Handle type="source" :position="Position.Bottom" class="vnm-node__handle" />
 
-    <span class="vnm-group__stack" aria-hidden="true">
+    <div class="vnm-node__circle vnm-group__circle">
       <span class="vnm-group__count">{{ memberCount }}</span>
-    </span>
 
-    <span class="vnm-node__body">
-      <span class="vnm-node__label">{{ label }}</span>
-      <span v-if="!map.simplified.value" class="vnm-group__meta">
-        {{ map.t('group.members', { count: memberCount }) }}
+      <span v-if="memberStatuses.length > 0" class="vnm-group__statuses">
+        <span
+          v-for="entry in memberStatuses"
+          :key="entry.status"
+          class="vnm-group__status"
+          :style="entry.color ? { backgroundColor: entry.color } : undefined"
+          :title="map.t('node.status', { status: entry.status })"
+        />
       </span>
-      <span v-if="!map.simplified.value && internalLinkCount > 0" class="vnm-group__meta">
+    </div>
+
+    <div v-if="!map.simplified.value" class="vnm-node__info">
+      <span class="vnm-node__label">{{ label }}</span>
+      <span class="vnm-node__sublabel">{{ map.t('group.members', { count: memberCount }) }}</span>
+      <span v-if="internalLinkCount > 0" class="vnm-node__sublabel">
         {{ map.t('group.internalLinks', { count: internalLinkCount }) }}
       </span>
-    </span>
-
-    <span v-if="!map.simplified.value && memberStatuses.length > 0" class="vnm-group__statuses">
-      <span
-        v-for="entry in memberStatuses"
-        :key="entry.status"
-        class="vnm-group__status"
-        :style="entry.color ? { backgroundColor: entry.color } : undefined"
-        :title="map.t('node.status', { status: entry.status })"
-      >
-        {{ entry.count }}
-      </span>
-    </span>
+    </div>
   </div>
 </template>
 
 <style>
-.vnm-group {
-  /* Двойная рамка-«стопка»: узел читается как «здесь их много». */
+/* Пунктирная рамка и «стопка» позади круга: узел читается как «здесь их много». */
+.vnm-group__circle {
+  border-style: dashed;
+  background: var(--vnm-surface-sunken);
   box-shadow:
     var(--vnm-shadow-sm),
-    4px 4px 0 -1px var(--vnm-surface),
-    5px 5px 0 -1px var(--vnm-border);
-  border-style: dashed;
-}
-
-.vnm-group:hover {
-  box-shadow:
-    var(--vnm-shadow-md),
-    4px 4px 0 -1px var(--vnm-surface),
-    5px 5px 0 -1px var(--vnm-border-strong);
-}
-
-.vnm-group__stack {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  min-width: 24px;
-  height: 24px;
-  padding: 0 var(--vnm-space-1);
-  border-radius: var(--vnm-radius-sm);
-  background: var(--vnm-accent-soft);
-  color: var(--vnm-accent);
+    3px 3px 0 -1px var(--vnm-surface),
+    4px 4px 0 -1px var(--vnm-border);
+  color: var(--vnm-fg-subtle);
 }
 
 .vnm-group__count {
-  font-size: var(--vnm-font-size-sm);
+  font-size: var(--vnm-font-size);
   font-weight: var(--vnm-font-weight-bold);
-}
-
-.vnm-group__meta {
-  overflow: hidden;
-  color: var(--vnm-fg-muted);
-  font-size: var(--vnm-font-size-sm);
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .vnm-group__statuses {
   position: absolute;
-  top: -8px;
-  right: var(--vnm-space-2);
+  top: -2px;
+  right: -2px;
   display: flex;
-  gap: var(--vnm-space-1);
+  gap: 1px;
 }
 
 .vnm-group__status {
-  min-width: 16px;
-  padding: 0 3px;
+  box-sizing: border-box;
+  width: 7px;
+  height: 7px;
   border: 1px solid var(--vnm-surface);
-  border-radius: var(--vnm-radius-sm);
+  border-radius: 50%;
   background: var(--vnm-status-unknown);
-  color: var(--vnm-fg-inverted);
-  font-size: var(--vnm-font-size-sm);
-  font-weight: var(--vnm-font-weight-bold);
-  line-height: 14px;
-  text-align: center;
 }
 </style>

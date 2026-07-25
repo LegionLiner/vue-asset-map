@@ -7,37 +7,42 @@
  * высокой специфичностью, а не расчёт на базовые токены.
  */
 .vnm-root.vnm-theme-light {
-  --vnm-bg: #f1f3f8;
+  --vnm-bg: #f7f8fa;
   --vnm-surface: #ffffff;
   --vnm-surface-raised: #ffffff;
-  --vnm-surface-sunken: #e9edf5;
-  --vnm-fg: #1f2937;
-  --vnm-fg-muted: #6b7280;
+  --vnm-surface-sunken: #edf0f5;
+  --vnm-fg: #1b2636;
+  --vnm-fg-subtle: #4d6d9a;
+  --vnm-fg-muted: #7c92b2;
   --vnm-fg-inverted: #ffffff;
-  --vnm-border: #e5e7eb;
-  --vnm-border-strong: #cbd5e1;
+  --vnm-border: #dfe5ee;
+  --vnm-border-strong: #7c92b2;
 
-  --vnm-accent: #3b82f6;
+  --vnm-accent: #4d6d9a;
   --vnm-accent-fg: #ffffff;
-  --vnm-accent-soft: rgba(59, 130, 246, 0.12);
-  --vnm-focus-ring: #2563eb;
-  --vnm-selection: rgba(59, 130, 246, 0.18);
-  --vnm-highlight: #f59e0b;
-  --vnm-highlight-soft: rgba(245, 158, 11, 0.18);
+  --vnm-accent-soft: rgba(77, 109, 154, 0.1);
+  --vnm-focus-ring: #4d6d9a;
+  --vnm-selection: #4d6d9a;
+  --vnm-highlight: #d9822b;
+  --vnm-highlight-soft: rgba(217, 130, 43, 0.16);
 
-  --vnm-edge: #94a3b8;
-  --vnm-edge-active: #6366f1;
-  --vnm-edge-dimmed: #cbd5e1;
+  --vnm-edge: #b9c5d6;
+  --vnm-edge-active: #5a5ee7;
+  --vnm-edge-dimmed: #e4e9f1;
   --vnm-edge-label-bg: #ffffff;
 
-  --vnm-status-online: #22c55e;
-  --vnm-status-offline: #ef4444;
-  --vnm-status-warning: #f59e0b;
-  --vnm-status-unknown: #9ca3af;
+  --vnm-status-online: #5fab6b;
+  --vnm-status-offline: #d05353;
+  --vnm-status-warning: #d9822b;
+  --vnm-status-unknown: #b9c5d6;
 
-  --vnm-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.08);
-  --vnm-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.1);
-  --vnm-shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.16);
+  --vnm-node-label-color: #1b2636;
+  --vnm-node-sublabel-color: #7c92b2;
+  --vnm-node-overlay-color: #5a5ee7;
 
-  --vnm-canvas-dot: #d3dae6;
+  --vnm-shadow-sm: 0 1px 2px rgba(27, 38, 54, 0.06);
+  --vnm-shadow-md: 0 2px 8px rgba(27, 38, 54, 0.1);
+  --vnm-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.16);
+
+  --vnm-canvas-dot: #dfe5ee;
 }

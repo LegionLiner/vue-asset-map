@@ -1,91 +1,215 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useTranslate } from '../../composables/useTranslate'
-import type { FacetCounts, FilterState } from '../../types/filter'
+import { groupValuesOf, selectedGroupCount } from '../../core/filter'
+import { IconCheckbox, IconCheckboxChecked, IconChevron, IconFilter } from '../icons/index'
+import type { FacetCounts, FilterGroupDef, FilterState } from '../../types/filter'
 
 /**
- * Фасетный фильтр по типам и состояниям.
+ * Фильтры: кнопка на полотне и раскрывающаяся панель со списками значений.
  *
- * Раскрывается нативным `<details>`: поповер без библиотеки, с работающей
- * клавиатурой и без ручного управления фокусом. Значения фасетов — из данных, а
- * не из списка в коде: пакет не знает, какие типы узлов бывают у потребителя.
+ * Списки — данные, а не код. «Подсеть», «Тип актива», «Критичность» задаёт
+ * потребитель через `groups`; без них панель показывает встроенные фасеты по
+ * типу и состоянию, собранные из самих сущностей.
  *
- * Состояние всегда заменяется новым объектом, а не правится на месте: снаружи
- * оно может быть контролируемым через `v-model:filters`, и мутация не породила бы
- * события обновления.
+ * Состояние состояния фильтра всегда заменяется новым объектом, а не правится на
+ * месте: снаружи оно может быть контролируемым через `v-model:filters`, и мутация
+ * не породила бы события обновления.
  */
 const model = defineModel<FilterState>({
   default: (): FilterState => ({ query: '', kinds: [], statuses: [] }),
 })
 
+/**
+ * Какие списки раскрыты.
+ *
+ * Наружу через `v-model:openGroups`, а не в `localStorage`: пакет не пишет в
+ * хранилище браузера — сохранять состояние между сессиями решает приложение.
+ */
+const openGroups = defineModel<string[] | undefined>('openGroups', { default: undefined })
+
 const props = defineProps<{
   facets: FacetCounts
+  /** Описания списков. Без них показываются фасеты по kind и status. */
+  groups?: readonly FilterGroupDef[]
 }>()
 
 const t = useTranslate()
 
-const kinds = computed(() => [...props.facets.kinds].sort(byLabel))
-const statuses = computed(() => [...props.facets.statuses].sort(byLabel))
+const open = ref(false)
+const query = ref('')
 
-const activeCount = computed(() => model.value.kinds.length + model.value.statuses.length)
+/** Встроенные списки, когда потребитель своих не задал. */
+const fallbackGroups = computed<FilterGroupDef[]>(() => [
+  { id: 'kinds', label: t.value('filter.kinds') },
+  { id: 'statuses', label: t.value('filter.statuses'), valuesOf: (entity) => [entity.status ?? ''] },
+])
 
-function byLabel(a: readonly [string, number], b: readonly [string, number]): number {
-  return a[0].localeCompare(b[0])
+const groups = computed(() => props.groups ?? fallbackGroups.value)
+
+/**
+ * Значения списка: объявленные потребителем или собранные из данных.
+ *
+ * Счётчики приходят из фасетов по проекции вида, поэтому не обнуляются при
+ * выборе значения — иначе снять фильтр было бы некуда.
+ */
+function optionsOf(group: FilterGroupDef): { value: string; label: string; count: number }[] {
+  const counts = props.facets.groups.get(group.id) ?? fallbackCounts(group.id)
+
+  const declared = group.options?.map((option) => ({
+    value: option.value,
+    label: option.label ?? option.value,
+    count: counts.get(option.value) ?? 0,
+  }))
+
+  const options =
+    declared ?? [...counts].map(([value, count]) => ({ value, label: value, count })).sort(byLabel)
+
+  const needle = query.value.trim().toLowerCase()
+  if (needle.length === 0) return options
+  return options.filter((option) => option.label.toLowerCase().includes(needle))
 }
 
-function toggle(facet: 'kinds' | 'statuses', value: string): void {
-  const current = model.value[facet]
+/** Встроенные списки берут счётчики из готовых фасетов по kind и status. */
+function fallbackCounts(groupId: string): ReadonlyMap<string, number> {
+  if (groupId === 'kinds') return props.facets.kinds
+  if (groupId === 'statuses') return props.facets.statuses
+  return new Map()
+}
+
+function byLabel(a: { label: string }, b: { label: string }): number {
+  return a.label.localeCompare(b.label)
+}
+
+const activeCount = computed(
+  () => model.value.kinds.length + model.value.statuses.length + selectedGroupCount(model.value),
+)
+
+function isOpen(group: FilterGroupDef): boolean {
+  if (openGroups.value) return openGroups.value.includes(group.id)
+  return group.defaultOpen ?? true
+}
+
+function toggleGroup(group: FilterGroupDef): void {
+  const current = openGroups.value ?? groups.value.filter((g) => g.defaultOpen ?? true).map((g) => g.id)
+  openGroups.value = current.includes(group.id)
+    ? current.filter((id) => id !== group.id)
+    : [...current, group.id]
+}
+
+/** Выбранные значения списка. Встроенные списки живут в своих полях состояния. */
+function selectedOf(groupId: string): readonly string[] {
+  if (groupId === 'kinds' && !props.groups) return model.value.kinds
+  if (groupId === 'statuses' && !props.groups) return model.value.statuses
+  return model.value.groups?.[groupId] ?? []
+}
+
+function isChecked(groupId: string, value: string): boolean {
+  return selectedOf(groupId).includes(value)
+}
+
+function toggleValue(groupId: string, value: string): void {
+  const current = selectedOf(groupId)
   const next = current.includes(value)
     ? current.filter((candidate) => candidate !== value)
     : [...current, value]
 
-  model.value = { ...model.value, [facet]: next }
+  if (groupId === 'kinds' && !props.groups) {
+    model.value = { ...model.value, kinds: next }
+    return
+  }
+  if (groupId === 'statuses' && !props.groups) {
+    model.value = { ...model.value, statuses: next }
+    return
+  }
+
+  model.value = { ...model.value, groups: { ...model.value.groups, [groupId]: next } }
 }
 
 function reset(): void {
   if (activeCount.value === 0) return
   // Запрос не трогаем: сброс фасетов и сброс поиска — разные действия.
-  model.value = { ...model.value, kinds: [], statuses: [] }
+  model.value = { ...model.value, kinds: [], statuses: [], groups: {} }
 }
+
+/** Значения группы у сущности — реэкспорт для потребителя, строящего свои списки. */
+defineExpose({ groupValuesOf })
 </script>
 
 <template>
-  <details class="vnm-filter">
-    <summary class="vnm-filter__summary">
-      <span>{{ t('filter.label') }}</span>
+  <div class="vnm-filter">
+    <button
+      type="button"
+      class="vnm-filter__button"
+      :class="{ 'vnm-filter__button--active': open }"
+      :aria-label="t('filter.label')"
+      :aria-expanded="open"
+      @click="open = !open"
+    >
+      <IconFilter />
       <span v-if="activeCount > 0" class="vnm-filter__badge">{{ activeCount }}</span>
-    </summary>
+    </button>
 
-    <div class="vnm-filter__panel">
-      <fieldset class="vnm-filter__group">
-        <legend class="vnm-filter__legend">{{ t('filter.kinds') }}</legend>
-        <p v-if="kinds.length === 0" class="vnm-filter__empty">{{ t('filter.empty') }}</p>
-        <label v-for="[kind, count] in kinds" :key="kind" class="vnm-filter__option">
-          <input type="checkbox" :checked="model.kinds.includes(kind)" @change="toggle('kinds', kind)" />
-          <span class="vnm-filter__option-label">{{ kind }}</span>
-          <span class="vnm-filter__count">{{ count }}</span>
-        </label>
-      </fieldset>
+    <section v-if="open" class="vnm-filter__panel" :aria-label="t('filter.label')">
+      <header class="vnm-filter__head">
+        <IconFilter class="vnm-filter__head-icon" />
+        <h3 class="vnm-filter__title">{{ t('filter.label') }}</h3>
+        <button type="button" class="vnm-filter__reset" :disabled="activeCount === 0" @click="reset">
+          {{ t('filter.reset') }}
+        </button>
+      </header>
 
-      <fieldset class="vnm-filter__group">
-        <legend class="vnm-filter__legend">{{ t('filter.statuses') }}</legend>
-        <p v-if="statuses.length === 0" class="vnm-filter__empty">{{ t('filter.empty') }}</p>
-        <label v-for="[status, count] in statuses" :key="status" class="vnm-filter__option">
-          <input
-            type="checkbox"
-            :checked="model.statuses.includes(status)"
-            @change="toggle('statuses', status)"
-          />
-          <span class="vnm-filter__option-label">{{ status }}</span>
-          <span class="vnm-filter__count">{{ count }}</span>
-        </label>
-      </fieldset>
+      <div class="vnm-filter__search">
+        <input
+          v-model="query"
+          type="search"
+          class="vnm-filter__search-input"
+          :aria-label="t('filter.search')"
+          :placeholder="t('filter.search')"
+        />
+      </div>
 
-      <button type="button" class="vnm-filter__reset" :disabled="activeCount === 0" @click="reset">
-        {{ t('filter.reset') }}
-      </button>
-    </div>
-  </details>
+      <div class="vnm-filter__groups">
+        <section v-for="group in groups" :key="group.id" class="vnm-filter__group">
+          <button
+            type="button"
+            class="vnm-filter__group-head"
+            :aria-expanded="isOpen(group)"
+            @click="toggleGroup(group)"
+          >
+            <span class="vnm-filter__group-title">{{ group.label }}</span>
+            <IconChevron
+              class="vnm-filter__chevron"
+              :class="{ 'vnm-filter__chevron--closed': !isOpen(group) }"
+            />
+          </button>
+
+          <div v-if="isOpen(group)" class="vnm-filter__options">
+            <p v-if="optionsOf(group).length === 0" class="vnm-filter__empty">
+              {{ t('filter.empty') }}
+            </p>
+
+            <label v-for="option in optionsOf(group)" :key="option.value" class="vnm-filter__option">
+              <input
+                type="checkbox"
+                class="vnm-filter__checkbox"
+                :checked="isChecked(group.id, option.value)"
+                @change="toggleValue(group.id, option.value)"
+              />
+              <IconCheckboxChecked
+                v-if="isChecked(group.id, option.value)"
+                class="vnm-filter__checkbox-icon vnm-filter__checkbox-icon--checked"
+              />
+              <IconCheckbox v-else class="vnm-filter__checkbox-icon" />
+
+              <span class="vnm-filter__option-label">{{ option.label }}</span>
+              <span class="vnm-filter__count">{{ option.count }}</span>
+            </label>
+          </div>
+        </section>
+      </div>
+    </section>
+  </div>
 </template>
 
 <style>
@@ -94,61 +218,141 @@ function reset(): void {
   flex: 0 0 auto;
 }
 
-.vnm-filter__summary {
+.vnm-filter__button {
   display: flex;
+  position: relative;
   align-items: center;
+  justify-content: center;
   gap: var(--vnm-space-2);
-  padding: var(--vnm-space-1) var(--vnm-space-3);
-  border: 1px solid var(--vnm-border);
-  border-radius: var(--vnm-radius-sm);
+  padding: var(--vnm-space-2);
+  border: 0;
+  border-radius: var(--vnm-radius-md);
   background: var(--vnm-surface);
-  color: var(--vnm-fg);
-  list-style: none;
-  white-space: nowrap;
+  color: var(--vnm-fg-muted);
   cursor: pointer;
 }
 
-/* Свой маркер вместо системного треугольника. */
-.vnm-filter__summary::-webkit-details-marker {
-  display: none;
+.vnm-filter__button:hover,
+.vnm-filter__button--active {
+  color: var(--vnm-fg-subtle);
 }
 
-.vnm-filter__summary:hover {
-  border-color: var(--vnm-border-strong);
-}
-
-.vnm-filter__summary:focus-visible {
+.vnm-filter__button:focus-visible {
   outline: 2px solid var(--vnm-focus-ring);
   outline-offset: 1px;
 }
 
 .vnm-filter__badge {
-  min-width: 16px;
-  padding: 0 var(--vnm-space-1);
+  position: absolute;
+  top: 0;
+  right: 0;
+  min-width: 14px;
   border-radius: var(--vnm-radius-sm);
   background: var(--vnm-accent);
   color: var(--vnm-accent-fg);
   font-size: var(--vnm-font-size-sm);
   font-weight: var(--vnm-font-weight-bold);
-  line-height: 16px;
+  line-height: 14px;
   text-align: center;
 }
 
 .vnm-filter__panel {
   position: absolute;
-  z-index: 10;
+  z-index: 30;
   top: calc(100% + var(--vnm-space-1));
   left: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--vnm-space-3);
-  min-width: 220px;
-  max-height: 320px;
-  padding: var(--vnm-space-3);
+  align-items: flex-start;
+  gap: var(--vnm-space-2);
+  box-sizing: border-box;
+  width: var(--vnm-filter-width);
+  max-height: var(--vnm-filter-height);
+  padding: var(--vnm-space-4);
+  border-radius: var(--vnm-radius-md);
+  background: var(--vnm-surface);
+  box-shadow: var(--vnm-shadow-lg);
+}
+
+.vnm-filter__head {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--vnm-space-2);
+  width: 100%;
+}
+
+.vnm-filter__head-icon {
+  flex-shrink: 0;
+  color: var(--vnm-fg-muted);
+}
+
+.vnm-filter__title {
+  flex: 1 1 auto;
+  margin: 0;
+  color: var(--vnm-fg-subtle);
+  font-size: var(--vnm-font-size-lg);
+  font-weight: var(--vnm-font-weight-bold);
+  line-height: var(--vnm-line-height-lg);
+}
+
+.vnm-filter__reset {
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--vnm-fg-subtle);
+  font-family: var(--vnm-font);
+  font-size: var(--vnm-font-size-sm);
+  cursor: pointer;
+}
+
+.vnm-filter__reset:disabled {
+  color: var(--vnm-fg-muted);
+  cursor: not-allowed;
+}
+
+.vnm-filter__reset:focus-visible {
+  outline: 2px solid var(--vnm-focus-ring);
+  outline-offset: 1px;
+}
+
+.vnm-filter__search {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 6px 10px;
   border: 1px solid var(--vnm-border);
   border-radius: var(--vnm-radius-md);
-  background: var(--vnm-surface-raised);
-  box-shadow: var(--vnm-shadow-lg);
+}
+
+.vnm-filter__search-input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--vnm-fg);
+  font-family: var(--vnm-font);
+  font-size: var(--vnm-font-size);
+}
+
+.vnm-filter__search-input::placeholder {
+  color: var(--vnm-fg-subtle);
+}
+
+.vnm-filter__search-input:focus {
+  outline: none;
+}
+
+.vnm-filter__groups {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--vnm-space-2);
+  width: 100%;
+  min-height: 0;
   overflow-y: auto;
 }
 
@@ -156,25 +360,79 @@ function reset(): void {
   display: flex;
   flex-direction: column;
   gap: var(--vnm-space-1);
-  margin: 0;
-  padding: 0;
-  border: 0;
 }
 
-.vnm-filter__legend {
-  padding: 0 0 var(--vnm-space-1);
-  color: var(--vnm-fg-muted);
-  font-size: var(--vnm-font-size-sm);
+.vnm-filter__group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--vnm-space-2);
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.vnm-filter__group-title {
+  color: var(--vnm-fg-subtle);
+  font-family: var(--vnm-font);
+  font-size: var(--vnm-font-size-lg);
   font-weight: var(--vnm-font-weight-bold);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  line-height: var(--vnm-line-height-lg);
+}
+
+.vnm-filter__group-head:focus-visible {
+  outline: 2px solid var(--vnm-focus-ring);
+  outline-offset: 2px;
+}
+
+.vnm-filter__chevron {
+  flex-shrink: 0;
+  color: var(--vnm-fg-subtle);
+  transition: transform var(--vnm-transition);
+}
+
+.vnm-filter__chevron--closed {
+  transform: rotate(-90deg);
+}
+
+.vnm-filter__options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vnm-space-1);
 }
 
 .vnm-filter__option {
   display: flex;
   align-items: center;
   gap: var(--vnm-space-2);
+  color: var(--vnm-fg);
+  font-size: var(--vnm-font-size-lg);
+  line-height: var(--vnm-line-height-lg);
   cursor: pointer;
+}
+
+/* Настоящий чекбокс остаётся для клавиатуры и скринридеров, а рисуется иконка. */
+.vnm-filter__checkbox {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.vnm-filter__checkbox-icon {
+  flex-shrink: 0;
+  color: var(--vnm-fg-muted);
+}
+
+.vnm-filter__checkbox-icon--checked {
+  color: var(--vnm-accent);
+}
+
+.vnm-filter__checkbox:focus-visible + .vnm-filter__checkbox-icon {
+  outline: 2px solid var(--vnm-focus-ring);
+  outline-offset: 1px;
 }
 
 .vnm-filter__option-label {
@@ -194,30 +452,5 @@ function reset(): void {
   margin: 0;
   color: var(--vnm-fg-muted);
   font-size: var(--vnm-font-size-sm);
-}
-
-.vnm-filter__reset {
-  padding: var(--vnm-space-1) var(--vnm-space-2);
-  border: 1px solid var(--vnm-border);
-  border-radius: var(--vnm-radius-sm);
-  background: var(--vnm-surface);
-  color: var(--vnm-fg);
-  font-family: var(--vnm-font);
-  font-size: var(--vnm-font-size);
-  cursor: pointer;
-}
-
-.vnm-filter__reset:disabled {
-  color: var(--vnm-fg-muted);
-  cursor: not-allowed;
-}
-
-.vnm-filter__reset:not(:disabled):hover {
-  border-color: var(--vnm-border-strong);
-}
-
-.vnm-filter__reset:focus-visible {
-  outline: 2px solid var(--vnm-focus-ring);
-  outline-offset: 1px;
 }
 </style>

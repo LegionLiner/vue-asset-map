@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useTranslate } from '../../composables/useTranslate'
+import { IconSearch } from '../icons/index'
 
 /**
- * Поле поиска по карте.
+ * Поле поиска.
+ *
+ * Без своего фона: в тулбаре карты контролы «висят» над полотном, а фон даёт
+ * общая плашка тулбара.
  *
  * Debounce живёт в `useFilters`, а не здесь: поле обязано отзываться на каждое
  * нажатие, иначе ввод «залипает». Отложен только пересчёт графа.
@@ -25,10 +29,6 @@ const summary = computed(() => {
     ? t.value('search.results', { count: props.resultCount })
     : t.value('search.empty')
 })
-
-function clear(): void {
-  model.value = ''
-}
 </script>
 
 <template>
@@ -46,10 +46,12 @@ function clear(): void {
       type="button"
       class="vnm-search__clear"
       :aria-label="t('search.clear')"
-      @click="clear"
+      @click="model = ''"
     >
       <span aria-hidden="true">×</span>
     </button>
+
+    <IconSearch v-else class="vnm-search__icon" />
 
     <!-- Счётчик в live-области: пользователь клавиатуры узнаёт результат, не
          уходя из поля. -->
@@ -64,47 +66,68 @@ function clear(): void {
   display: flex;
   align-items: center;
   gap: var(--vnm-space-2);
+  align-self: stretch;
+  padding: 6px 10px;
   min-width: 0;
 }
 
 .vnm-search__input {
-  width: 260px;
-  max-width: 100%;
+  flex: 1 1 auto;
+  width: 100%;
   min-width: 0;
-  padding: var(--vnm-space-1) var(--vnm-space-2);
-  border: 1px solid var(--vnm-border);
-  border-radius: var(--vnm-radius-sm);
-  background: var(--vnm-surface);
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: var(--vnm-fg);
   font-family: var(--vnm-font);
   font-size: var(--vnm-font-size);
+  line-height: var(--vnm-line-height-sm);
 }
 
 .vnm-search__input::placeholder {
-  color: var(--vnm-fg-muted);
+  color: var(--vnm-fg-subtle);
+}
+
+/* Системный крестик у type="search" заменён своей кнопкой. */
+.vnm-search__input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.vnm-search__input:focus {
+  outline: none;
 }
 
 .vnm-search__input:focus-visible {
-  border-color: var(--vnm-accent);
   outline: 2px solid var(--vnm-focus-ring);
-  outline-offset: -1px;
+  outline-offset: 2px;
+}
+
+.vnm-search__icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: var(--vnm-fg-muted);
 }
 
 .vnm-search__clear {
-  flex: 0 0 auto;
-  width: 22px;
-  height: 22px;
-  border: 1px solid var(--vnm-border);
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
   border-radius: var(--vnm-radius-sm);
-  background: var(--vnm-surface);
+  background: transparent;
   color: var(--vnm-fg-muted);
+  font-size: var(--vnm-font-size-lg);
   line-height: 1;
   cursor: pointer;
 }
 
 .vnm-search__clear:hover {
-  border-color: var(--vnm-border-strong);
-  color: var(--vnm-fg);
+  color: var(--vnm-fg-subtle);
 }
 
 .vnm-search__clear:focus-visible {
