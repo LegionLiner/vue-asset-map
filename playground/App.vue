@@ -1,14 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from 'vue'
 import { NetworkMap, type FilterState, type NetworkMapExposed, type ThemeMode } from 'network-map'
-import {
-  entities,
-  links,
-  statusColors,
-  views,
-  type AssetMeta,
-  type DemoLink,
-} from '@fixtures/infra'
+import { entities, links, statusColors, views, type AssetMeta, type DemoLink } from '@fixtures/infra'
 
 /**
  * Демо реального кейса: два вида одной инфраструктуры, поиск, свёртка фермы
@@ -80,26 +73,11 @@ function neighborsOf(id: string): DemoLink[] {
     <div class="pg-bar">
       <span class="pg-bar__title">network-map · плейграунд</span>
 
-      <label>
-        Вид
-        <select v-model="viewId">
-          <option v-for="view in views" :key="view.id" :value="view.id">{{ view.label }}</option>
-        </select>
-      </label>
+      <span class="pg-bar__hint">
+        Переключатель видов, поиск и фильтры — встроенные контролы библиотеки в тулбаре ниже
+      </span>
 
-      <label>
-        Поиск
-        <input
-          v-model="filters.query"
-          type="search"
-          placeholder="Dmitry, 10.38.24.*, 100.64.0.0/24"
-          size="26"
-        />
-      </label>
-
-      <button type="button" @click="toggleTheme">
-        Тема: {{ theme === 'dark' ? 'тёмная' : 'светлая' }}
-      </button>
+      <button type="button" @click="toggleTheme">Тема: {{ theme === 'dark' ? 'тёмная' : 'светлая' }}</button>
 
       <button type="button" :disabled="!canTracePath" @click="tracePath">Показать путь</button>
       <button type="button" :disabled="!lastPath" @click="clearPath">Сбросить путь</button>
@@ -125,7 +103,6 @@ function neighborsOf(id: string): DemoLink[] {
       :views="views"
       :theme="theme"
       :theme-config="{ statusColors }"
-      :show-toolbar="false"
     >
       <!-- Панель подробностей: библиотека даёт контейнер, шапку, кнопку закрытия
            и табы; наполнение — наше. Пакет не знает наших полей `meta`. -->

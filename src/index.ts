@@ -36,6 +36,11 @@ export { default as GroupNode } from './components/nodes/GroupNode.vue'
 export { default as NetworkEdge } from './components/edges/NetworkEdge.vue'
 export { default as DetailsPanel } from './components/panel/DetailsPanel.vue'
 export { default as DetailsSection } from './components/panel/DetailsSection.vue'
+// Контролы работают и вне карты: локаль они берут из контекста, а при его
+// отсутствии — из встроенной.
+export { default as SearchInput } from './components/controls/SearchInput.vue'
+export { default as ViewSwitcher } from './components/controls/ViewSwitcher.vue'
+export { default as FilterMenu } from './components/controls/FilterMenu.vue'
 
 // Реестр типов узлов — для тех, кто собирает свой набор компонентов.
 export {
@@ -57,6 +62,7 @@ export { useLayout } from './composables/useLayout'
 export { useFlowElements } from './composables/useFlowElements'
 export { useSelection } from './composables/useSelection'
 export { resolveTheme } from './composables/useTheme'
+export { useTranslate } from './composables/useTranslate'
 export { useMapContext } from './composables/useMapContext'
 export type { MapContext } from './composables/useMapContext'
 export type {

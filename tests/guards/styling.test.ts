@@ -134,10 +134,9 @@ describe('строки интерфейса живут только в src/local
 
   it('компоненты не импортируют конкретную локаль напрямую', () => {
     for (const { path, content } of vueSources) {
-      expect(
-        /from\s+['"].*locale\/(?:ru|en)['"]/.test(content),
-        `${path} импортирует локаль жёстко`,
-      ).toBe(false)
+      expect(/from\s+['"].*locale\/(?:ru|en)['"]/.test(content), `${path} импортирует локаль жёстко`).toBe(
+        false,
+      )
     }
   })
 

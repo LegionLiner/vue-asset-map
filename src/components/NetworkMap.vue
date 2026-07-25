@@ -22,6 +22,9 @@ import { useSelection } from '../composables/useSelection'
 import { useFlowElements } from '../composables/useFlowElements'
 import { provideMapContext, type ArrowDirection, type MapContext } from '../composables/useMapContext'
 import DetailsPanel from './panel/DetailsPanel.vue'
+import SearchInput from './controls/SearchInput.vue'
+import ViewSwitcher from './controls/ViewSwitcher.vue'
+import FilterMenu from './controls/FilterMenu.vue'
 import { buildEdgeTypes, buildNodeTypes } from '../registry/nodeRegistry'
 import { createTranslator, resolveLocale } from '../locale/index'
 import { findPaths } from '../core/traverse'
@@ -126,6 +129,17 @@ const layoutState = useLayout({
   onDone: (engine, positions) => emit('layout-done', { engine, positions }),
   onError: (error) => emit('error', error),
 })
+
+/**
+ * Частичное обновление состояния фильтра.
+ *
+ * Всегда новый объект: `filters` может быть контролируемым снаружи через
+ * `v-model:filters`, и правка на месте не породила бы события обновления —
+ * вдобавок это была бы мутация объекта, принадлежащего потребителю.
+ */
+function patchFilters(patch: Partial<FilterState>): void {
+  filters.value = { ...filters.value, ...patch }
+}
 
 const selectionState = useSelection(selection)
 
@@ -425,6 +439,23 @@ defineExpose({
     <div v-if="showToolbar" class="vnm-toolbar">
       <div class="vnm-toolbar__group">
         <slot name="toolbar-left" />
+        <!-- Один вид переключать не нужно, и место в тулбаре не бесконечное. -->
+        <ViewSwitcher
+          v-if="views && views.length > 1"
+          :model-value="viewId"
+          :views="views"
+          @update:model-value="viewId = $event"
+        />
+        <SearchInput
+          :model-value="filters.query"
+          :result-count="filterState.matchedIds.value.size"
+          @update:model-value="patchFilters({ query: $event })"
+        />
+        <FilterMenu
+          :model-value="filters"
+          :facets="filterState.facets.value"
+          @update:model-value="filters = $event"
+        />
       </div>
       <div class="vnm-toolbar__group vnm-toolbar__group--end">
         <slot name="toolbar-right" />

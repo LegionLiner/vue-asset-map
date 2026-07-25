@@ -63,9 +63,7 @@ describe('панель подробностей: каркас от пакета'
     const wrapper = await mountMap()
     const panel = await openPanel(wrapper, 'Vlad')
 
-    expect(panel.find('.vnm-panel__status').attributes('style')).toContain(
-      'var(--vnm-status-offline)',
-    )
+    expect(panel.find('.vnm-panel__status').attributes('style')).toContain('var(--vnm-status-offline)')
 
     wrapper.unmount()
   })
@@ -96,9 +94,7 @@ describe('панель подробностей: каркас от пакета'
     expect(panel.findAll('[role="tab"]')[1]?.attributes('aria-selected')).toBe('true')
 
     await openPanel(wrapper, 'Keenetic 1')
-    expect(wrapper.find('.vnm-panel').findAll('[role="tab"]')[0]?.attributes('aria-selected')).toBe(
-      'true',
-    )
+    expect(wrapper.find('.vnm-panel').findAll('[role="tab"]')[0]?.attributes('aria-selected')).toBe('true')
 
     wrapper.unmount()
   })
@@ -185,10 +181,7 @@ describe('панель подробностей: слоты потребител
   })
 
   it('#details получает активный таб и реагирует на переключение', async () => {
-    const wrapper = await mountMap(
-      {},
-      { details: (props) => h('div', { class: 'own-body' }, props.tab) },
-    )
+    const wrapper = await mountMap({}, { details: (props) => h('div', { class: 'own-body' }, props.tab) })
 
     const panel = await openPanel(wrapper, 'Dmitry')
     expect(panel.find('.own-body').text()).toBe('overview')
