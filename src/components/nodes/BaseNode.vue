@@ -39,6 +39,19 @@ const sublabels = computed(() => {
 const badges = computed(() => (map.simplified.value ? [] : (entity.value?.badges ?? [])))
 
 const statusColor = computed(() => map.statusColorOf(entity.value?.status))
+
+const markers = computed(() => map.markersFor(props.id))
+
+/**
+ * Цвет кружка.
+ *
+ * У заражённого узла маркеры красятся цветом заражения независимо от своего:
+ * принадлежность важна, но факт захвата важнее, и кружки не должны спорить с
+ * остальной раскраской узла.
+ */
+function markerColor(marker: { color: string }): string {
+  return map.isInfected(props.id) ? 'var(--vnm-marker-infected)' : marker.color
+}
 const icon = computed(() => (entity.value ? map.iconFor(entity.value.kind) : undefined))
 
 /** Слот `#node-{kind}` подменяет содержимое круга. */
@@ -169,6 +182,26 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
         {{ sublabel }}
       </span>
     </div>
+
+    <!-- Маркеры принадлежности: те же группировки, что и связи, но читаются
+         взглядом — нажимать на узел не нужно. -->
+    <span v-if="markers.length > 0 && !map.simplified.value" class="vnm-node__markers">
+      <button
+        v-for="marker in markers"
+        :key="marker.id"
+        type="button"
+        class="vnm-node__marker"
+        :aria-label="map.t('marker.membership', { label: marker.label })"
+        :title="marker.label"
+        @mouseenter="map.onMarkerEnter(marker.id)"
+        @mouseleave="map.onMarkerLeave()"
+        @focus="map.onMarkerFocus(marker.id)"
+        @blur="map.onMarkerLeave()"
+        @click.stop
+      >
+        <span class="vnm-node__marker-dot" :style="{ backgroundColor: markerColor(marker) }" />
+      </button>
+    </span>
 
     <span
       v-if="!map.simplified.value && badges.length > 0"
@@ -403,6 +436,44 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
    единственный способ различить их с одного взгляда. */
 .vnm-node__sublabel-overlay {
   color: var(--vnm-node-overlay-color);
+}
+
+/* Маркеры принадлежности: ряд кружков под плашкой, по центру. */
+.vnm-node__markers {
+  display: flex;
+  justify-content: center;
+  gap: var(--vnm-marker-gap);
+  /* Отступ задаётся здесь, а не через gap контейнера: у плашки и у бейджей свои
+     расстояния, и общий gap развалил бы оба. */
+  margin-top: calc(var(--vnm-marker-offset) - var(--vnm-node-label-gap));
+}
+
+.vnm-node__marker {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: var(--vnm-marker-size);
+  height: var(--vnm-marker-size);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  /* Белая подложка: кружок читается и на плашке, и на полотне. */
+  background: var(--vnm-marker-bg);
+  cursor: pointer;
+}
+
+.vnm-node__marker:focus-visible {
+  outline: 2px solid var(--vnm-focus-ring);
+  outline-offset: 1px;
+}
+
+.vnm-node__marker-dot {
+  width: var(--vnm-marker-dot-size);
+  height: var(--vnm-marker-dot-size);
+  border-radius: 50%;
+  background: var(--vnm-marker-1);
 }
 
 /* Бейджи — под плашкой, а не внутри: внутри места ровно под три строки. */

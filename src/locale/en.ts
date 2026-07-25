@@ -61,6 +61,8 @@ export const en: LocaleMessages = {
 
   'minimap.label': 'Overview map',
 
+  'marker.membership': 'Membership: {label}',
+
   'node.status': 'Status: {status}',
   'node.badges': 'Badges: {count}',
 }

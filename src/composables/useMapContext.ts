@@ -3,6 +3,7 @@ import type { EntityId, NetworkEntity } from '../types/entity'
 import type { NetworkGraph } from '../types/graph'
 import type { CollapsedGroup } from '../types/collapse'
 import type { Translate } from '../types/locale'
+import type { ResolvedNodeMarker } from '../types/props'
 
 export type ArrowDirection = 'up' | 'down' | 'left' | 'right'
 
@@ -50,6 +51,12 @@ export interface MapContext {
   isHighlighted: (id: string) => boolean
   isEdgeHighlighted: (edgeId: string) => boolean
   isEdgeDimmed: (edgeId: string) => boolean
+
+  /** Маркеры принадлежности узла: кружки под подписью. */
+  markersFor: (id: EntityId) => readonly ResolvedNodeMarker[]
+  onMarkerEnter: (markerId: string) => void
+  onMarkerLeave: () => void
+  onMarkerFocus: (markerId: string) => void
 
   /** Узел попал в зону распространения «заражения». */
   isInfected: (id: string) => boolean

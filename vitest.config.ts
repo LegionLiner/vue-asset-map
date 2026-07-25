@@ -8,6 +8,8 @@ export default defineConfig({
     // Component tests opt in with a `@vitest-environment jsdom` docblock.
     environment: 'node',
     include: ['tests/**/*.test.ts'],
+    // Заглушки ResizeObserver и размеров элементов: без них VueFlow падает в
+    // jsdom, и все компонентные тесты не доходят до проверяемого поведения.
     setupFiles: ['tests/setup/dom.ts'],
     coverage: {
       provider: 'v8',

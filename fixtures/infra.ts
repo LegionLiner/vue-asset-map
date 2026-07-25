@@ -4,7 +4,13 @@
  * Лежит вне `src/`, потому что не должна попадать в публикуемый пакет: это
  * данные примера, а не часть API библиотеки.
  */
-import type { FilterGroupDef, NetworkEntity, NetworkLink, NetworkView } from '../src/types/index'
+import type {
+  FilterGroupDef,
+  NetworkEntity,
+  NetworkLink,
+  NetworkView,
+  NodeMarkerDef,
+} from '../src/types/index'
 
 /** Метаданные активов в этом демо. Потребитель задаёт свою форму. */
 export interface AssetMeta {
@@ -400,6 +406,31 @@ export const filterGroups: FilterGroupDef[] = [
       { value: 'low', label: 'Низкий' },
     ],
     defaultOpen: false,
+  },
+]
+
+/**
+ * Маркеры принадлежности этого демо: подсеть актива.
+ *
+ * Цвета не заданы — библиотека раздаёт их из палитры по порядку объявления.
+ * Своих цветов у маркеров быть не обязано: если у потребителя они есть, он
+ * передаёт `color` и палитра не используется.
+ */
+export const nodeMarkers: NodeMarkerDef[] = [
+  {
+    id: 'internet',
+    label: 'Интернет',
+    match: (entity) => (entity.meta as AssetMeta | undefined)?.subnet === 'internet',
+  },
+  {
+    id: 'vpn',
+    label: 'VPN',
+    match: (entity) => (entity.meta as AssetMeta | undefined)?.subnet === 'vpn',
+  },
+  {
+    id: 'docker',
+    label: 'Docker Bridge',
+    match: (entity) => (entity.meta as AssetMeta | undefined)?.subnet === 'docker',
   },
 ]
 

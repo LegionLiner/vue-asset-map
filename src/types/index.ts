@@ -13,3 +13,4 @@ export type {
 } from './filter'
 export type { ResolvedTheme, ThemeConfig, ThemeMode } from './theme'
 export type { LocaleKey, LocaleMessages, PartialLocaleMessages, Translate } from './locale'
+export type { InfectionOptions, NodeMarkerDef, ResolvedNodeMarker } from './props'

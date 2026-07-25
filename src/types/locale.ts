@@ -63,6 +63,8 @@ export interface LocaleMessages {
 
   'minimap.label': string
 
+  'marker.membership': string
+
   'node.status': string
   'node.badges': string
 }

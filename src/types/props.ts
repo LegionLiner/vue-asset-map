@@ -14,6 +14,30 @@ export interface NetworkMapLayoutSpec {
   options?: unknown
 }
 
+/**
+ * Маркер принадлежности — кружок под подписью узла.
+ *
+ * Показывает те же группировки, что и связи, но читается взглядом: не нужно
+ * ничего нажимать, чтобы понять, что к чему относится. Наведение на кружок
+ * подсвечивает всех, у кого он есть.
+ */
+export interface NodeMarkerDef {
+  id: string
+  /** Цвет заполнения. Без него берётся из палитры токенов по порядку. */
+  color?: string
+  /** Подпись для screen reader и подсказки. Без неё используется `id`. */
+  label?: string
+  /** Есть ли этот маркер у сущности. */
+  match: (entity: NetworkEntity) => boolean
+}
+
+/** Маркер с уже выбранным цветом — то, что получает узел. */
+export interface ResolvedNodeMarker {
+  id: string
+  color: string
+  label: string
+}
+
 /** Как считать распространение «заражения» от помеченных сущностей. */
 export interface InfectionOptions {
   /** Дефолт `downstream`: по направлению связей. */
@@ -73,6 +97,16 @@ export interface NetworkMapProps<E = unknown, L = unknown> {
    */
   infected?: EntityId[]
   infectionOptions?: InfectionOptions
+
+  /**
+   * Маркеры принадлежности под подписью узла.
+   *
+   * Порядок кружков повторяет порядок этого массива, поэтому одинаковые маркеры
+   * у разных узлов всегда стоят на одном месте.
+   */
+  markers?: NodeMarkerDef[]
+  /** Задержка перед подсветкой при наведении на кружок, мс. Дефолт 500. */
+  markerHoverDelay?: number
 
   /** Рендерить только видимые элементы полотна. Дефолт true. */
   onlyRenderVisibleElements?: boolean

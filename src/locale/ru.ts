@@ -61,6 +61,8 @@ export const ru: LocaleMessages = {
 
   'minimap.label': 'Обзорная карта',
 
+  'marker.membership': 'Принадлежность: {label}',
+
   'node.status': 'Состояние: {status}',
   'node.badges': 'Метки: {count}',
 }

@@ -66,6 +66,7 @@ export { useLayout } from './composables/useLayout'
 export { useFlowElements } from './composables/useFlowElements'
 export { useSelection } from './composables/useSelection'
 export { resolveTheme } from './composables/useTheme'
+export { useNodeMarkers } from './composables/useNodeMarkers'
 export { useTranslate } from './composables/useTranslate'
 export { useMapContext } from './composables/useMapContext'
 export type { MapContext } from './composables/useMapContext'
@@ -88,6 +89,8 @@ export type {
   FocusOptions,
   InfectionOptions,
   NetworkMapExposed,
+  NodeMarkerDef,
+  ResolvedNodeMarker,
   NetworkMapLayoutSpec,
   NetworkMapModels,
   NetworkMapProps,

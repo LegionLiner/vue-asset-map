@@ -168,7 +168,7 @@ const headerSlot = computed(() => map.slot('details-header'))
    Отступ сверху — общий токен: когда в тулбаре справа есть кнопки приложения,
    окна начинаются под ними, а не поверх. */
 .vnm-details {
-  top: var(--vnm-windows-top);
+  top: var(--vnm-details-top);
   right: var(--vnm-space-3);
 }
 

@@ -5,6 +5,7 @@ import {
   entities as fixtureEntities,
   filterGroups,
   links as fixtureLinks,
+  nodeMarkers,
   statusColors,
   views,
   type AssetMeta,
@@ -279,6 +280,7 @@ const historyControls = [
       :theme="theme"
       :theme-config="{ statusColors, kindIcons }"
       :filter-options="{ groups: filterGroups }"
+      :markers="nodeMarkers"
       :max-details-windows="3"
       :infected="infected"
       :infection-options="{ maxDepth: infectionDepth }"

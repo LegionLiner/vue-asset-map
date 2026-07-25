@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="E = unknown, L = unknown">
-import { computed, ref, shallowRef, useSlots, watch, type Slot } from 'vue'
+import { computed, nextTick, onMounted, ref, shallowRef, useSlots, watch, type Slot } from 'vue'
 import { VueFlow, useVueFlow, type NodeDragEvent } from '@vue-flow/core'
 import type { EntityId, NetworkEntity, XY } from '../types/entity'
 import type { CollapsedGroup } from '../types/collapse'
@@ -19,6 +19,7 @@ import { useFilters } from '../composables/useFilters'
 import { useCollapse } from '../composables/useCollapse'
 import { useLayout, type NodeSize } from '../composables/useLayout'
 import { useSelection } from '../composables/useSelection'
+import { useNodeMarkers } from '../composables/useNodeMarkers'
 import { useFlowElements } from '../composables/useFlowElements'
 import { provideMapContext, type ArrowDirection, type MapContext } from '../composables/useMapContext'
 import DetailsPanel from './panel/DetailsPanel.vue'
@@ -172,6 +173,12 @@ const layoutState = useLayout({
 function patchFilters(patch: Partial<FilterState>): void {
   filters.value = { ...filters.value, ...patch }
 }
+
+const markerState = useNodeMarkers(
+  graph,
+  computed(() => props.markers),
+  computed(() => props.markerHoverDelay),
+)
 
 const selectionState = useSelection(selection)
 
@@ -434,18 +441,65 @@ const openFilterGroups = defineModel<string[] | undefined>('openFilterGroups', {
 
 const maxDetailWindows = computed(() => Math.max(0, props.maxDetailsWindows ?? 2))
 
+const windowsLayer = ref<HTMLElement>()
+
+/** Высота, занятая своими окнами потребителя у верхней кромки их слоя. */
+const customWindowsHeight = ref(0)
+
 /**
- * Опускает окна под тулбар, если в его правом слоте что-то есть.
+ * Своё окно считается «занимающим место сверху», если его верх не дальше этой
+ * полосы от кромки слоя. Перетащенное на середину полотна окно отжимать окна
+ * подробностей не должно.
+ */
+const TOP_BAND_PX = 24
+
+function measureCustomWindows(): void {
+  const layer = windowsLayer.value
+  if (!layer) {
+    customWindowsHeight.value = 0
+    return
+  }
+
+  const layerTop = layer.getBoundingClientRect().top
+  let occupied = 0
+  for (const child of layer.children) {
+    const rect = child.getBoundingClientRect()
+    if (rect.height === 0) continue
+    if (rect.top - layerTop > TOP_BAND_PX) continue
+    occupied = Math.max(occupied, rect.bottom - layerTop)
+  }
+
+  customWindowsHeight.value = occupied
+}
+
+// Замер перед открытием окна и при старте: именно в этот момент нужно знать,
+// сколько места сверху уже занято.
+onMounted(measureCustomWindows)
+watch(openDetails, () => void nextTick(measureCustomWindows))
+
+/**
+ * Отступы окон сверху.
  *
- * Слева в тулбаре стоят контролы карты — окно их и так не перекрывает, оно
- * прижато вправо. А кнопки приложения из `#toolbar-right` окно накрыло бы, и
- * нажать их стало бы нельзя. Пустой слот справа — окна прижимаются к верху.
+ * `--vnm-windows-top` опускает окна под тулбар, если в его правом слоте что-то
+ * есть: слева стоят контролы карты, их прижатое вправо окно и так не перекрывает,
+ * а кнопки приложения из `#toolbar-right` накрыло бы, и нажать их стало бы нельзя.
+ *
+ * `--vnm-details-top` дополнительно опускает окна подробностей под свои окна
+ * потребителя — чтобы новое окно не закрывало, например, историю.
  */
 const canvasStyle = computed<Record<string, string> | undefined>(() => {
-  if (!props.showToolbar || !slots['toolbar-right']) return undefined
-  return {
-    '--vnm-windows-top': 'calc(var(--vnm-space-3) + var(--vnm-toolbar-height) + var(--vnm-space-2))',
+  const style: Record<string, string> = {}
+
+  if (props.showToolbar && slots['toolbar-right']) {
+    style['--vnm-windows-top'] = 'calc(var(--vnm-space-3) + var(--vnm-toolbar-height) + var(--vnm-space-2))'
   }
+
+  if (customWindowsHeight.value > 0) {
+    style['--vnm-details-top'] =
+      `calc(var(--vnm-windows-top) + ${customWindowsHeight.value}px + var(--vnm-space-2))`
+  }
+
+  return Object.keys(style).length > 0 ? style : undefined
 })
 
 /**
@@ -558,8 +612,22 @@ const infectedEdgeIds = computed<ReadonlySet<string>>(() => {
   return edges
 })
 
+/** Наведённый маркер в терминах узлов схлопнутого графа. */
+const markerFocusIds = computed<ReadonlySet<string>>(() => {
+  if (markerState.hoveredMarker.value === undefined) return new Set()
+  const focus = new Set<string>()
+  for (const id of markerState.memberIds.value) focus.add(resolveVisual(id))
+  return focus
+})
+
+const markerFocusActive = computed(() => markerState.hoveredMarker.value !== undefined)
+
 const dimmedNode = (id: string): boolean => {
-  // Поиск главнее выделения: пока фильтр активен, он и решает, что видно.
+  // Порядок приоритетов: наведение на маркер — самое свежее и самое короткое
+  // действие пользователя, поэтому пока курсор на кружке, показываем именно
+  // принадлежность. Затем поиск: пока фильтр активен, он решает, что видно.
+  // Выделение — в последнюю очередь, оно живёт дольше всех.
+  if (markerFocusActive.value) return !markerFocusIds.value.has(id)
   if (filterState.active.value) return !filterState.matchedIds.value.has(id)
   if (selectionFocusActive.value) return !selectionFocusIds.value.has(id)
   return false
@@ -568,6 +636,14 @@ const dimmedNode = (id: string): boolean => {
 const dimmedEdgeIds = computed<ReadonlySet<string>>(() => {
   const edges = new Set<string>()
   const links = collapseState.collapsed.value.links
+
+  if (markerFocusActive.value) {
+    for (const link of links) {
+      const inside = markerFocusIds.value.has(link.source) && markerFocusIds.value.has(link.target)
+      if (!inside) edges.add(link.id)
+    }
+    return edges
+  }
 
   if (filterState.active.value) {
     const matched = filterState.matchedIds.value
@@ -604,6 +680,10 @@ const context: MapContext = {
   iconFor: (kind) => props.themeConfig?.kindIcons?.[kind],
   groupById: (groupId) => collapseState.groupById.value.get(groupId),
   entityById: (id) => graph.value.entities.get(id),
+  markersFor: markerState.markersFor,
+  onMarkerEnter: markerState.onMarkerEnter,
+  onMarkerLeave: markerState.onMarkerLeave,
+  onMarkerFocus: markerState.onMarkerFocus,
   isRootNode: (id) => graph.value.parentOf.get(id) === null,
   hasChildren: (id) => (graph.value.childrenOf.get(id)?.length ?? 0) > 0,
   isSubtreeCollapsed: (id) => collapseState.isSubtreeCollapsed(id),
@@ -750,7 +830,7 @@ defineExpose({
         <!-- Свои окна потребителя: поверх окон подробностей. Обёртка не
              перехватывает указатель, чтобы полотно оставалось перетаскиваемым
              в промежутках между окнами. -->
-        <div v-if="slots.windows" class="vnm-windows">
+        <div v-if="slots.windows" ref="windowsLayer" class="vnm-windows">
           <slot name="windows" />
         </div>
       </div>
