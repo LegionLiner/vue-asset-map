@@ -141,6 +141,20 @@ export interface AssetMapProps<E = unknown, L = unknown> {
   searchDebounce?: number
   /** Show a loading overlay above the canvas. */
   loading?: boolean
+
+  /**
+   * Fit the canvas to its content whenever the visible nodes finish laying
+   * out — on mount, and again after a view switch, a group collapse/expand or
+   * a layout engine change reshapes what's on screen.
+   *
+   * Off by default: an application that manages its own `viewport` (a saved
+   * position, a deliberate `focus` on load) should not have that overridden.
+   * Waits on Vue Flow's own node-measurement signal rather than a fixed
+   * delay, so it fires exactly once dimensions are known, never on a guess.
+   *
+   * @default false
+   */
+  autoFitView?: boolean
 }
 
 /** Two-way bindings. Without a `v-model` the component owns the state itself. */

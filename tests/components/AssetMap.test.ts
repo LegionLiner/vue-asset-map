@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { h, nextTick } from 'vue'
 import AssetMap from '../../src/components/AssetMap.vue'
@@ -144,6 +144,22 @@ describe('<AssetMap> выделение и панель', () => {
 
     await wrapper.find('[aria-label^="Keenetic 1"]').trigger('click')
     expect(wrapper.emitted('selection-change')?.at(-1)?.[0]).toEqual(['keenetic-1'])
+
+    wrapper.unmount()
+  })
+
+  it('Shift+клик тоже добавляет узел к выделению', async () => {
+    // На macOS Ctrl+клик — системный жест правого клика: браузер шлёт вместо
+    // click событие contextmenu, и обработчик клика его не увидит вовсе. Shift
+    // с этим не конфликтует ни на одной платформе, поэтому именно он должен
+    // работать как аддитивный модификатор без исключений.
+    const wrapper = await mountMap()
+
+    await wrapper.find('[aria-label^="Keenetic 1"]').trigger('click')
+    await wrapper.find('[aria-label^="Keenetic 2"]').trigger('click', { shiftKey: true })
+    await nextTick()
+
+    expect(wrapper.emitted('selection-change')?.at(-1)?.[0]).toEqual(['keenetic-1', 'keenetic-2'])
 
     wrapper.unmount()
   })
@@ -542,6 +558,65 @@ describe('<AssetMap> устойчивость', () => {
 
     expect(entitiesCopy).toEqual(structuredClone(entities))
     expect(linksCopy).toEqual(structuredClone(links))
+
+    wrapper.unmount()
+  })
+})
+
+/**
+ * `ResizeObserver`, который реально стреляет колбэком, в отличие от глушилки
+ * из `tests/setup/dom.ts` (там `observe()` — no-op, и `useNodesInitialized`
+ * никогда не станет true). Подставляется только в этом describe и снимается
+ * после — остальные тесты файла на глобальную заглушку и не полагаются.
+ */
+class FiringResizeObserver {
+  private readonly callback: ResizeObserverCallback
+
+  constructor(callback: ResizeObserverCallback) {
+    this.callback = callback
+  }
+
+  observe(target: Element): void {
+    const callback = this.callback
+    const self = this as unknown as ResizeObserver
+    queueMicrotask(() => callback([{ target } as ResizeObserverEntry], self))
+  }
+
+  unobserve(): void {}
+  disconnect(): void {}
+}
+
+describe('<AssetMap> autoFitView', () => {
+  beforeEach(() => {
+    vi.stubGlobal('ResizeObserver', FiringResizeObserver)
+    // jsdom не реализует DOMMatrixReadOnly; Vue Flow читает из неё только m22
+    // (масштаб), разбирая CSS transform панели — identity-заглушка достаточна.
+    vi.stubGlobal(
+      'DOMMatrixReadOnly',
+      class {
+        m22 = 1
+      },
+    )
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('без autoFitView вьюпорт не трогается сам по себе', async () => {
+    const wrapper = await mountMap()
+    for (let i = 0; i < 5; i += 1) await flushPromises()
+
+    expect(wrapper.emitted('update:viewport')).toBeUndefined()
+
+    wrapper.unmount()
+  })
+
+  it('с autoFitView карта подгоняет вьюпорт под содержимое после раскладки', async () => {
+    const wrapper = await mountMap({ autoFitView: true })
+    for (let i = 0; i < 5; i += 1) await flushPromises()
+
+    expect(wrapper.emitted('update:viewport')).toBeDefined()
 
     wrapper.unmount()
   })

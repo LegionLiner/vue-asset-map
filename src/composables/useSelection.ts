@@ -52,7 +52,7 @@ export function useSelection(selection: Ref<EntityId[]>): UseSelectionReturn {
 
   const toggle = (id: EntityId, additive = false): void => {
     if (isSelected(id)) {
-      // Without Ctrl, clicking an already selected node leaves it as the only
+      // A plain click on an already selected node leaves it as the only
       // selection; clearing is what clicking the background is for.
       if (additive) deselect(id)
       else replace([id])

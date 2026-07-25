@@ -95,8 +95,11 @@ const arrowKeys: Readonly<Record<string, ArrowDirection>> = {
 function onKeydown(event: KeyboardEvent): void {
   if (event.key === 'Enter' || event.key === ' ') {
     event.preventDefault()
-    // The keyboard mirrors a click, additive selection on Ctrl/Meta included.
-    map.onNodeClick(props.id, new MouseEvent('click', { ctrlKey: event.ctrlKey, metaKey: event.metaKey }))
+    // The keyboard mirrors a click, additive selection included.
+    map.onNodeClick(
+      props.id,
+      new MouseEvent('click', { shiftKey: event.shiftKey, ctrlKey: event.ctrlKey, metaKey: event.metaKey }),
+    )
     return
   }
 

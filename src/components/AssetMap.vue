@@ -1,6 +1,6 @@
 <script setup lang="ts" generic="E = unknown, L = unknown">
 import { computed, nextTick, onMounted, ref, shallowRef, useSlots, watch, type Slot } from 'vue'
-import { VueFlow, useVueFlow, type NodeDragEvent } from '@vue-flow/core'
+import { VueFlow, useNodesInitialized, useVueFlow, type NodeDragEvent } from '@vue-flow/core'
 import type { EntityId, AssetEntity, XY } from '../types/entity'
 import type { CollapsedGroup } from '../types/collapse'
 import type { FilterState } from '../types/filter'
@@ -39,6 +39,7 @@ const props = withDefaults(defineProps<AssetMapProps<E, L>>(), {
   onlyRenderVisibleElements: true,
   lodThreshold: 0.5,
   loading: false,
+  autoFitView: false,
   // `collapse` is typed `CollapseRule | false`, so Vue treats it as a boolean
   // prop and casts an absent value to `false`. Without an explicit
   // `default: undefined` collapsing would be off by default — the exact opposite
@@ -201,6 +202,17 @@ const {
   dimensions: canvasSize,
 } = useVueFlow()
 
+/**
+ * True once every visible node has a measured size — Vue Flow gets this from a
+ * `ResizeObserver` on each node, so it flips back to `false` and then `true`
+ * again whenever the set of visible nodes changes, not just once at mount.
+ */
+const nodesReady = useNodesInitialized()
+
+watch(nodesReady, (ready) => {
+  if (ready && props.autoFitView) void fitView()
+})
+
 /** Overview nodes: the visible ones, with positions already computed. */
 const minimapNodes = computed<MiniMapNode[]>(() =>
   nodes.value
@@ -308,7 +320,12 @@ function payloadFor(id: string, event: MouseEvent): NodeEventPayload {
 }
 
 function onNodeClick(id: string, event: MouseEvent): void {
-  selectionState.toggle(id, event.ctrlKey || event.metaKey)
+  // Shift is the primary additive modifier, not just a fallback: on macOS,
+  // Ctrl+click is the system's own right-click emulation and is dispatched as
+  // `contextmenu` instead of `click` in most browsers, so a handler keyed only
+  // on `ctrlKey`/`metaKey` would never see it. Ctrl/Cmd are still honoured for
+  // whoever's muscle memory expects them, but Shift is the one that always works.
+  selectionState.toggle(id, event.shiftKey || event.ctrlKey || event.metaKey)
   // A group node gets no details window: a group has no entity behind it.
   if (graph.value.entities.has(id)) openDetail(id)
   emit('node-click', payloadFor(id, event))
