@@ -432,7 +432,21 @@ const openFilterGroups = defineModel<string[] | undefined>('openFilterGroups', {
   default: undefined,
 })
 
-const maxDetailWindows = computed(() => Math.max(0, props.maxDetailsWindows ?? 1))
+const maxDetailWindows = computed(() => Math.max(0, props.maxDetailsWindows ?? 2))
+
+/**
+ * Опускает окна под тулбар, если в его правом слоте что-то есть.
+ *
+ * Слева в тулбаре стоят контролы карты — окно их и так не перекрывает, оно
+ * прижато вправо. А кнопки приложения из `#toolbar-right` окно накрыло бы, и
+ * нажать их стало бы нельзя. Пустой слот справа — окна прижимаются к верху.
+ */
+const canvasStyle = computed<Record<string, string> | undefined>(() => {
+  if (!props.showToolbar || !slots['toolbar-right']) return undefined
+  return {
+    '--vnm-windows-top': 'calc(var(--vnm-space-3) + var(--vnm-toolbar-height) + var(--vnm-space-2))',
+  }
+})
 
 /**
  * Открывает окно для сущности.
@@ -651,7 +665,7 @@ defineExpose({
 <template>
   <div :class="['vnm-root', `vnm-theme-${theme}`]" @keydown="onRootKeydown">
     <div class="vnm-body">
-      <div class="vnm-canvas" role="application" :aria-label="t('canvas.label')">
+      <div class="vnm-canvas" role="application" :aria-label="t('canvas.label')" :style="canvasStyle">
         <!-- Тулбар висит над полотном и своего фона не имеет: фон есть только у
              самих контролов. Так карта не теряет вертикального места. -->
         <div v-if="showToolbar" class="vnm-toolbar">
@@ -849,7 +863,9 @@ defineExpose({
 .vnm-windows {
   position: absolute;
   z-index: 40;
-  inset: 0;
+  /* Слой начинается там же, где окна подробностей: свои окна потребителя тоже
+     не должны накрывать кнопки в тулбаре. */
+  inset: var(--vnm-windows-top) 0 0 0;
   pointer-events: none;
 }
 

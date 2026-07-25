@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import DetailsSection from './DetailsSection.vue'
 import MapWindow from '../MapWindow.vue'
 import { useMapContext } from '../../composables/useMapContext'
@@ -31,16 +31,14 @@ const tabs: readonly { id: TabId; labelKey: 'details.tab.overview' | 'details.ta
   { id: 'links', labelKey: 'details.tab.links' },
 ]
 
+/**
+ * Активный таб.
+ *
+ * Сбрасывать его при смене сущности не нужно: карта рендерит окна с `key` по id
+ * сущности, поэтому другая сущность — это другой экземпляр компонента с
+ * состоянием по умолчанию.
+ */
 const activeTab = ref<TabId>('overview')
-
-// Смена узла возвращает панель на первый таб: «Связи» предыдущего узла к новому
-// отношения не имеют.
-watch(
-  () => props.entity.id,
-  () => {
-    activeTab.value = 'overview'
-  },
-)
 
 const statusColor = computed(() => map.statusColorOf(props.entity.status))
 
@@ -166,11 +164,12 @@ const headerSlot = computed(() => map.slot('details-header'))
 </template>
 
 <style>
-/* Окно подробностей всегда прижато к правому верхнему углу полотна; дальше его
-   двигает пользователь. */
+/* Окно прижато к правому верхнему углу полотна; дальше его двигает пользователь.
+   Отступ сверху — общий токен: когда в тулбаре справа есть кнопки приложения,
+   окна начинаются под ними, а не поверх. */
 .vnm-details {
-  top: var(--vnm-space-4);
-  right: var(--vnm-space-4);
+  top: var(--vnm-windows-top);
+  right: var(--vnm-space-3);
 }
 
 .vnm-window__heading {

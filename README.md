@@ -100,7 +100,7 @@ const selection = ref<string[]>([])
 | `showToolbar`               | `boolean`                         | `true`               | Встроенный тулбар с поиском, видами и фильтрами.                       |
 | `showDetailsPanel`          | `boolean`                         | `true`               | Окна подробностей.                                                     |
 | `showMinimap`               | `boolean`                         | `false`              | Обзорная карта в углу полотна.                                         |
-| `maxDetailsWindows`         | `number`                          | `1`                  | Сколько окон подробностей открыто одновременно.                        |
+| `maxDetailsWindows`         | `number`                          | `2`                  | Сколько окон подробностей открыто одновременно.                        |
 | `neighborHighlightDepth`    | `number`                          | `1`                  | На сколько шагов подсвечивать связи выделенного узла. `0` — выключить. |
 | `infected`                  | `EntityId[]`                      | `[]`                 | Помеченные «заражёнными» сущности.                                     |
 | `infectionOptions`          | `InfectionOptions`                | `{}`                 | Как считать распространение захвата.                                   |
@@ -274,9 +274,9 @@ const map = useMapContext()
 
 ## Окна
 
-Подробности живут в плавающих окнах. По умолчанию открыто одно: клик по узлу
-заменяет его содержимое. `maxDetailsWindows` разрешает держать несколько сразу —
-тогда окна не приходится закрывать, их достаточно свернуть до шапки:
+Подробности живут в плавающих окнах. По умолчанию их можно держать два;
+`maxDetailsWindows` меняет лимит. Окна не приходится закрывать — их достаточно
+свернуть до шапки:
 
 ```vue
 <NetworkMap v-model:open-details="openDetails" :max-details-windows="3" :entities="entities" :links="links" />

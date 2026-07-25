@@ -376,7 +376,8 @@ describe('окно подробностей', () => {
   })
 
   it('смена узла возвращает окно в исходное положение', async () => {
-    const wrapper = await mountMap()
+    // Ровно одно окно: со несколькими каждое живёт своей позицией.
+    const wrapper = await mountMap({ maxDetailsWindows: 1 })
     await wrapper.find('[aria-label^="Dmitry"]').trigger('click')
     await nextTick()
 

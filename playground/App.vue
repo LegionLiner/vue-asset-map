@@ -11,6 +11,8 @@ import {
   type DemoEntity,
   type DemoLink,
 } from '@fixtures/infra'
+// Ядро без Vue доступно отдельным подпутём — здесь оно считает подпись к кнопке.
+import { blastRadius, buildGraph } from 'network-map/core'
 import {
   CloudIcon,
   ContainerIcon,
@@ -41,13 +43,35 @@ const openDetails = ref<string[]>([])
 /**
  * Режим «заражения».
  *
- * Помечаем координатор VPN: карта сама посчитает, что он захватывает. Глубина
- * ограничена двумя шагами — иначе в демо краснеет весь связный компонент и
- * смотреть не на что.
+ * Помечаем координатор VPN — карта сама посчитает, что он захватывает. Радиус
+ * управляется шагами, чтобы распространение было видно постепенно: на первом шаге
+ * краснеют только прямые связи, дальше захват расходится по графу.
  */
 const infectedSource = 'vps-tailscale'
 const infectionOn = ref(false)
+const infectionDepth = ref(1)
 const infected = computed(() => (infectionOn.value ? [infectedSource] : []))
+
+/**
+ * Тот же захват, посчитанный самим приложением через `network-map/core`.
+ *
+ * Нужен только для подписи «захвачено N узлов»: карта считает его внутри теми же
+ * функциями, поэтому число рядом с кнопкой всегда совпадает с тем, что покрашено.
+ */
+const capturedIds = computed(() => {
+  if (!infectionOn.value) return new Set<string>()
+  return blastRadius(buildGraph(entities.value, links.value), infectedSource, {
+    direction: 'downstream',
+    maxDepth: infectionDepth.value,
+    layers: [viewId.value ?? 'physical'],
+  })
+})
+
+const capturedLabels = computed(() =>
+  [...capturedIds.value]
+    .map((id) => entities.value.find((entity) => entity.id === id)?.label ?? id)
+    .join(', '),
+)
 /** Раскрытые списки фильтров: библиотека отдаёт их наружу, храним у себя. */
 const openFilterGroups = ref<string[] | undefined>(undefined)
 
@@ -195,13 +219,37 @@ const historyControls = [
         Тема: {{ theme === 'dark' ? 'тёмная' : 'светлая' }}
       </button>
 
-      <button
-        type="button"
-        :class="{ 'pg-bar__button--on': infectionOn }"
-        @click="infectionOn = !infectionOn"
-      >
-        Заражение: {{ infectionOn ? 'вкл' : 'выкл' }}
-      </button>
+      <span class="pg-infection">
+        <button
+          type="button"
+          :class="{ 'pg-bar__button--on': infectionOn }"
+          @click="infectionOn = !infectionOn"
+        >
+          Заражение: {{ infectionOn ? 'вкл' : 'выкл' }}
+        </button>
+
+        <!-- Шаги захвата: видно, как заражение расходится от Tailscale VPS. -->
+        <template v-if="infectionOn">
+          <button
+            type="button"
+            :disabled="infectionDepth <= 0"
+            aria-label="Уменьшить радиус захвата"
+            @click="infectionDepth -= 1"
+          >
+            −
+          </button>
+          <span class="pg-infection__depth">шаг {{ infectionDepth }}</span>
+          <button
+            type="button"
+            :disabled="infectionDepth >= 5"
+            aria-label="Увеличить радиус захвата"
+            @click="infectionDepth += 1"
+          >
+            +
+          </button>
+          <span class="pg-infection__count" :title="capturedLabels">захвачено: {{ capturedIds.size }}</span>
+        </template>
+      </span>
 
       <button type="button" :disabled="!canTracePath" @click="tracePath">Показать путь</button>
       <button type="button" :disabled="!lastPath" @click="clearPath">Сбросить путь</button>
@@ -233,7 +281,7 @@ const historyControls = [
       :filter-options="{ groups: filterGroups }"
       :max-details-windows="3"
       :infected="infected"
-      :infection-options="{ maxDepth: 2 }"
+      :infection-options="{ maxDepth: infectionDepth }"
       show-minimap
     >
       <!-- Правый слот шапки карты: место для действий приложения. -->

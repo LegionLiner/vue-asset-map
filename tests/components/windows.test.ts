@@ -39,13 +39,24 @@ async function clickNode(
 }
 
 describe('несколько окон подробностей', () => {
-  it('по умолчанию открыто одно окно: новый узел заменяет предыдущее', async () => {
+  it('по умолчанию можно держать два окна', async () => {
     const wrapper = await mountMap()
 
     await clickNode(wrapper, 'Dmitry')
     expect(wrapper.findAll('.vnm-window')).toHaveLength(1)
 
     await clickNode(wrapper, 'Vlad')
+    expect(wrapper.findAll('.vnm-window')).toHaveLength(2)
+
+    wrapper.unmount()
+  })
+
+  it('maxDetailsWindows: 1 возвращает поведение «одно окно на весь экран»', async () => {
+    const wrapper = await mountMap({ maxDetailsWindows: 1 })
+
+    await clickNode(wrapper, 'Dmitry')
+    await clickNode(wrapper, 'Vlad')
+
     const windows = wrapper.findAll('.vnm-window')
     expect(windows).toHaveLength(1)
     expect(windows[0]?.text()).toContain('Vlad')
@@ -258,6 +269,40 @@ describe('MapWindow: каркас для своих окон', () => {
     expect(style).toContain('right: 12px')
     expect(style).toContain('translate(0px, 0px)')
 
+    wrapper.unmount()
+  })
+})
+
+describe('окна не перекрывают кнопки приложения в тулбаре', () => {
+  it('без правого слота окна прижаты к верху полотна', async () => {
+    const wrapper = await mountMap()
+
+    // Токен не подменён — окна используют значение по умолчанию.
+    expect(wrapper.find('.vnm-canvas').attributes('style') ?? '').not.toContain('--vnm-windows-top')
+
+    wrapper.unmount()
+  })
+
+  it('с кнопкой в правом слоте окна опускаются под тулбар', async () => {
+    const wrapper = await mountMap(
+      {},
+      { 'toolbar-right': () => h('button', { class: 'add-btn' }, 'Добавить') },
+    )
+
+    const style = wrapper.find('.vnm-canvas').attributes('style') ?? ''
+    expect(style).toContain('--vnm-windows-top')
+    expect(style).toContain('var(--vnm-toolbar-height)')
+
+    wrapper.unmount()
+  })
+
+  it('выключенный тулбар отступ не создаёт', async () => {
+    const wrapper = await mountMap(
+      { showToolbar: false },
+      { 'toolbar-right': () => h('button', {}, 'Добавить') },
+    )
+
+    expect(wrapper.find('.vnm-canvas').attributes('style') ?? '').not.toContain('--vnm-windows-top')
     wrapper.unmount()
   })
 })

@@ -86,7 +86,8 @@ describe('панель подробностей: каркас от пакета'
   })
 
   it('смена узла возвращает панель на первый таб', async () => {
-    const wrapper = await mountMap()
+    // Ровно одно окно: сценарий «в одном окне сменилась сущность».
+    const wrapper = await mountMap({ maxDetailsWindows: 1 })
     const panel = await openPanel(wrapper, 'Keenetic 2')
 
     await panel.findAll('[role="tab"]')[1]?.trigger('click')

@@ -86,15 +86,33 @@ body {
   min-height: 0;
 }
 
+/* Группа управления заражением: кнопка плюс шаги захвата. */
+.pg-infection {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pg-infection__depth {
+  min-width: 52px;
+  text-align: center;
+}
+
+.pg-infection__count {
+  color: #f6b0b0;
+  cursor: help;
+}
+
 .pg-bar__button--on {
   border-color: #cb5555;
   background: #cb5555;
   color: #fff;
 }
 
-/* Демо-окно «История»: собрано из <MapWindow>, позиционируется приложением. */
+/* Демо-окно «История»: собрано из <MapWindow>, позиционируется приложением.
+   Слой своих окон уже опущен под тулбар, поэтому top отсчитывается от него. */
 .pg-history {
-  top: 12px;
+  top: 0;
   right: 12px;
 }
 
