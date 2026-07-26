@@ -11,7 +11,7 @@ Entities, links, icons and a radial layout. Click a node to open its details, dr
   <BasicMap />
 </LiveDemo>
 
-## Switching projections
+## Switching views
 
 One dataset, two topologies. The counter is computed by the page through `vue-asset-map/core`, so it always agrees
 with what the map draws.
@@ -73,7 +73,7 @@ highlight everything that shares it.
   <MarkersMap />
 </LiveDemo>
 
-## Search and facet filters
+## Search and filter groups
 
 Try `10.38.24.0/24`, `10.38.24.*` or a plain word in the search field, and open the filter panel on the left.
 
