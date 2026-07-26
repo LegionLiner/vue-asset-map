@@ -1,4 +1,4 @@
-﻿# API reference
+# API reference
 
 Everything the package exports. Three entry points:
 
