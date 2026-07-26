@@ -7,7 +7,7 @@ hero:
   tagline: A component for entities, links and views of one graph, with search, filters and path tracing.
   image:
     light: /hero-light.webp
-    dark: /hero-dark.png
+    dark: /hero-dark.webp
     alt: vue-asset-map
   actions:
     - theme: brand
