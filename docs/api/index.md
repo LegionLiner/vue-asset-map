@@ -1,4 +1,4 @@
-# API reference
+﻿# API reference
 
 Everything the package exports. Three entry points:
 
@@ -17,33 +17,36 @@ The map. Generic over the payload types of `entity.meta` and `link.meta`: `Asset
 
 #### Props
 
-| Prop                        | Type                              | Default                | Description                                                   |
-| --------------------------- | --------------------------------- | ---------------------- | ------------------------------------------------------------- |
-| `entities`                  | `AssetEntity<E>[]`                | —                      | Nodes. Read-only for the map.                                 |
-| `links`                     | `AssetLink<L>[]`                  | —                      | Edges. Read-only for the map.                                 |
-| `views`                     | `AssetView[]`                     | —                      | Projections. Without them everything is drawn.                |
-| `nodeTypes`                 | `Record<string, Component>`       | —                      | Node components by `kind`, merged over the built-ins.         |
-| `edgeTypes`                 | `Record<string, Component>`       | —                      | Edge components by `kind`.                                    |
-| `layout`                    | `AssetMapLayoutSpec`              | `{ engine: 'manual' }` | Engine by name or instance, plus its options.                 |
-| `collapse`                  | `CollapseRule \| false`           | `{ threshold: 10 }`    | `false` disables group collapsing.                            |
-| `filterOptions`             | `FilterOptions`                   | —                      | Search fields, neighbour depth, filter groups.                |
-| `theme`                     | `ThemeMode`                       | `'light'`              | `'light'`, `'dark'` or `'auto'`.                              |
-| `themeConfig`               | `ThemeConfig`                     | —                      | `statusColors` and `kindIcons`.                               |
-| `locale`                    | `string \| PartialLocaleMessages` | `'ru'`                 | Locale code or an override dictionary.                        |
-| `showToolbar`               | `boolean`                         | `true`                 | Render the built-in controls.                                 |
-| `showDetailsPanel`          | `boolean`                         | `true`                 | Open details windows on click.                                |
-| `showMinimap`               | `boolean`                         | `false`                | Render the overview map.                                      |
-| `maxDetailsWindows`         | `number`                          | `2`                    | `0` disables the windows entirely.                            |
-| `neighborHighlightDepth`    | `number`                          | `1`                    | Steps of a selection that stay lit. `0` disables.             |
-| `infected`                  | `EntityId[]`                      | —                      | Infection sources; the spread is computed with `blastRadius`. |
-| `infectionOptions`          | `InfectionOptions`                | —                      | `direction`, `maxDepth`, `layers` of the spread.              |
-| `markers`                   | `NodeMarkerDef[]`                 | —                      | Membership dots under the labels.                             |
-| `markerHoverDelay`          | `number`                          | `500`                  | Delay in ms before a hovered dot highlights.                  |
-| `onlyRenderVisibleElements` | `boolean`                         | `true`                 | Mount only what is in the viewport.                           |
-| `lodThreshold`              | `number`                          | `0.5`                  | Zoom below which nodes render simplified.                     |
-| `searchDebounce`            | `number`                          | `200`                  | Delay in ms before a typed query applies.                     |
-| `loading`                   | `boolean`                         | `false`                | Show a loading overlay.                                       |
-| `autoFitView`               | `boolean`                         | `false`                | Fit the canvas to its content after every layout settles.     |
+| Prop                        | Type                                | Default                | Description                                            |
+| --------------------------- | ------------------------------------ | ---------------------- | -------------------------------------------------------- |
+| `entities`                  | `AssetEntity<E>[]`                 | —                      | The map's nodes.                                     |
+| `links`                     | `AssetLink<L>[]`                   | —                      | The map's edges.                                     |
+| `views`                     | `AssetView[]`                      | —                      | The views.                                            |
+| `nodeTypes`                 | `Record<string, Component>`        | —                      | Node components by `kind`, merged over the built-ins. |
+| `edgeTypes`                 | `Record<string, Component>`        | —                      | Edge components by `kind`.                            |
+| `layout`                    | `AssetMapLayoutSpec`               | `{ engine: 'manual' }` | Layout engine by name or instance, plus its options.  |
+| `collapse`                  | `CollapseRule \| false`            | `{ threshold: 10 }`    | Group collapse rule; `false` disables collapsing.     |
+| `filterOptions`             | `FilterOptions`                    | —                      | Search fields, neighbour depth, filter groups.        |
+| `theme`                     | `ThemeMode`                        | `'light'`               | Theme mode: `'light'`, `'dark'` or `'auto'`.          |
+| `themeConfig`               | `ThemeConfig`                      | —                      | `statusColors` and `kindIcons`.                       |
+| `locale`                    | `string \| PartialLocaleMessages`  | `'ru'`                 | Locale code or an override dictionary.                |
+| `showToolbar`               | `boolean`                          | `true`                 | Visibility of the built-in controls.                  |
+| `showDetailsPanel`          | `boolean`                          | `true`                 | Opening of details windows on click.                  |
+| `showMinimap`               | `boolean`                          | `false`                | Visibility of the overview map.                       |
+| `maxDetailsWindows`         | `number`                           | `2`                    | Cap on open windows; `0` disables windows.            |
+| `neighborHighlightDepth`    | `number`                           | `1`                    | Steps of a selection that stay lit; `0` disables.     |
+| `infected`                  | `EntityId[]`                       | —                      | Infection sources for `blastRadius`.                  |
+| `infectionOptions`          | `InfectionOptions`                 | —                      | `direction`, `maxDepth`, `layers` of the spread.      |
+| `markers`                   | `NodeMarkerDef[]`                  | —                      | Membership dots under the labels.                     |
+| `markerHoverDelay`          | `number`                           | `500`                  | Delay in ms before a hovered dot highlights.          |
+| `onlyRenderVisibleElements` | `boolean`                          | `true`                 | Mounting of only what is in the viewport.             |
+| `lodThreshold`              | `number`                           | `0.5`                  | Zoom below which nodes render simplified.             |
+| `searchDebounce`            | `number`                           | `200`                  | Delay in ms before a typed query applies.             |
+| `loading`                   | `boolean`                          | `false`                | Loading indicator.                                    |
+| `autoFitView`               | `boolean`                          | `false`                | Auto-fit of the canvas to its content after layout.   |
+
+`entities` and `links` are read-only for the map: it never adds, reorders or normalises fields in the input arrays.
+Without `views`, everything is drawn.
 
 #### Two-way bindings
 
@@ -52,7 +55,7 @@ The map. Generic over the payload types of `entity.meta` and `link.meta`: `Asset
 | `view`             | `string \| undefined`   | Active view id.                                   |
 | `selection`        | `EntityId[]`            | Selected ids, in selection order.                 |
 | `expanded`         | `Set<string>`           | Group ids expanded by hand.                       |
-| `filters`          | `FilterState`           | Query, facets, group selection.                   |
+| `filters`          | `FilterState`           | Query, filter groups, group selection.            |
 | `viewport`         | `Viewport`              | Pan in px plus zoom.                              |
 | `openDetails`      | `EntityId[]`            | Entities with an open window; the last is on top. |
 | `collapsedNodes`   | `Set<EntityId>`         | Nodes whose subtree is folded.                    |
