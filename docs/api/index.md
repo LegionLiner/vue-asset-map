@@ -17,33 +17,33 @@ The map. Generic over the payload types of `entity.meta` and `link.meta`: `Asset
 
 #### Props
 
-| Prop                        | Type                                | Default                | Description                                            |
-| --------------------------- | ------------------------------------ | ---------------------- | -------------------------------------------------------- |
-| `entities`                  | `AssetEntity<E>[]`                 | —                      | The map's nodes.                                     |
-| `links`                     | `AssetLink<L>[]`                   | —                      | The map's edges.                                     |
-| `views`                     | `AssetView[]`                      | —                      | The views.                                            |
-| `nodeTypes`                 | `Record<string, Component>`        | —                      | Node components by `type`, merged over the built-ins. |
-| `edgeTypes`                 | `Record<string, Component>`        | —                      | Edge components by `type`.                            |
-| `layout`                    | `AssetMapLayoutSpec`               | `{ engine: 'manual' }` | Layout engine by name or instance, plus its options.  |
-| `collapse`                  | `CollapseRule \| false`            | `{ threshold: 10 }`    | Group collapse rule; `false` disables collapsing.     |
-| `filterOptions`             | `FilterOptions`                    | —                      | Search fields, neighbour depth, filter groups.        |
-| `theme`                     | `ThemeMode`                        | `'light'`               | Theme mode: `'light'`, `'dark'` or `'auto'`.          |
-| `themeConfig`               | `ThemeConfig`                      | —                      | `statusColors` and `kindIcons`.                       |
-| `locale`                    | `string \| PartialLocaleMessages`  | `'ru'`                 | Locale code or an override dictionary.                |
-| `showToolbar`               | `boolean`                          | `true`                 | Visibility of the built-in controls.                  |
-| `showDetailsPanel`          | `boolean`                          | `true`                 | Opening of details windows on click.                  |
-| `showMinimap`               | `boolean`                          | `false`                | Visibility of the overview map.                       |
-| `maxDetailsWindows`         | `number`                           | `2`                    | Cap on open windows; `0` disables windows.            |
-| `neighborHighlightDepth`    | `number`                           | `1`                    | Steps of a selection that stay lit; `0` disables.     |
-| `infected`                  | `EntityId[]`                       | —                      | Infection sources for `blastRadius`.                  |
-| `infectionOptions`          | `InfectionOptions`                 | —                      | `direction`, `maxDepth`, `layers` of the spread.      |
-| `markers`                   | `NodeMarkerDef[]`                  | —                      | Membership dots under the labels.                     |
-| `markerHoverDelay`          | `number`                           | `500`                  | Delay in ms before a hovered dot highlights.          |
-| `onlyRenderVisibleElements` | `boolean`                          | `true`                 | Mounting of only what is in the viewport.             |
-| `lodThreshold`              | `number`                           | `0.5`                  | Zoom below which nodes render simplified.             |
-| `searchDebounce`            | `number`                           | `200`                  | Delay in ms before a typed query applies.             |
-| `loading`                   | `boolean`                          | `false`                | Loading indicator.                                    |
-| `autoFitView`               | `boolean`                          | `false`                | Auto-fit of the canvas to its content after layout.   |
+| Prop                        | Type                              | Default                | Description                                           |
+| --------------------------- | --------------------------------- | ---------------------- | ----------------------------------------------------- |
+| `entities`                  | `AssetEntity<E>[]`                | —                      | The map's nodes.                                      |
+| `links`                     | `AssetLink<L>[]`                  | —                      | The map's edges.                                      |
+| `views`                     | `AssetView[]`                     | —                      | The views.                                            |
+| `nodeTypes`                 | `Record<string, Component>`       | —                      | Node components by `type`, merged over the built-ins. |
+| `edgeTypes`                 | `Record<string, Component>`       | —                      | Edge components by `type`.                            |
+| `layout`                    | `AssetMapLayoutSpec`              | `{ engine: 'manual' }` | Layout engine by name or instance, plus its options.  |
+| `collapse`                  | `CollapseRule \| false`           | `{ threshold: 10 }`    | Group collapse rule; `false` disables collapsing.     |
+| `filterOptions`             | `FilterOptions`                   | —                      | Search fields, neighbour depth, filter groups.        |
+| `theme`                     | `ThemeMode`                       | `'light'`              | Theme mode: `'light'`, `'dark'` or `'auto'`.          |
+| `themeConfig`               | `ThemeConfig`                     | —                      | `statusColors` and `kindIcons`.                       |
+| `locale`                    | `string \| PartialLocaleMessages` | `'ru'`                 | Locale code or an override dictionary.                |
+| `showToolbar`               | `boolean`                         | `true`                 | Visibility of the built-in controls.                  |
+| `showDetailsPanel`          | `boolean`                         | `true`                 | Opening of details windows on click.                  |
+| `showMinimap`               | `boolean`                         | `false`                | Visibility of the overview map.                       |
+| `maxDetailsWindows`         | `number`                          | `2`                    | Cap on open windows; `0` disables windows.            |
+| `neighborHighlightDepth`    | `number`                          | `1`                    | Steps of a selection that stay lit; `0` disables.     |
+| `infected`                  | `EntityId[]`                      | —                      | Infection sources for `blastRadius`.                  |
+| `infectionOptions`          | `InfectionOptions`                | —                      | `direction`, `maxDepth`, `layers` of the spread.      |
+| `markers`                   | `NodeMarkerDef[]`                 | —                      | Membership dots under the labels.                     |
+| `markerHoverDelay`          | `number`                          | `500`                  | Delay in ms before a hovered dot highlights.          |
+| `onlyRenderVisibleElements` | `boolean`                         | `true`                 | Mounting of only what is in the viewport.             |
+| `lodThreshold`              | `number`                          | `0.5`                  | Zoom below which nodes render simplified.             |
+| `searchDebounce`            | `number`                          | `200`                  | Delay in ms before a typed query applies.             |
+| `loading`                   | `boolean`                         | `false`                | Loading indicator.                                    |
+| `autoFitView`               | `boolean`                         | `false`                | Auto-fit of the canvas to its content after layout.   |
 
 `entities` and `links` are read-only for the map: it never adds, reorders or normalises fields in the input arrays.
 Without `views`, everything is drawn.

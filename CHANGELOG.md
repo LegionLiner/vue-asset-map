@@ -3,6 +3,21 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.0.3 — 2026-07-26
+
+### Added
+
+- `sitemap.xml`, `robots.txt` and per-page canonical/Open Graph/Twitter Card meta tags on the docs site, so pages are
+  indexable and share links render a title, description and preview image.
+- IBM Plex Mono as the site-wide typeface, replacing the default theme font.
+- The project logo in the docs header and as the browser favicon, and a hero image on the landing page — both
+  switching with the site's light/dark theme.
+
+### Fixed
+
+- Example maps on the docs site now follow the site's own dark-mode toggle instead of always rendering in light
+  theme.
+
 ## 1.0.2 — 2026-07-26
 
 ### Changed

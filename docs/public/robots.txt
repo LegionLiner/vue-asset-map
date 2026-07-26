@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://legionliner.github.io/vue-asset-map/sitemap.xml

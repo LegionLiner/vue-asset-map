@@ -43,7 +43,7 @@ onMounted(trace)
     auto-fit-view
   >
     <template #toolbar-right>
-      <span class="demo-toolbar-button demo-toolbar-button--hint"> Shift-click two nodes, then trace </span>
+      <span class="demo-toolbar-button demo-toolbar-button--hint">Shift-click two nodes, then trace</span>
       <button type="button" class="demo-toolbar-button" :disabled="selection.length !== 2" @click="trace">
         Trace path ({{ selection.length }}/2 selected)
       </button>

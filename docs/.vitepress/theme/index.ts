@@ -5,6 +5,7 @@ import '@vue-flow/core/dist/style.css'
 import 'vue-asset-map/style.css'
 import './fonts.css'
 import './demo.css'
+import './custom.css'
 
 import LiveDemo from './LiveDemo.vue'
 import BasicMap from '../demos/BasicMap.vue'

@@ -31,9 +31,15 @@ const guideRu = [
 
 // Must match the repository name: GitHub Pages serves the site from a subpath.
 // `head` link hrefs are not rewritten with `base` by VitePress the way
-// theme-config asset fields (e.g. `logo`) are, so favicon links below prefix
-// it by hand.
+// theme-config asset fields (e.g. `logo`) are, so favicon and OG links below
+// prefix it by hand.
 const base = '/vue-asset-map/'
+
+// Matches `homepage` in package.json. `sitemap.hostname` is resolved against
+// with each page's base-relative URL, so it has to include the base path
+// itself — otherwise every sitemap entry would drop the `/vue-asset-map/` prefix.
+const hostname = 'https://legionliner.github.io/vue-asset-map/'
+const ogImage = `${hostname}hero-light.png`
 
 export default defineConfig({
   base,
@@ -41,6 +47,8 @@ export default defineConfig({
   lastUpdated: true,
   cleanUrls: true,
   ignoreDeadLinks: false,
+
+  sitemap: { hostname },
 
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: `${base}logo-light.svg` }],
@@ -62,7 +70,34 @@ export default defineConfig({
         href: `${base}logo-dark.svg`,
       },
     ],
+    ['meta', { name: 'robots', content: 'index, follow' }],
+    ['meta', { property: 'og:type', content: 'website' }],
+    ['meta', { property: 'og:site_name', content: 'vue-asset-map' }],
+    ['meta', { property: 'og:image', content: ogImage }],
+    ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
+    ['meta', { name: 'twitter:image', content: ogImage }],
   ],
+
+  // Per-page tags that need the resolved title/description/URL: adds a
+  // canonical link (the same content is reachable at "/" and "/index",
+  // canonical says which one counts) plus OG/Twitter title, description and
+  // url so shared links render a real preview instead of a bare URL.
+  transformHead({ pageData, siteData, title, description }) {
+    if (pageData.isNotFound) return [['meta', { name: 'robots', content: 'noindex' }]]
+
+    const path = pageData.relativePath.replace(/(^|\/)index\.md$/, '$1').replace(/\.md$/, '')
+    const canonicalUrl = `${hostname}${path}`
+
+    return [
+      ['link', { rel: 'canonical', href: canonicalUrl }],
+      ['meta', { property: 'og:url', content: canonicalUrl }],
+      ['meta', { property: 'og:title', content: title }],
+      ['meta', { property: 'og:description', content: description }],
+      ['meta', { property: 'og:locale', content: siteData.lang.replace('-', '_') }],
+      ['meta', { name: 'twitter:title', content: title }],
+      ['meta', { name: 'twitter:description', content: description }],
+    ]
+  },
 
   vite: {
     resolve: {
@@ -99,6 +134,7 @@ export default defineConfig({
       lang: 'en-US',
       description: 'Interactive infrastructure asset map for Vue 3, built on Vue Flow',
       themeConfig: {
+        siteTitle: 'VueAssetMap',
         nav: [
           { text: 'Guide', link: '/guide/getting-started' },
           { text: 'API', link: '/api/' },
