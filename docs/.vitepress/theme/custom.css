@@ -34,18 +34,25 @@
 /*
  * The /playground page, set by `pageClass` in its frontmatter.
  *
- * A playground in the default 688px prose column is unusable — the map needs
- * the width more than the text does — so the doc container gives up its cap on
- * this page alone. The prose above the app keeps a readable measure of its own.
+ * A playground in the default prose column is unusable — the map needs the width
+ * far more than the text does — so the doc drops its caps on this page alone and
+ * runs the full width of the viewport, less the page's own padding.
+ *
+ * `:not(.has-sidebar)` is carried over from the rules being overridden rather
+ * than being needed here: the default theme scopes them with a `[data-v-*]`
+ * attribute, which puts them at four selectors, and a shorter override would
+ * simply lose. This page has no sidebar, so the condition always holds.
  */
-.playground-page .VPDoc:not(.has-sidebar) .container {
-  max-width: 1400px;
+.playground-page .VPDoc:not(.has-sidebar) .container,
+.playground-page .VPDoc:not(.has-sidebar) .content,
+.playground-page .VPDoc:not(.has-sidebar) .content-container {
+  max-width: none;
 }
 
-.playground-page .VPDoc .content {
-  max-width: 100%;
-}
-
+/*
+ * Prose keeps a readable measure of its own — only the app and its source want
+ * the whole width.
+ */
 .playground-page .vp-doc > div > p,
 .playground-page .vp-doc > div > ul,
 .playground-page .vp-doc > div > h1,
@@ -55,15 +62,29 @@
 
 /*
  * The app is `height: 100%` of whatever box it is given, and it carries its own
- * toolbar above the canvas — so it needs a taller frame than the API demos.
+ * toolbar above the canvas, so it needs a taller frame than the API demos. The
+ * viewport-relative height keeps the canvas the tallest thing on screen without
+ * growing past it; the ceiling stops it from becoming a strip on a tall monitor.
  */
 .playground-frame {
-  height: 76vh;
-  min-height: 560px;
+  height: min(88vh, 1000px);
+  min-height: 600px;
   margin: 24px 0;
   border: 1px solid var(--vp-c-divider);
   border-radius: 8px;
   overflow: hidden;
+}
+
+/*
+ * Below the tablet breakpoint the page padding is worth more than the extra few
+ * pixels of canvas, and a short viewport (a laptop in landscape) would otherwise
+ * leave the map a letterbox.
+ */
+@media (max-width: 768px) {
+  .playground-frame {
+    height: 70vh;
+    min-height: 460px;
+  }
 }
 
 /*
