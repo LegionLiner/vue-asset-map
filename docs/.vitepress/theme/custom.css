@@ -9,10 +9,14 @@
 
 .VPHero .main .heading .name.clip {
   color: transparent;
-  background: linear-gradient(to right, #325ff7, #3148a4) !important;
+  background: linear-gradient(to right, #325FF7, #3148A4) !important;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent !important;
+}
+
+.VPHero .main .heading .text {
+  font-size: 40px;
 }
 
 @media (max-width: 640px) {
