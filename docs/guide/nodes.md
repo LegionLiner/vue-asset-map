@@ -65,8 +65,7 @@ indicator" should not have to be said twice.
 `sublabels` is a plain array with no length limit of the package's own: an entity with six sublabels draws six lines and
 the plate grows to fit. Two is simply what the sample data carries.
 
-`maxSublabels` caps them when an even node height matters more than completeness — the tail is what gets dropped, since
-the first lines are the important ones:
+`maxSublabels` caps them when an even node height matters more than completeness — the tail is what gets dropped.
 
 ```vue
 <AssetMap :entities="entities" :links="links" :max-sublabels="2" />

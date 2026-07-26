@@ -88,7 +88,7 @@ ignores both the theme switch and your token overrides. See [Nodes](./nodes).
 
 ## Reduced motion
 
-Transitions become instant (`0s`) under `prefers-reduced-motion: reduce`. Nothing to configure.
+Transitions become instant (`0s`) under `prefers-reduced-motion: reduce`.
 
 ## Class names
 

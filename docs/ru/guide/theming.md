@@ -88,7 +88,7 @@ const statusColors = {
 
 ## Уменьшенная анимация
 
-При `prefers-reduced-motion: reduce` переходы становятся мгновенными (`0s`). Настраивать нечего.
+При `prefers-reduced-motion: reduce` переходы становятся мгновенными (`0s`).
 
 ## Имена классов
 

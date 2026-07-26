@@ -38,7 +38,7 @@ spacing and typography by eye.
 
 A details window is four parts stacked: the title bar (`.vam-window__header`), the heading block
 (`.vam-window__heading`), the tab strip (`.vam-window__tabs`) and the body (`.vam-window__content`). Everything below
-the title bar can be replaced or removed outright, so nothing of the package's design has to survive but the bar:
+the title bar can be replaced or removed outright:
 
 | Part          | Change it         | Remove it                   |
 | ------------- | ----------------- | --------------------------- |
