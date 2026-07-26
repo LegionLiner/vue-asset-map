@@ -50,14 +50,29 @@
 }
 
 /*
- * Prose keeps a readable measure of its own — only the app and its source want
- * the whole width.
+ * With the container's cap gone, the article would otherwise hug the left edge
+ * of a box as wide as the window. Everything keeps a measure of its own and is
+ * centred in that box; the two exceptions below widen it again.
+ *
+ * `margin-inline` rather than `margin: 0 auto`, so the vertical rhythm the
+ * default theme sets on headings and paragraphs survives untouched.
  */
-.playground-page .vp-doc > div > p,
-.playground-page .vp-doc > div > ul,
-.playground-page .vp-doc > div > h1,
-.playground-page .vp-doc > div > h2 {
+.playground-page .vp-doc > div > * {
   max-width: 720px;
+  margin-inline: auto;
+}
+
+/*
+ * Code earns more room than prose: `App.vue` is long, its template lines are
+ * wide, and a listing is scanned rather than read line by line.
+ */
+.playground-page .vp-doc > div > div[class*='language-'] {
+  max-width: 1080px;
+}
+
+/* The app is the reason this page is wide at all. */
+.playground-page .vp-doc > div > .playground-frame {
+  max-width: none;
 }
 
 /*
