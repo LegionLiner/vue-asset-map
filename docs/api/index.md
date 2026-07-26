@@ -33,10 +33,19 @@ The map. Generic over the payload types of `entity.meta` and `link.meta`: `Asset
 | `showToolbar`               | `boolean`                         | `true`                 | Visibility of the built-in controls.                  |
 | `showDetailsPanel`          | `boolean`                         | `true`                 | Opening of details windows on click.                  |
 | `showMinimap`               | `boolean`                         | `false`                | Visibility of the overview map.                       |
+| `showNodeStatus`            | `boolean`                         | `true`                 | Status dot on the node circle.                        |
+| `showNodeToggle`            | `boolean`                         | `true`                 | Subtree fold button on a node.                        |
+| `showNodeLabel`             | `boolean`                         | `true`                 | Label plate under the circle.                         |
+| `maxSublabels`              | `number`                          | unlimited              | Cap on sublabel lines; `0` hides them.                |
+| `detailsTitle`              | `string \| (entity) => string`    | `entity.label`         | Caption of a details window's title bar.              |
+| `showDetailsHeading`        | `boolean`                         | `true`                 | Heading block inside a details window.                |
+| `detailsTabs`               | `DetailsTabDef[] \| false`        | the built-in tabs      | Tabs of a details window; `false` removes the strip.  |
 | `maxDetailsWindows`         | `number`                          | `2`                    | Cap on open windows; `0` disables windows.            |
 | `neighborHighlightDepth`    | `number`                          | `1`                    | Steps of a selection that stay lit; `0` disables.     |
 | `infected`                  | `EntityId[]`                      | —                      | Infection sources for `blastRadius`.                  |
 | `infectionOptions`          | `InfectionOptions`                | —                      | `direction`, `maxDepth`, `layers` of the spread.      |
+| `autoPath`                  | `boolean`                         | `false`                | Trace the path between two selected nodes on its own. |
+| `pathOptions`               | `PathOptions`                     | —                      | `maxDepth`, `layers` of a path search.                |
 | `markers`                   | `NodeMarkerDef[]`                 | —                      | Membership dots under the labels.                     |
 | `markerHoverDelay`          | `number`                          | `500`                  | Delay in ms before a hovered dot highlights.          |
 | `onlyRenderVisibleElements` | `boolean`                         | `true`                 | Mounting of only what is in the viewport.             |
@@ -73,6 +82,7 @@ Each works without a `v-model`; the component then owns that state.
 | `expand`, `collapse`                               | `{ groupId: string; group: CollapsedGroup \| undefined }` |
 | `node-expand`, `node-collapse`                     | `{ id: EntityId; entity: AssetEntity<E> \| undefined }`   |
 | `selection-change`                                 | `EntityId[]`                                              |
+| `path-change`                                      | `EntityId[]` — the traced path, empty when dropped        |
 | `layout-start`                                     | `string` — engine name                                    |
 | `layout-done`                                      | `{ engine: string; positions: number }`                   |
 | `error`                                            | `unknown`                                                 |
@@ -86,8 +96,14 @@ Each works without a `v-model`; the component then owns that state.
 | `windows`                       | —                           |
 | `details`                       | `DetailsSlotProps<E>`       |
 | `details-header`                | `DetailsHeaderSlotProps<E>` |
+| `details-title`                 | `DetailsTitleSlotProps<E>`  |
+| `details-tabs`                  | `DetailsTabsSlotProps<E>`   |
 | `edge-label`                    | `EdgeLabelSlotProps<L>`     |
 | `node-{type}`, `node-badge`     | `NodeSlotProps<E>`          |
+| `node-label`, `node-status`     | `NodeSlotProps<E>`          |
+
+`NodeSlotProps` carries `entity`, `nodeId` and `simplified` for every `node-*` slot, plus one field for the slot that
+needs it: `badge` for `node-badge`, `sublabels` for `node-label`, `status` and `statusColor` for `node-status`.
 
 #### Exposed methods — `AssetMapExposed<E, L>`
 
@@ -96,7 +112,7 @@ Each works without a `v-model`; the component then owns that state.
 | `fitView`        | `() => Promise<void>`                                     |
 | `focus`          | `(id: EntityId, options?: FocusOptions) => Promise<void>` |
 | `relayout`       | `() => Promise<void>`                                     |
-| `highlightPath`  | `(from: EntityId, to: EntityId) => EntityId[]`            |
+| `highlightPath`  | `(from, to, options?: PathOptions) => EntityId[]`         |
 | `clearHighlight` | `() => void`                                              |
 | `getGraph`       | `() => AssetGraph<E, L>`                                  |
 
@@ -139,9 +155,10 @@ Each works without a `v-model`; the component then owns that state.
 ### Component contract
 
 `AssetMapProps<E, L>`, `AssetMapModels`, `AssetMapSlots<E, L>`, `AssetMapExposed<E, L>`, `AssetMapLayoutSpec`,
-`Viewport`, `FocusOptions`, `InfectionOptions`, `NodeEventPayload`, `NodeSlotProps<E>`, `DetailsSlotProps<E>`,
-`DetailsHeaderSlotProps<E>`, `EdgeLabelSlotProps<L>`, `EmptySlotProps`, `MiniMapNode`, `MapContext`,
-`AssetNodeData<E>`, `EntityNodeData<E>`, `GroupNodeData`, `AssetEdgeData`.
+`Viewport`, `FocusOptions`, `InfectionOptions`, `PathOptions`, `NodeEventPayload`, `NodeSlotProps<E>`,
+`DetailsSlotProps<E>`, `DetailsHeaderSlotProps<E>`, `DetailsTitleSlotProps<E>`, `DetailsTabsSlotProps<E>`,
+`DetailsTabDef`, `EdgeLabelSlotProps<L>`, `EmptySlotProps`, `MiniMapNode`, `MapContext`, `AssetNodeData<E>`,
+`EntityNodeData<E>`, `GroupNodeData`, `AssetEdgeData`.
 
 ### Theme and locale
 

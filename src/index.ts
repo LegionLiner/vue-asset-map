@@ -85,6 +85,9 @@ export { builtinLocales, createTranslator, defaultLocale, en, resolveLocale, ru 
 export type {
   DetailsHeaderSlotProps,
   DetailsSlotProps,
+  DetailsTabDef,
+  DetailsTabsSlotProps,
+  DetailsTitleSlotProps,
   EdgeLabelSlotProps,
   EmptySlotProps,
   FocusOptions,
@@ -95,6 +98,7 @@ export type {
   AssetMapProps,
   AssetMapSlots,
   NodeEventPayload,
+  PathOptions,
   NodeSlotProps,
   Viewport,
 } from './types/props'

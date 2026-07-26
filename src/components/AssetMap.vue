@@ -11,6 +11,7 @@ import type {
   AssetMapProps,
   AssetMapSlots,
   NodeEventPayload,
+  PathOptions,
   Viewport,
 } from '../types/props'
 import { useAssetGraph } from '../composables/useAssetGraph'
@@ -36,10 +37,19 @@ const props = withDefaults(defineProps<AssetMapProps<E, L>>(), {
   showToolbar: true,
   showDetailsPanel: true,
   showMinimap: false,
+  showNodeStatus: true,
+  showNodeToggle: true,
+  showNodeLabel: true,
+  showDetailsHeading: true,
   onlyRenderVisibleElements: true,
   lodThreshold: 0.5,
   loading: false,
   autoFitView: false,
+  autoPath: false,
+  // Same trap as `collapse`: `DetailsTabDef[] | false` reads as a boolean prop to
+  // Vue, so an absent value would be cast to `false` and remove the tab strip
+  // from every window instead of leaving the built-in tabs in place.
+  detailsTabs: undefined,
   // `collapse` is typed `CollapseRule | false`, so Vue treats it as a boolean
   // prop and casts an absent value to `false`. Without an explicit
   // `default: undefined` collapsing would be off by default — the exact opposite
@@ -58,6 +68,8 @@ const emit = defineEmits<{
   'node-expand': [payload: { id: EntityId; entity: AssetEntity<E> | undefined }]
   'node-collapse': [payload: { id: EntityId; entity: AssetEntity<E> | undefined }]
   'selection-change': [ids: EntityId[]]
+  /** The traced path changed: entity ids in order, or empty when it was dropped. */
+  'path-change': [ids: EntityId[]]
   'layout-start': [engine: string]
   'layout-done': [payload: { engine: string; positions: number }]
   error: [error: unknown]
@@ -138,6 +150,24 @@ const NODE_LABEL_HEIGHT = 42
 const NODE_LABEL_GAP = 6
 const NODE_CIRCLE = 36
 const NODE_CIRCLE_ROOT = 60
+
+/**
+ * Sublabels a node should draw.
+ *
+ * Three inputs narrow the entity's own list: the view may hide sublabels
+ * altogether, a simplified node has no plate to put them on, and `maxSublabels`
+ * caps how many lines fit the design. There is no limit of the package's own — an
+ * entity with six sublabels draws six.
+ */
+function sublabelsOf(id: EntityId): readonly string[] {
+  if (!showSublabels.value || simplified.value) return []
+
+  const sublabels = graph.value.entities.get(id)?.sublabels
+  if (!sublabels || sublabels.length === 0) return []
+
+  const max = props.maxSublabels
+  return max === undefined ? sublabels : sublabels.slice(0, Math.max(0, max))
+}
 
 function sizeOf(nodeId: string): NodeSize {
   const circle = graph.value.parentOf.get(nodeId) === null ? NODE_CIRCLE_ROOT : NODE_CIRCLE
@@ -260,7 +290,31 @@ watch(viewport, (next) => {
 const highlightedNodeIds = shallowRef<ReadonlySet<string>>(new Set())
 const highlightedEdgeIds = shallowRef<ReadonlySet<string>>(new Set())
 
+/**
+ * Hop limit for a path search.
+ *
+ * Bounded because `findPaths` walks the graph depth-first: on a dense map an
+ * unbounded search is what hangs the tab, and a route longer than this is not
+ * something a reader can follow on screen anyway.
+ */
+const DEFAULT_PATH_DEPTH = 12
+
+/** Last traced path, in original entity ids. Drives `path-change`. */
+const tracedPath = shallowRef<readonly EntityId[]>([])
+
+function setTracedPath(path: readonly EntityId[]): void {
+  // Guarded rather than emitted unconditionally: with `autoPath` on, the trace is
+  // recomputed whenever the graph or the view changes, and most of those runs
+  // find the same path as before.
+  if (path.length === tracedPath.value.length && path.every((id, index) => tracedPath.value[index] === id)) {
+    return
+  }
+  tracedPath.value = path
+  emit('path-change', [...path])
+}
+
 function clearHighlight(): void {
+  setTracedPath([])
   if (highlightedNodeIds.value.size === 0 && highlightedEdgeIds.value.size === 0) return
   highlightedNodeIds.value = new Set()
   highlightedEdgeIds.value = new Set()
@@ -274,11 +328,12 @@ function clearHighlight(): void {
  * group, the group node and the edges leading to it light up instead — the path
  * would otherwise appear to break off.
  */
-function highlightPath(from: EntityId, to: EntityId): EntityId[] {
-  const layers = view.value ? [view.value.id] : undefined
+function highlightPath(from: EntityId, to: EntityId, options?: PathOptions): EntityId[] {
+  const resolved = { ...props.pathOptions, ...options }
+  const layers = resolved.layers ?? (view.value ? [view.value.id] : undefined)
   const paths = findPaths(graph.value, from, to, {
     maxPaths: 1,
-    maxDepth: 12,
+    maxDepth: resolved.maxDepth ?? DEFAULT_PATH_DEPTH,
     ...(layers ? { layers } : {}),
   })
 
@@ -305,6 +360,7 @@ function highlightPath(from: EntityId, to: EntityId): EntityId[] {
 
   highlightedNodeIds.value = nodeIds
   highlightedEdgeIds.value = edgeIds
+  setTracedPath(path)
   return path
 }
 
@@ -325,9 +381,17 @@ function onNodeClick(id: string, event: MouseEvent): void {
   // `contextmenu` instead of `click` in most browsers, so a handler keyed only
   // on `ctrlKey`/`metaKey` would never see it. Ctrl/Cmd are still honoured for
   // whoever's muscle memory expects them, but Shift is the one that always works.
-  selectionState.toggle(id, event.shiftKey || event.ctrlKey || event.metaKey)
-  // A group node gets no details window: a group has no entity behind it.
-  if (graph.value.entities.has(id)) openDetail(id)
+  const additive = event.shiftKey || event.ctrlKey || event.metaKey
+
+  selectionState.toggle(id, additive)
+
+  // A modified click only builds up a selection: someone picking a second node to
+  // trace a path to does not want a window over the map for every node they
+  // touch, and by the time the pair is chosen the windows would be in the way of
+  // the very path they asked for. A plain click still opens one.
+  // A group node never gets a window either — there is no entity behind it.
+  if (!additive && graph.value.entities.has(id)) openDetail(id)
+
   emit('node-click', payloadFor(id, event))
 }
 
@@ -523,6 +587,18 @@ function closeDetail(id: EntityId): void {
   openDetails.value = openDetails.value.filter((candidate) => candidate !== id)
 }
 
+/**
+ * Caption for a window's title bar.
+ *
+ * `undefined` leaves the window to fall back to `entity.label`, which is also
+ * what a function returning nothing usable means.
+ */
+function detailsTitleOf(entity: AssetEntity<E>): string | undefined {
+  const title = props.detailsTitle
+  if (title === undefined) return undefined
+  return typeof title === 'function' ? title(entity) : title
+}
+
 /** Entities of the open windows; ones that leave the data drop out by themselves. */
 const detailWindows = computed(() =>
   openDetails.value
@@ -535,6 +611,29 @@ const resolveVisual = (id: EntityId): string => collapseState.collapsed.value.gr
 
 /** Layers of the current view: traversals must follow the links on screen. */
 const activeLayers = computed(() => (view.value ? [view.value.id] : undefined))
+
+/**
+ * Traces the path between two selected nodes on its own, while `autoPath` is on.
+ *
+ * Re-runs on a layer or collapse change as well as on the selection: the route
+ * depends on which links the current view keeps, and the highlight is drawn on
+ * the collapsed graph, so a group folding shut moves it. Anything other than
+ * exactly two selected nodes means there is no pair to connect and the highlight
+ * goes away — the moment a third node joins the selection included.
+ */
+watch(
+  [selection, () => props.autoPath, activeLayers, () => collapseState.collapsed.value],
+  ([ids, enabled]) => {
+    if (!enabled) return
+    const [from, to] = ids
+    if (ids.length !== 2 || from === undefined || to === undefined) {
+      clearHighlight()
+      return
+    }
+    highlightPath(from, to)
+  },
+  { immediate: true },
+)
 
 /**
  * Nodes that stay lit while something is selected: the selection and its links.
@@ -667,6 +766,10 @@ const context: MapContext = {
   graph,
   showSublabels,
   simplified,
+  showNodeStatus: computed(() => props.showNodeStatus),
+  showNodeToggle: computed(() => props.showNodeToggle),
+  showNodeLabel: computed(() => props.showNodeLabel),
+  sublabelsOf,
   // Cast: `defineSlots` narrows `useSlots()` to `AssetMapSlots`, while lookup by
   // an arbitrary name needs an indexable object. This is the only place that
   // widening to `Record` is required.
@@ -817,6 +920,9 @@ defineExpose({
           :entity="entity"
           :offset="{ x: index * -24, y: index * 24 }"
           :style="{ zIndex: 20 + index }"
+          :title="detailsTitleOf(entity)"
+          :show-heading="showDetailsHeading"
+          :tabs="detailsTabs"
           @close="closeDetail(entity.id)"
         />
 

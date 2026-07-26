@@ -52,10 +52,43 @@ would be unreliable.
 
 ## Highlighting a path on the map
 
-`highlightPath` takes two entity ids — the demo below gets them from `v-model:selection`, built up by Shift-clicking
-two nodes. Shift is the modifier to reach for: it adds to the selection on every platform, whereas Ctrl+click does not
-reach a node's click handler at all on macOS, where it is the system's own right-click gesture and is dispatched as a
+### Automatically, from the selection
+
+`autoPath` is the whole feature: with exactly two nodes selected the map finds the route between them and highlights
+it, and the result leaves through `path-change`. Nothing to call, nothing to wire to a button.
+
+```vue
+<AssetMap
+  v-model:selection="selection"
+  :entities="entities"
+  :links="links"
+  auto-path
+  @path-change="(hops) => (path = hops)"
+/>
+```
+
+Shift-click is how a pair gets picked. A modified click **only** builds up the selection — it opens no details window,
+so choosing a second node does not bury the path under the windows you asked the map to draw it beneath. A plain click
+still opens one.
+
+Shift is the modifier to reach for: it adds to the selection on every platform, whereas Ctrl+click does not reach a
+node's click handler at all on macOS, where it is the system's own right-click gesture and is dispatched as a
 `contextmenu` event instead of a `click`. Ctrl and Cmd are still honoured for anyone whose muscle memory expects them.
+
+Anything other than exactly two selected nodes means there is no pair to connect, so the highlight goes away — the
+moment a third node joins the selection included. A selection set from outside works the same: two ids in
+`v-model:selection` trace a path without a click ever happening.
+
+`path-change` fires only when the route actually changes, so it is safe to hang work off. It carries original entity
+ids in order, or an empty array when the highlight was dropped.
+
+`autoPath` is off by default: a map that traces paths by itself would fight an application that highlights something of
+its own on selection.
+
+### By hand
+
+`highlightPath` does the same thing on demand — for a pair that comes from somewhere other than the selection, an
+asset list or a search result:
 
 ```ts
 const map = useTemplateRef<AssetMapExposed>('map')
@@ -64,9 +97,17 @@ const hops = map.value?.highlightPath('ws-artjom', 'ws-vlad') ?? []
 map.value?.clearHighlight()
 ```
 
+It emits `path-change` too, so both routes into the feature report through one channel.
+
+`pathOptions` bounds the search for both — `{ maxDepth, layers }`, defaulting to 12 hops and the current view's
+layers. A third argument to `highlightPath` overrides it for that one call. The depth is bounded because the search
+walks the graph depth-first: on a dense map an unbounded one is what hangs the tab, and a route longer than that is not
+something a reader can follow on screen anyway.
+
 The search runs on the original graph, restricted to the current view's layers, but the highlight is drawn on the
 collapsed one: where a stretch of the path is hidden inside a group, the group node and the edges leading to it light
-up instead. Otherwise the path would appear to break off.
+up instead. Otherwise the path would appear to break off. That is also why the trace is recomputed when a group folds
+shut or the view changes — the route depends on which links are on screen.
 
 <LiveDemo :source="pathSource">
   <PathTraceMap />

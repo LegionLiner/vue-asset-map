@@ -15,6 +15,12 @@ import { IconExpand } from '../icons/index'
  * Interactions go to the map context rather than to VueFlow events, so behaviour
  * does not depend on whether VueFlow's own selection is enabled and works the
  * same for mouse and keyboard.
+ *
+ * Every part of it can be dropped or replaced without writing a node component:
+ * `showNodeStatus`, `showNodeToggle` and `showNodeLabel` remove the status dot,
+ * the fold button and the label plate; `#node-{type}` swaps the circle's
+ * contents, `#node-status` the dot and `#node-label` the whole plate. A design
+ * that shares none of this structure is a `nodeTypes` entry instead.
  */
 const props = defineProps<{
   id: string
@@ -28,17 +34,20 @@ const entity = computed(() => (props.data?.variant === 'entity' ? props.data.ent
 
 const isRoot = computed(() => map.isRootNode(props.id))
 
-const hasChildren = computed(() => map.hasChildren(props.id))
+const hasChildren = computed(() => map.hasChildren(props.id) && map.showNodeToggle.value)
 const subtreeCollapsed = computed(() => map.isSubtreeCollapsed(props.id))
 
-const sublabels = computed(() => {
-  if (!map.showSublabels.value || map.simplified.value) return []
-  return entity.value?.sublabels ?? []
-})
+const sublabels = computed(() => map.sublabelsOf(props.id))
 
 const badges = computed(() => (map.simplified.value ? [] : (entity.value?.badges ?? [])))
 
 const statusColor = computed(() => map.statusColorOf(entity.value?.status))
+
+/** The status dot: present only while the entity has one and it is not switched off. */
+const status = computed(() => (map.showNodeStatus.value ? entity.value?.status : undefined))
+
+/** The label plate: dropped by `showNodeLabel`, and by the LOD level. */
+const showLabel = computed(() => map.showNodeLabel.value && !map.simplified.value)
 
 const markers = computed(() => map.markersFor(props.id))
 
@@ -59,6 +68,25 @@ const kindSlot = computed(() => {
 })
 
 const badgeSlot = computed(() => map.slot('node-badge'))
+
+/** `#node-label` replaces the whole plate; `#node-status` replaces the dot. */
+const labelSlot = computed(() => map.slot('node-label'))
+const statusSlot = computed(() => map.slot('node-status'))
+
+/**
+ * What every `node-*` slot receives.
+ *
+ * Bound as one object rather than attribute by attribute: a template writes
+ * `:node-id`, and a slot function is invoked as a functional component with no
+ * declared props, so it receives the raw attribute names — the `nodeId` the
+ * public `NodeSlotProps` promises would arrive as `node-id` and read as
+ * `undefined`. `v-bind` of an object keeps the keys exactly as written here.
+ */
+const slotProps = computed(() => ({
+  entity: entity.value,
+  nodeId: props.id,
+  simplified: map.simplified.value,
+}))
 
 const selected = computed(() => map.isSelected(props.id))
 
@@ -139,13 +167,7 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
     <Handle type="source" :position="Position.Bottom" class="vam-node__handle" />
 
     <div class="vam-node__circle">
-      <component
-        :is="kindSlot"
-        v-if="kindSlot"
-        :entity="entity"
-        :node-id="id"
-        :simplified="map.simplified.value"
-      />
+      <component :is="kindSlot" v-if="kindSlot" v-bind="slotProps" />
       <template v-else>
         <component :is="icon" v-if="icon" class="vam-node__icon" />
         <span v-else class="vam-node__initials" aria-hidden="true">
@@ -153,12 +175,15 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
         </span>
       </template>
 
-      <span
-        v-if="entity?.status"
-        class="vam-node__status"
-        :style="statusColor ? { backgroundColor: statusColor } : undefined"
-        :title="map.t('node.status', { status: entity.status })"
-      />
+      <template v-if="status">
+        <component :is="statusSlot" v-if="statusSlot" v-bind="{ ...slotProps, status, statusColor }" />
+        <span
+          v-else
+          class="vam-node__status"
+          :style="statusColor ? { backgroundColor: statusColor } : undefined"
+          :title="map.t('node.status', { status })"
+        />
+      </template>
 
       <button
         v-if="hasChildren"
@@ -173,16 +198,19 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
       </button>
     </div>
 
-    <div v-if="!map.simplified.value" class="vam-node__info">
-      <span class="vam-node__label">{{ entity?.label ?? id }}</span>
-      <span
-        v-for="(sublabel, index) in sublabels"
-        :key="sublabel"
-        :class="index === 0 ? 'vam-node__sublabel' : 'vam-node__sublabel-overlay'"
-      >
-        {{ sublabel }}
-      </span>
-    </div>
+    <template v-if="showLabel">
+      <component :is="labelSlot" v-if="labelSlot" v-bind="{ ...slotProps, sublabels }" />
+      <div v-else class="vam-node__info">
+        <span class="vam-node__label">{{ entity?.label ?? id }}</span>
+        <span
+          v-for="(sublabel, index) in sublabels"
+          :key="sublabel"
+          :class="index === 0 ? 'vam-node__sublabel' : 'vam-node__sublabel-overlay'"
+        >
+          {{ sublabel }}
+        </span>
+      </div>
+    </template>
 
     <span v-if="markers.length > 0 && !map.simplified.value" class="vam-node__markers">
       <button
@@ -208,14 +236,7 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
       :aria-label="map.t('node.badges', { count: badges.length })"
     >
       <template v-for="badge in badges" :key="badge.id">
-        <component
-          :is="badgeSlot"
-          v-if="badgeSlot"
-          :badge="badge"
-          :entity="entity"
-          :node-id="id"
-          :simplified="map.simplified.value"
-        />
+        <component :is="badgeSlot" v-if="badgeSlot" v-bind="{ ...slotProps, badge }" />
         <span
           v-else
           class="vam-node__badge"

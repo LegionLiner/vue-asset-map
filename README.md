@@ -25,7 +25,12 @@ Interactive infrastructure asset map for Vue 3, built on Vue Flow.
 - **Membership markers.** Dots under a label show which hubs a node connects to, derived from the graph itself.
   Hovering one highlights every node carrying it and dims the rest.
 - **Details in draggable windows.** Several stay open at once, capped by a prop, and are filled through the `#details`
-  slot. `<MapWindow>` is exported so you can build windows of your own.
+  slot. Title, heading and tabs are each replaceable or removable, so nothing of the default design need survive but the
+  title bar. `<MapWindow>` is exported so you can build windows of your own.
+- **Automatic path tracing.** With `autoPath` and two nodes selected, the route between them is found and highlighted on
+  its own and arrives through `path-change`. Shift-click builds the pair up and opens no window while doing it.
+- **A node design you can take apart.** The status dot, the fold button, the label plate and the sublabels each switch
+  off with a prop or swap out through a slot; `nodeTypes` replaces the node wholesale.
 - **Pluggable layouts.** `manual` and `radial` are built in, `dagre` ships behind a subpath. Any object with
   `run(graph, options, signal)` can be passed instead.
 - **Framework-free core.** `vue-asset-map/core` imports neither Vue nor Vue Flow, so projections, filtering and blast
@@ -115,6 +120,10 @@ The ones reached for most often; the full list is in the
 | `theme`             | `'light' \| 'dark' \| 'auto'`     | `'light'`      | `'auto'` reads the OS setting once.                       |
 | `markers`           | `NodeMarkerDef[]`                 | —              | Membership dots under the labels.                         |
 | `maxDetailsWindows` | `number`                          | `2`            | `0` disables the details windows.                         |
+| `detailsTabs`       | `DetailsTabDef[] \| false`        | built-in tabs  | Tabs of a details window; `false` removes the strip.      |
+| `showNodeStatus`    | `boolean`                         | `true`         | `false` removes the status dot from every node.           |
+| `maxSublabels`      | `number`                          | unlimited      | Caps the sublabel lines; `0` hides them.                  |
+| `autoPath`          | `boolean`                         | `false`        | Trace the path between two selected nodes on its own.     |
 | `locale`            | `string \| PartialLocaleMessages` | `ru`           | Locale code, or a dictionary of overrides.                |
 | `autoFitView`       | `boolean`                         | `false`        | Fit the canvas to its content after every layout.         |
 
@@ -127,6 +136,7 @@ Two-way bindings: `view`, `selection`, `expanded`, `filters`, `viewport`, `openD
 | --------------------- | ------------------------------ | --------------------------------------------------------------- |
 | `node-click`          | `{ id, entity, group, event }` | A node or a group node is clicked.                              |
 | `selection-change`    | `EntityId[]`                   | The selection changes, in selection order.                      |
+| `path-change`         | `EntityId[]`                   | The traced path changes; empty when the highlight was dropped.  |
 | `expand` / `collapse` | `{ groupId, group }`           | A collapsed group is opened or closed.                          |
 | `layout-done`         | `{ engine, positions }`        | A layout run finished and was applied.                          |
 | `error`               | `unknown`                      | A layout engine threw, or an unknown engine name was requested. |
@@ -136,7 +146,9 @@ Two-way bindings: `view`, `selection`, `expanded`, `filters`, `viewport`, `openD
 | Slot                             | Props                            | Purpose                                   |
 | -------------------------------- | -------------------------------- | ----------------------------------------- |
 | `details`                        | `{ entity, close, tab }`         | Body of a details window.                 |
+| `details-title` / `details-tabs` | `{ entity, … }`                  | Caption and tab strip of the window.      |
 | `node-{type}`                    | `{ entity, nodeId, simplified }` | Replaces the contents of a node circle.   |
+| `node-label` / `node-status`     | `{ entity, nodeId, simplified }` | Replaces the label plate or status dot.   |
 | `toolbar-left` / `toolbar-right` | —                                | Your own controls in the map header.      |
 | `windows`                        | —                                | Custom floating windows above the canvas. |
 | `edge-label`                     | `{ link, aggregated, count }`    | Replaces an edge label.                   |

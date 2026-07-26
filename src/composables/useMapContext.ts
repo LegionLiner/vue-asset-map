@@ -25,6 +25,21 @@ export interface MapContext {
   /** `true` when zoom is below the LOD threshold and nodes render simplified. */
   simplified: ComputedRef<boolean>
 
+  /** Whether the default node draws the status dot on its circle. */
+  showNodeStatus: ComputedRef<boolean>
+  /** Whether the default node draws the subtree toggle. */
+  showNodeToggle: ComputedRef<boolean>
+  /** Whether the default node draws the label plate under its circle. */
+  showNodeLabel: ComputedRef<boolean>
+  /**
+   * The sublabels a node should draw: the entity's own, narrowed by the view, the
+   * LOD level and `maxSublabels`.
+   *
+   * Resolved here rather than in the node so a custom node inherits the same
+   * rules instead of reimplementing them.
+   */
+  sublabelsOf: (id: EntityId) => readonly string[]
+
   /**
    * Looks up a map slot by name.
    *

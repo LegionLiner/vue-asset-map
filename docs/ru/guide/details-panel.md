@@ -35,7 +35,69 @@ const LABELS = { owner: 'Владелец', os: 'ОС', cpu: 'vCPU' }
 `DetailsSection` экспортируется, чтобы свою панель можно было собрать из тех же блоков, что и дефолтную, и не подбирать
 отступы и типографику на глаз.
 
-`#details-header` так же подменяет содержимое шапки.
+## Полностью своё оформление
+
+Окно подробностей — это четыре части одна под другой: шапка (`.vam-window__header`), заголовочный блок
+(`.vam-window__heading`), полоса вкладок (`.vam-window__tabs`) и тело (`.vam-window__content`). Всё, что ниже шапки,
+можно подменить или убрать совсем, так что от оформления пакета не обязано остаться ничего, кроме самой шапки:
+
+| Часть             | Подменить         | Убрать                      |
+| ----------------- | ----------------- | --------------------------- |
+| Шапка             | `detailsTitle`    | —                           |
+| Подпись в шапке   | `#details-title`  | —                           |
+| Заголовочный блок | `#details-header` | `showDetailsHeading: false` |
+| Полоса вкладок    | `#details-tabs`   | `detailsTabs: false`        |
+| Состав вкладок    | `detailsTabs`     | —                           |
+| Тело              | `#details`        | —                           |
+
+По умолчанию окно называется `entity.label`. `detailsTitle` меняет название — строкой или функцией от сущности:
+
+```vue
+<AssetMap
+  :entities="entities"
+  :links="links"
+  :details-title="(entity) => `${entity.type.toUpperCase()} · ${entity.label}`"
+/>
+```
+
+`#details-title` забирает подпись себе целиком — не строкой, а разметкой, — и получает вместе с сущностью состояние
+`collapsed`:
+
+```vue
+<template #details-title="{ entity, collapsed }">
+  <b>{{ entity.label }}</b>
+  <small v-if="!collapsed">{{ entity.type }}</small>
+</template>
+```
+
+`#details-header` подменяет заголовочный блок под шапкой — крупное название со строкой типа и состояния.
+`showDetailsHeading: false` его убирает.
+
+Всё вместе оставляет от дефолтного оформления одну шапку:
+
+```vue
+<AssetMap
+  :entities="entities"
+  :links="links"
+  details-title="Карточка актива"
+  :show-details-heading="false"
+  :details-tabs="[{ id: 'risk', label: 'Риски' }]"
+>
+  <template #details-tabs="{ tabs, active, select }">
+    <nav class="my-tabs">
+      <button v-for="tab in tabs" :key="tab.id" :class="{ on: tab.id === active }" @click="select(tab.id)">
+        {{ tab.label }}
+      </button>
+    </nav>
+  </template>
+  <template #details="{ entity, tab }">
+    <MyPanel :entity="entity" :tab="tab" />
+  </template>
+</AssetMap>
+```
+
+Сама шапка остаётся: на ней держатся перетаскивание, сжатие и закрытие — то, что делает это окном. Если своей должна быть
+и шапка, соберите окно из `MapWindow` в слоте `#windows` — об этом ниже.
 
 ## Несколько окон сразу
 
@@ -101,9 +163,36 @@ import { AssetMap, MapWindow } from 'vue-asset-map'
 
 ## Табы
 
-В дефолтной панели два таба: обзор и связи. Id активного таба доходит до слота как `tab`, поэтому своя панель может
-рисовать разное содержимое. Он никогда не сбрасывается при смене сущности: карта рендерит окна с `key` по id сущности,
-поэтому другая сущность — это другой экземпляр компонента с состоянием по умолчанию.
+В дефолтной панели два таба: обзор и связи. Id активного таба доходит до слота `#details` как `tab`, поэтому своя панель
+может рисовать разное содержимое. Он никогда не сбрасывается при смене сущности: карта рендерит окна с `key` по id
+сущности, поэтому другая сущность — это другой экземпляр компонента с состоянием по умолчанию.
+
+`detailsTabs` заменяет эту пару своими табами. `label` — готовая строка, а не ключ локали: ваши табы — ваши, и словарь
+пакета о них ничего не знает. Первый в списке открыт сразу.
+
+```vue
+<AssetMap
+  :entities="entities"
+  :links="links"
+  :details-tabs="[
+    { id: 'risk', label: 'Риски' },
+    { id: 'audit', label: 'Аудит' },
+  ]"
+>
+  <template #details="{ entity, tab }">
+    <RiskPanel v-if="tab === 'risk'" :entity="entity" />
+    <AuditPanel v-else :entity="entity" />
+  </template>
+</AssetMap>
+```
+
+Со своими табами пакет своего тела не рисует: под незнакомым табом ему нечего показать, а подставить под «Риски»
+встроенный список связей было бы прямой ложью. Заполняйте `#details` вместе с ними.
+
+`detailsTabs: false` убирает полосу. Встроенное тело при этом остаётся — табы убраны, а не подменены, — поэтому для окна
+без вкладок больше ничего не нужно.
+
+`#details-tabs` подменяет отрисовку полосы, сохраняя поведение: слот получает табы, id активного и колбэк `select`.
 
 <script setup>
 import detailsSource from '../../.vitepress/demos/CustomDetailsMap.vue?raw'

@@ -1,7 +1,11 @@
 # Nodes
 
-A node is a circle with an icon, with a fixed-size plate under it carrying the label and up to two sublabels. Root
-entities are drawn at 60 px, children at 36 px. That is the only visual cue for depth, not a field in your data.
+A node is a circle with an icon, with a plate under it carrying the label and the entity's sublabels. Root entities are
+drawn at 60 px, children at 36 px. That is the only visual cue for depth, not a field in your data.
+
+Every part of that is optional. Nothing in the design is load-bearing: the status dot, the collapse button, the label
+plate and the sublabels can each be switched off with a prop or replaced through a slot, and a design that shares none
+of this structure is a `nodeTypes` entry instead. The sections below go from the smallest change to the largest.
 
 ## Icons by type
 
@@ -37,6 +41,73 @@ const statusColors = {
 ```
 
 Both a token reference and a literal color work. Referencing a token means the dot follows the theme.
+
+`showNodeStatus: false` removes the dot — the "online / offline" indicator — from every node:
+
+```vue
+<AssetMap :entities="entities" :links="links" :show-node-status="false" />
+```
+
+The value stays in the data: details windows and filters still see `status`, only this indicator is gone. To draw it
+differently rather than remove it, use `#node-status`:
+
+```vue
+<template #node-status="{ status, statusColor }">
+  <span class="my-status" :style="{ background: statusColor }">{{ status }}</span>
+</template>
+```
+
+The slot is rendered in the dot's place, inside the circle. `showNodeStatus: false` wins over it — "remove the
+indicator" should not have to be said twice.
+
+## Sublabels
+
+`sublabels` is a plain array with no length limit of the package's own: an entity with six sublabels draws six lines and
+the plate grows to fit. Two is simply what the sample data carries.
+
+`maxSublabels` caps them when an even node height matters more than completeness — the tail is what gets dropped, since
+the first lines are the important ones:
+
+```vue
+<AssetMap :entities="entities" :links="links" :max-sublabels="2" />
+```
+
+`0` removes sublabels entirely, leaving the label. A view can also switch them off for every node at once with
+`showSublabels: false`, which outranks `maxSublabels`.
+
+`showNodeLabel: false` removes the whole plate, label included, leaving the circle alone on the canvas:
+
+```vue
+<AssetMap :entities="entities" :links="links" :show-node-label="false" />
+```
+
+Layout still reserves the plate's height, so switching it off does not reshape the map.
+
+`#node-label` replaces the plate instead of removing it. It receives the sublabels already narrowed by the view and by
+`maxSublabels`, so the slot does not reimplement those rules:
+
+```vue
+<template #node-label="{ entity, sublabels }">
+  <div class="my-plate">
+    <b>{{ entity?.label }}</b>
+    <small v-for="line in sublabels" :key="line">{{ line }}</small>
+  </div>
+</template>
+```
+
+## Hiding the collapse button
+
+`showNodeToggle: false` removes the fold button from every node. The subtree state itself is untouched — it is still
+driveable through `v-model:collapsed-nodes`, which is how a design without the button folds things:
+
+```vue
+<AssetMap
+  :entities="entities"
+  :links="links"
+  v-model:collapsed-nodes="collapsedNodes"
+  :show-node-toggle="false"
+/>
+```
 
 ## Replacing the contents of a circle
 

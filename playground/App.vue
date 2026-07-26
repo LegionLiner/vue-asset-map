@@ -72,16 +72,12 @@ const currentView = computed(() => views.find((view) => view.id === viewId.value
 const canTracePath = computed(() => selection.value.length === 2)
 const lastPath = ref<string[] | undefined>(undefined)
 
-function tracePath(): void {
-  const [from, to] = selection.value
-  if (from === undefined || to === undefined) return
-  const path = map.value?.highlightPath(from, to)
-  lastPath.value = path && path.length > 0 ? path : undefined
+function onPathChange(path: string[]): void {
+  lastPath.value = path.length > 0 ? path : undefined
 }
 
 function clearPath(): void {
-  map.value?.clearHighlight()
-  lastPath.value = undefined
+  selection.value = []
 }
 
 const addOpen = ref(false)
@@ -218,15 +214,16 @@ const historyControls = [
         </template>
       </span>
 
-      <button type="button" :disabled="!canTracePath" @click="tracePath">Показать путь</button>
       <button type="button" :disabled="!lastPath" @click="clearPath">Сбросить путь</button>
       <button type="button" @click="map?.fitView()">Вся карта</button>
       <button type="button" @click="map?.relayout()">Перестроить</button>
 
       <span class="pg-bar__hint">
         <template v-if="lastPath">Путь: {{ lastPath.join(' → ') }}</template>
-        <template v-else-if="canTracePath">Выбрано 2 узла — можно строить путь</template>
-        <template v-else>Выделено: {{ selection.length }} · Ctrl+клик добавляет узел</template>
+        <template v-else-if="canTracePath">Между выбранными узлами пути нет</template>
+        <template v-else>
+          Выделено: {{ selection.length }} · Shift+клик набирает узлы, на двух путь строится сам
+        </template>
       </span>
     </div>
 
@@ -252,6 +249,8 @@ const historyControls = [
       :infection-options="{ maxDepth: infectionDepth }"
       show-minimap
       auto-fit-view
+      auto-path
+      @path-change="onPathChange"
     >
       <template #toolbar-right>
         <button type="button" class="pg-add" @click="openAdd">Добавить</button>

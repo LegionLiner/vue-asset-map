@@ -34,7 +34,69 @@ const LABELS = { owner: 'Owner', os: 'OS', cpu: 'vCPU' }
 `DetailsSection` is exported so a custom panel can be built from the same blocks as the default one, without matching
 spacing and typography by eye.
 
-`#details-header` replaces the title bar contents the same way.
+## Replacing the whole design
+
+A details window is four parts stacked: the title bar (`.vam-window__header`), the heading block
+(`.vam-window__heading`), the tab strip (`.vam-window__tabs`) and the body (`.vam-window__content`). Everything below
+the title bar can be replaced or removed outright, so nothing of the package's design has to survive but the bar:
+
+| Part          | Change it         | Remove it                   |
+| ------------- | ----------------- | --------------------------- |
+| Title bar     | `detailsTitle`    | —                           |
+| Bar caption   | `#details-title`  | —                           |
+| Heading block | `#details-header` | `showDetailsHeading: false` |
+| Tab strip     | `#details-tabs`   | `detailsTabs: false`        |
+| Tabs shown    | `detailsTabs`     | —                           |
+| Body          | `#details`        | —                           |
+
+The window's own title is `entity.label` by default. `detailsTitle` changes it — a string, or a function of the entity:
+
+```vue
+<AssetMap
+  :entities="entities"
+  :links="links"
+  :details-title="(entity) => `${entity.type.toUpperCase()} · ${entity.label}`"
+/>
+```
+
+`#details-title` takes over the caption with markup rather than a string, and receives the window's `collapsed` state
+along with the entity:
+
+```vue
+<template #details-title="{ entity, collapsed }">
+  <b>{{ entity.label }}</b>
+  <small v-if="!collapsed">{{ entity.type }}</small>
+</template>
+```
+
+`#details-header` replaces the heading block below the bar — the large label with the type and status line.
+`showDetailsHeading: false` removes it instead.
+
+All of it together leaves the title bar and nothing else of the default design:
+
+```vue
+<AssetMap
+  :entities="entities"
+  :links="links"
+  details-title="Asset card"
+  :show-details-heading="false"
+  :details-tabs="[{ id: 'risk', label: 'Risks' }]"
+>
+  <template #details-tabs="{ tabs, active, select }">
+    <nav class="my-tabs">
+      <button v-for="tab in tabs" :key="tab.id" :class="{ on: tab.id === active }" @click="select(tab.id)">
+        {{ tab.label }}
+      </button>
+    </nav>
+  </template>
+  <template #details="{ entity, tab }">
+    <MyPanel :entity="entity" :tab="tab" />
+  </template>
+</AssetMap>
+```
+
+The bar itself stays: it carries the dragging, collapsing and closing that make the thing a window. To build a window
+whose bar is yours too, use `MapWindow` in the `#windows` slot — see below.
 
 ## Several windows at once
 
@@ -99,9 +161,37 @@ browser synthesising a `click`.
 
 ## Tabs
 
-The default panel has an overview tab and a links tab. The active tab id reaches the slot as `tab`, so a custom panel
-can render different content per tab. It is never reset when the entity changes — the map keys its windows by entity
-id, so a different entity is a different component instance with default state.
+The default panel has an overview tab and a links tab. The active tab id reaches the `#details` slot as `tab`, so a
+custom panel can render different content per tab. It is never reset when the entity changes — the map keys its windows
+by entity id, so a different entity is a different component instance with default state.
+
+`detailsTabs` replaces the pair with tabs of your own. `label` is a finished string, not a locale key: your tabs are
+yours, and the package's dictionary knows nothing about them. The first entry is the one open at first.
+
+```vue
+<AssetMap
+  :entities="entities"
+  :links="links"
+  :details-tabs="[
+    { id: 'risk', label: 'Risks' },
+    { id: 'audit', label: 'Audit' },
+  ]"
+>
+  <template #details="{ entity, tab }">
+    <RiskPanel v-if="tab === 'risk'" :entity="entity" />
+    <AuditPanel v-else :entity="entity" />
+  </template>
+</AssetMap>
+```
+
+With custom tabs the package draws no body of its own: it has nothing to show under a tab it does not know, and putting
+the built-in link list under "Risks" would be a plain lie. Fill `#details` alongside them.
+
+`detailsTabs: false` removes the strip. The built-in body stays — the tabs are gone, not replaced — so a single-page
+window needs nothing else.
+
+`#details-tabs` replaces the strip's rendering while keeping its behaviour: the slot receives the tabs, the active id
+and a `select` callback.
 
 <script setup>
 import detailsSource from '../.vitepress/demos/CustomDetailsMap.vue?raw'

@@ -33,10 +33,19 @@
 | `showToolbar`               | `boolean`                         | `true`                 | Видимость встроенных контролов.                      |
 | `showDetailsPanel`          | `boolean`                         | `true`                 | Открытие окон подробностей по клику.                 |
 | `showMinimap`               | `boolean`                         | `false`                | Видимость обзорной карты.                            |
+| `showNodeStatus`            | `boolean`                         | `true`                 | Плашка состояния на круге узла.                      |
+| `showNodeToggle`            | `boolean`                         | `true`                 | Кнопка свёртки поддерева на узле.                    |
+| `showNodeLabel`             | `boolean`                         | `true`                 | Плашка с подписями под кругом.                       |
+| `maxSublabels`              | `number`                          | без предела            | Предел числа подписей; `0` убирает их.               |
+| `detailsTitle`              | `string \| (entity) => string`    | `entity.label`         | Подпись в шапке окна подробностей.                   |
+| `showDetailsHeading`        | `boolean`                         | `true`                 | Заголовочный блок внутри окна подробностей.          |
+| `detailsTabs`               | `DetailsTabDef[] \| false`        | встроенные табы        | Табы окна подробностей; `false` убирает полосу.      |
 | `maxDetailsWindows`         | `number`                          | `2`                    | Лимит открытых окон; `0` выключает окна.             |
 | `neighborHighlightDepth`    | `number`                          | `1`                    | Шаги выделения, остающиеся яркими; `0` выключает.    |
 | `infected`                  | `EntityId[]`                      | —                      | Источники заражения для `blastRadius`.               |
 | `infectionOptions`          | `InfectionOptions`                | —                      | `direction`, `maxDepth`, `layers` распространения.   |
+| `autoPath`                  | `boolean`                         | `false`                | Сам строит путь между двумя выделенными узлами.      |
+| `pathOptions`               | `PathOptions`                     | —                      | `maxDepth`, `layers` поиска пути.                    |
 | `markers`                   | `NodeMarkerDef[]`                 | —                      | Кружки принадлежности под подписями.                 |
 | `markerHoverDelay`          | `number`                          | `500`                  | Задержка в мс перед подсветкой по наведению.         |
 | `onlyRenderVisibleElements` | `boolean`                         | `true`                 | Монтирование только элементов в области просмотра.   |
@@ -73,6 +82,7 @@
 | `expand`, `collapse`                               | `{ groupId: string; group: CollapsedGroup \| undefined }` |
 | `node-expand`, `node-collapse`                     | `{ id: EntityId; entity: AssetEntity<E> \| undefined }`   |
 | `selection-change`                                 | `EntityId[]`                                              |
+| `path-change`                                      | `EntityId[]` — путь; пустой, когда подсветку сняли        |
 | `layout-start`                                     | `string` — имя алгоритма                                  |
 | `layout-done`                                      | `{ engine: string; positions: number }`                   |
 | `error`                                            | `unknown`                                                 |
@@ -86,8 +96,14 @@
 | `windows`                       | —                           |
 | `details`                       | `DetailsSlotProps<E>`       |
 | `details-header`                | `DetailsHeaderSlotProps<E>` |
+| `details-title`                 | `DetailsTitleSlotProps<E>`  |
+| `details-tabs`                  | `DetailsTabsSlotProps<E>`   |
 | `edge-label`                    | `EdgeLabelSlotProps<L>`     |
 | `node-{type}`, `node-badge`     | `NodeSlotProps<E>`          |
+| `node-label`, `node-status`     | `NodeSlotProps<E>`          |
+
+`NodeSlotProps` несёт `entity`, `nodeId` и `simplified` для всех слотов `node-*` плюс по одному полю тому слоту, которому
+оно нужно: `badge` для `node-badge`, `sublabels` для `node-label`, `status` и `statusColor` для `node-status`.
 
 #### Императивный API — `AssetMapExposed<E, L>`
 
@@ -96,7 +112,7 @@
 | `fitView`        | `() => Promise<void>`                                     |
 | `focus`          | `(id: EntityId, options?: FocusOptions) => Promise<void>` |
 | `relayout`       | `() => Promise<void>`                                     |
-| `highlightPath`  | `(from: EntityId, to: EntityId) => EntityId[]`            |
+| `highlightPath`  | `(from, to, options?: PathOptions) => EntityId[]`         |
 | `clearHighlight` | `() => void`                                              |
 | `getGraph`       | `() => AssetGraph<E, L>`                                  |
 
@@ -139,9 +155,10 @@
 ### Контракт компонента
 
 `AssetMapProps<E, L>`, `AssetMapModels`, `AssetMapSlots<E, L>`, `AssetMapExposed<E, L>`, `AssetMapLayoutSpec`,
-`Viewport`, `FocusOptions`, `InfectionOptions`, `NodeEventPayload`, `NodeSlotProps<E>`, `DetailsSlotProps<E>`,
-`DetailsHeaderSlotProps<E>`, `EdgeLabelSlotProps<L>`, `EmptySlotProps`, `MiniMapNode`, `MapContext`,
-`AssetNodeData<E>`, `EntityNodeData<E>`, `GroupNodeData`, `AssetEdgeData`.
+`Viewport`, `FocusOptions`, `InfectionOptions`, `PathOptions`, `NodeEventPayload`, `NodeSlotProps<E>`,
+`DetailsSlotProps<E>`, `DetailsHeaderSlotProps<E>`, `DetailsTitleSlotProps<E>`, `DetailsTabsSlotProps<E>`,
+`DetailsTabDef`, `EdgeLabelSlotProps<L>`, `EmptySlotProps`, `MiniMapNode`, `MapContext`, `AssetNodeData<E>`,
+`EntityNodeData<E>`, `GroupNodeData`, `AssetEdgeData`.
 
 ### Тема и локаль
 

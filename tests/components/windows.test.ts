@@ -31,9 +31,12 @@ async function mountMap(props: Record<string, unknown> = {}, slots: AssetMapSlot
 async function clickNode(
   wrapper: Awaited<ReturnType<typeof mountMap>>,
   label: string,
-  options: { ctrl?: boolean } = {},
+  options: { ctrl?: boolean; shift?: boolean } = {},
 ) {
-  await wrapper.find(`[aria-label^="${label}"]`).trigger('click', { ctrlKey: options.ctrl === true })
+  await wrapper.find(`[aria-label^="${label}"]`).trigger('click', {
+    ctrlKey: options.ctrl === true,
+    shiftKey: options.shift === true,
+  })
   await flushPromises()
   await nextTick()
 }
@@ -68,8 +71,8 @@ describe('несколько окон подробностей', () => {
     const wrapper = await mountMap({ maxDetailsWindows: 3 })
 
     await clickNode(wrapper, 'Dmitry')
-    await clickNode(wrapper, 'Vlad', { ctrl: true })
-    await clickNode(wrapper, 'Andrey', { ctrl: true })
+    await clickNode(wrapper, 'Vlad')
+    await clickNode(wrapper, 'Andrey')
 
     const windows = wrapper.findAll('.vam-window')
     expect(windows).toHaveLength(3)
@@ -84,8 +87,8 @@ describe('несколько окон подробностей', () => {
     const wrapper = await mountMap({ maxDetailsWindows: 2 })
 
     await clickNode(wrapper, 'Dmitry')
-    await clickNode(wrapper, 'Vlad', { ctrl: true })
-    await clickNode(wrapper, 'Andrey', { ctrl: true })
+    await clickNode(wrapper, 'Vlad')
+    await clickNode(wrapper, 'Andrey')
 
     expect(wrapper.findAll('.vam-window')).toHaveLength(2)
     // Самый старый узел уступил место новому.
@@ -99,8 +102,8 @@ describe('несколько окон подробностей', () => {
     const wrapper = await mountMap({ maxDetailsWindows: 3 })
 
     await clickNode(wrapper, 'Dmitry')
-    await clickNode(wrapper, 'Vlad', { ctrl: true })
-    await clickNode(wrapper, 'Dmitry', { ctrl: true })
+    await clickNode(wrapper, 'Vlad')
+    await clickNode(wrapper, 'Dmitry')
 
     expect(wrapper.findAll('.vam-window')).toHaveLength(2)
     expect(wrapper.emitted('update:openDetails')?.at(-1)?.[0]).toEqual(['ws-vlad', 'ws-dmitry'])
@@ -112,7 +115,7 @@ describe('несколько окон подробностей', () => {
     const wrapper = await mountMap({ maxDetailsWindows: 2 })
 
     await clickNode(wrapper, 'Dmitry')
-    await clickNode(wrapper, 'Vlad', { ctrl: true })
+    await clickNode(wrapper, 'Vlad')
 
     const styles = wrapper.findAll('.vam-window').map((node) => node.attributes('style') ?? '')
     expect(styles[0]).toContain('translate(0px, 0px)')
@@ -125,7 +128,7 @@ describe('несколько окон подробностей', () => {
     const wrapper = await mountMap({ maxDetailsWindows: 2 })
 
     await clickNode(wrapper, 'Dmitry')
-    await clickNode(wrapper, 'Vlad', { ctrl: true })
+    await clickNode(wrapper, 'Vlad')
 
     // Сворачиваем второе окно — первое остаётся раскрытым.
     const second = wrapper.findAll('.vam-window')[1]
@@ -149,7 +152,7 @@ describe('несколько окон подробностей', () => {
     const wrapper = await mountMap({ maxDetailsWindows: 3 })
 
     await clickNode(wrapper, 'Dmitry')
-    await clickNode(wrapper, 'Vlad', { ctrl: true })
+    await clickNode(wrapper, 'Vlad')
 
     await wrapper.find('.vam-root').trigger('keydown', { key: 'Escape' })
     await nextTick()
@@ -171,6 +174,46 @@ describe('несколько окон подробностей', () => {
     expect(wrapper.findAll('.vam-window')).toHaveLength(0)
     // Выделение при этом работает.
     expect(wrapper.find('[aria-label^="Dmitry"]').classes()).toContain('vam-node--selected')
+
+    wrapper.unmount()
+  })
+
+  it('Shift+клик только выделяет и окно не открывает', async () => {
+    // Модификатор — жест набора выделения: кто выбирает вторую точку для пути,
+    // не хочет получить окно поверх карты на каждый узел, который тронул.
+    const wrapper = await mountMap({ maxDetailsWindows: 3 })
+
+    await clickNode(wrapper, 'Dmitry', { shift: true })
+    await clickNode(wrapper, 'Vlad', { shift: true })
+
+    expect(wrapper.findAll('.vam-window')).toHaveLength(0)
+    expect(wrapper.emitted('selection-change')?.at(-1)?.[0]).toEqual(['ws-dmitry', 'ws-vlad'])
+
+    wrapper.unmount()
+  })
+
+  it('Ctrl+клик окно тоже не открывает', async () => {
+    const wrapper = await mountMap({ maxDetailsWindows: 3 })
+
+    await clickNode(wrapper, 'Dmitry', { ctrl: true })
+
+    expect(wrapper.findAll('.vam-window')).toHaveLength(0)
+    expect(wrapper.find('[aria-label^="Dmitry"]').classes()).toContain('vam-node--selected')
+
+    wrapper.unmount()
+  })
+
+  it('обычный клик после Shift+клика окно открывает', async () => {
+    // Простой клик остаётся простым кликом: модификатор ничего не переключает
+    // насовсем.
+    const wrapper = await mountMap()
+
+    await clickNode(wrapper, 'Dmitry', { shift: true })
+    await clickNode(wrapper, 'Vlad')
+
+    const windows = wrapper.findAll('.vam-window')
+    expect(windows).toHaveLength(1)
+    expect(windows[0]?.text()).toContain('Vlad')
 
     wrapper.unmount()
   })

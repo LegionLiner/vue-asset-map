@@ -5,6 +5,7 @@ import MapWindow from '../MapWindow.vue'
 import { useMapContext } from '../../composables/useMapContext'
 import { incidentLinks, otherEnd } from '../../core/graph'
 import type { AssetEntity, XY } from '../../types/entity'
+import type { DetailsTabDef } from '../../types/props'
 
 /**
  * Entity details inside a floating window.
@@ -13,31 +14,65 @@ import type { AssetEntity, XY } from '../../types/entity'
  * fills them in minimally — label, type, tabs and a flat list of `meta` fields as
  * a fallback. Real content belongs in the `#details` slot: the package knows
  * neither the consumer's field names nor which of them matter.
+ *
+ * Everything below `.vam-window__header` can be replaced or removed outright: the
+ * caption through `title` or `#details-title`, the heading block through
+ * `showHeading` or `#details-header`, the tabs through `tabs` or `#details-tabs`,
+ * the body through `#details`. With all four taken over, nothing of the default
+ * design survives but the title bar.
  */
-const props = defineProps<{
-  entity: AssetEntity<unknown>
-  /** Offset in px, so several windows do not stack exactly on one another. */
-  offset?: XY
-}>()
+const props = withDefaults(
+  defineProps<{
+    entity: AssetEntity<unknown>
+    /** Offset in px, so several windows do not stack exactly on one another. */
+    offset?: XY
+    /** Title-bar caption. Falls back to `entity.label`. */
+    title?: string
+    /**
+     * Show the heading block: the large label with the type and status line.
+     *
+     * @default true
+     */
+    showHeading?: boolean
+    /**
+     * Tabs to draw. `false` removes the strip; omitted keeps the built-in pair.
+     */
+    tabs?: readonly DetailsTabDef[] | false
+  }>(),
+  { showHeading: true, tabs: undefined },
+)
 
 const emit = defineEmits<{ close: [] }>()
 
 const map = useMapContext()
 
-type TabId = 'overview' | 'links'
+/** The package's own tabs, used while `tabs` is not given. */
+const builtinTabs = computed<readonly DetailsTabDef[]>(() => [
+  { id: 'overview', label: map.t('details.tab.overview') },
+  { id: 'links', label: map.t('details.tab.links') },
+])
 
-const tabs: readonly { id: TabId; labelKey: 'details.tab.overview' | 'details.tab.links' }[] = [
-  { id: 'overview', labelKey: 'details.tab.overview' },
-  { id: 'links', labelKey: 'details.tab.links' },
-]
+const tabs = computed<readonly DetailsTabDef[]>(() =>
+  props.tabs === false ? [] : (props.tabs ?? builtinTabs.value),
+)
+
+/** Whether the window still renders the package's own body for a tab. */
+const builtinBody = computed(() => props.tabs === undefined || props.tabs === false)
 
 /**
  * Active tab.
  *
  * Never reset when the entity changes: the map keys its windows by entity id, so
  * a different entity is a different component instance with default state.
+ *
+ * Starts on the first declared tab rather than a fixed id, since custom tabs
+ * carry ids the package cannot guess.
  */
-const activeTab = ref<TabId>('overview')
+const activeTab = ref<string>(tabs.value[0]?.id ?? 'overview')
+
+function selectTab(id: string): void {
+  activeTab.value = id
+}
 
 const statusColor = computed(() => map.statusColorOf(props.entity.status))
 
@@ -67,20 +102,31 @@ const metaRows = computed(() => {
 
 const detailsSlot = computed(() => map.slot('details'))
 const headerSlot = computed(() => map.slot('details-header'))
+const titleSlot = computed(() => map.slot('details-title'))
+const tabsSlot = computed(() => map.slot('details-tabs'))
+
+const close = (): void => emit('close')
 </script>
 
 <template>
   <MapWindow
     class="vam-details"
     :offset="offset"
-    :title="entity.label"
     :close-label="map.t('details.close')"
     :collapse-label="map.t('details.collapseWindow')"
     :expand-label="map.t('details.expandWindow')"
-    @close="emit('close')"
+    @close="close"
   >
-    <div class="vam-window__heading">
-      <component :is="headerSlot" v-if="headerSlot" :entity="entity" :close="() => emit('close')" />
+    <!-- The caption is a slot rather than the `title` prop whenever
+         `#details-title` is filled: a prop can only carry a string, and a
+         consumer replacing the design wants markup there. -->
+    <template #header="{ collapsed }">
+      <component :is="titleSlot" v-if="titleSlot" :entity="entity" :collapsed="collapsed" :close="close" />
+      <template v-else>{{ title ?? entity.label }}</template>
+    </template>
+
+    <div v-if="showHeading" class="vam-window__heading">
+      <component :is="headerSlot" v-if="headerSlot" :entity="entity" :close="close" />
       <template v-else>
         <span class="vam-window__title">{{ entity.label }}</span>
         <span class="vam-window__subtitle">
@@ -96,32 +142,38 @@ const headerSlot = computed(() => map.slot('details-header'))
       </template>
     </div>
 
-    <div class="vam-window__tabs" role="tablist" :aria-label="map.t('details.title')">
-      <button
-        v-for="tab in tabs"
-        :key="tab.id"
-        type="button"
-        role="tab"
-        class="vam-window__tab"
-        :class="{ 'vam-window__tab--active': activeTab === tab.id }"
-        :aria-selected="activeTab === tab.id"
-        @click="activeTab = tab.id"
-      >
-        {{ map.t(tab.labelKey) }}
-      </button>
-    </div>
+    <template v-if="tabs.length > 0">
+      <component
+        :is="tabsSlot"
+        v-if="tabsSlot"
+        :entity="entity"
+        :tabs="tabs"
+        :active="activeTab"
+        :select="selectTab"
+      />
+      <div v-else class="vam-window__tabs" role="tablist" :aria-label="map.t('details.title')">
+        <button
+          v-for="tab in tabs"
+          :key="tab.id"
+          type="button"
+          role="tab"
+          class="vam-window__tab"
+          :class="{ 'vam-window__tab--active': activeTab === tab.id }"
+          :aria-selected="activeTab === tab.id"
+          @click="selectTab(tab.id)"
+        >
+          {{ tab.label }}
+        </button>
+      </div>
+    </template>
 
     <div class="vam-window__content" role="tabpanel">
-      <component
-        :is="detailsSlot"
-        v-if="detailsSlot"
-        :entity="entity"
-        :close="() => emit('close')"
-        :tab="activeTab"
-      />
+      <component :is="detailsSlot" v-if="detailsSlot" :entity="entity" :close="close" :tab="activeTab" />
 
-      <!-- Fallback: just enough for the package to be usable without the slot. -->
-      <template v-else-if="activeTab === 'overview'">
+      <!-- Fallback: just enough for the package to be usable without the slot.
+           Skipped once custom tabs are in play — the package has no content to
+           show under a tab it does not know. -->
+      <template v-else-if="builtinBody && activeTab === 'overview'">
         <DetailsSection :title="map.t('details.id')">
           <span class="vam-field__key">{{ map.t('details.id') }}</span>
           <span class="vam-field__value">{{ entity.id }}</span>
@@ -149,7 +201,7 @@ const headerSlot = computed(() => map.slot('details-header'))
         </DetailsSection>
       </template>
 
-      <template v-else>
+      <template v-else-if="builtinBody">
         <DetailsSection :title="map.t('details.neighbors')" :empty="neighbors.length === 0">
           <template #empty>{{ map.t('filter.empty') }}</template>
           <template v-for="neighbor in neighbors" :key="neighbor.id">

@@ -56,9 +56,11 @@ The `#details` slot with the application's own field labels. The package never g
 
 ## Tracing a path between two nodes
 
-Two nodes are pre-selected, so a path is already highlighted below. Shift-click two nodes of your own to trace a
-different pair — Shift is the additive modifier that works everywhere, unlike Ctrl+click, which macOS treats as a
-right click. The path is searched on the original graph and highlighted on the collapsed one.
+`autoPath` traces the pair itself: two nodes are pre-selected, so a path is already highlighted below with nothing
+called. Shift-click two nodes of your own to trace a different pair — Shift is the additive modifier that works
+everywhere, unlike Ctrl+click, which macOS treats as a right click, and a modified click only selects, leaving no
+window over the path. The route arrives through `path-change`; it is searched on the original graph and highlighted on
+the collapsed one.
 
 <LiveDemo :source="pathSource">
   <PathTraceMap />
