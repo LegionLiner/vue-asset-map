@@ -2,7 +2,7 @@
 layout: home
 
 hero:
-  # name: vue-asset-map
+  name: VueAssetMap
   text: Infrastructure asset map for Vue 3
   tagline: A component for entities, links and views of one graph, with search, filters and path tracing.
   image:
