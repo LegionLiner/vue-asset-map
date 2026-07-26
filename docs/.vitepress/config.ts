@@ -18,7 +18,7 @@ const guide = (base: string) => [
 const guideRu = [
   { text: 'Начало работы', link: '/ru/guide/getting-started' },
   { text: 'Модель данных', link: '/ru/guide/data-model' },
-  { text: 'Проекции', link: '/ru/guide/views' },
+  { text: 'Представления', link: '/ru/guide/views' },
   { text: 'Узлы', link: '/ru/guide/nodes' },
   { text: 'Связи', link: '/ru/guide/edges' },
   { text: 'Свёртка групп', link: '/ru/guide/collapse' },
