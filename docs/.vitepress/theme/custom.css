@@ -7,7 +7,15 @@
   max-height: 500px;
 }
 
-@media (min-width: 640px) {
+.VPHero .main .heading .name.clip {
+  color: transparent;
+  background: linear-gradient(to right, #325ff7, #3148a4) !important;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent !important;
+}
+
+@media (max-width: 640px) {
   .VPHero .image .image-src {
     max-width: 380px;
     max-height: 380px;

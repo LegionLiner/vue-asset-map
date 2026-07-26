@@ -164,6 +164,7 @@ export default defineConfig({
       link: '/ru/',
       description: 'Интерактивная карта инфраструктурных активов для Vue 3 на базе Vue Flow',
       themeConfig: {
+        siteTitle: 'VueAssetMap',
         nav: [
           { text: 'Руководство', link: '/ru/guide/getting-started' },
           { text: 'API', link: '/ru/api/' },
