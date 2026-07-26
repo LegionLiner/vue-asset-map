@@ -1,13 +1,15 @@
 # Search and filters
 
-Search and facets narrow one set together: an entity matches when it passes the text query **and** the kind facet
-**and** the status facet **and** every consumer-defined group **and** the custom predicate.
+Search and filter groups narrow one set together: an entity matches when it passes the text query **and** the kind
+group **and** the status group **and** every consumer-defined group **and** the custom predicate.
 
 <LiveDemo :source="searchSource">
   <SearchMap />
 </LiveDemo>
 
-## Three search modes, picked by the query itself
+## Search modes
+
+The query itself picks the mode:
 
 | Query                                    | Mode                                                                       |
 | ---------------------------------------- | -------------------------------------------------------------------------- |
@@ -27,7 +29,7 @@ const filterOptions = {
 
 The default is the label plus every sublabel.
 
-## Matches, and what stays around them
+## Matches and the visible area
 
 `applyFilters` returns two sets:
 
@@ -35,8 +37,8 @@ The default is the label plus every sublabel.
 - `visibleIds` — everything left on the map: hits, plus neighbours within `neighborDepth` steps, plus ancestor chains
   unless `keepPathToRoot` is off.
 
-Keeping the neighbours and the path to the root is what stops a search from shattering the graph into isolated
-circles. A node out of scope does not merely stay hidden — it also cannot bridge to the next step.
+Neighbours and the path to the root keep the graph connected around the matches. A node out of scope is not shown, and
+it cannot bridge to the next step of a traversal either.
 
 ```ts
 const filterOptions = {
@@ -48,9 +50,10 @@ const filterOptions = {
 
 While no criterion is active, `matchedIds` is empty and the whole graph is visible: there is nothing to highlight yet.
 
-## Filter groups are data
+## Custom filter groups
 
-The package does not know what a "subnet" or a "severity" is. Declare the groups and how to read them off an entity:
+The package does not know what a "subnet" or a "severity" is. Declare the groups and how to read their values off an
+entity:
 
 ```ts
 import type { FilterGroupDef } from 'vue-asset-map'
@@ -90,10 +93,10 @@ and the values are collected from the data instead.
 
 Values inside one group combine with OR (picking "critical" and "high" shows both); groups combine with AND.
 
-## Counters do not collapse as you select
+## Filter group counters
 
-Facet counts are computed over the current **projection**, not over the filter result. Picking `offline` would
-otherwise zero every other counter and leave nowhere to go back to.
+Counters are computed over the current **projection**, not over the filter result. Picking `offline` would otherwise
+zero every other counter and leave nowhere to go back to.
 
 Values declared explicitly in `options` are reported even at zero, so the list does not jump around while you click.
 
@@ -116,16 +119,16 @@ const filters = ref(emptyFilterState())
 const openFilterGroups = ref<string[]>(['subnet'])
 ```
 
-Which groups are expanded is component state, not `localStorage` — the package never writes to browser storage.
+Which groups are expanded is component state, not `localStorage`: the package never writes to browser storage.
 Persisting it across sessions is the application's decision, and `v-model:open-filter-groups` is how it gets out.
 
 ## Debouncing
 
-The text query is debounced by `searchDebounce` (200 ms by default); clicking a facet applies immediately, because a
-click is a single deliberate act and delaying it just feels sluggish. Clearing the field also applies at once.
+The text query is debounced by `searchDebounce` (200 ms by default). Clicking a filter value applies immediately,
+since a click is a single deliberate act that does not need delaying. Clearing the field also applies at once.
 
-Layout deliberately ignores the filter: search hides and highlights nodes but never rebuilds the map, or the graph
-would jump on every keystroke.
+Layout ignores the filter: search hides and highlights nodes but never rebuilds the map. Otherwise the graph would
+jump on every keystroke.
 
 <script setup>
 import searchSource from '../.vitepress/demos/SearchMap.vue?raw'

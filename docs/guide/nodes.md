@@ -1,7 +1,7 @@
 # Nodes
 
-A node is a circle with an icon and a fixed-size plate under it carrying the label and up to two sublabels. Root
-entities are drawn at 60 px and children at 36 px — the only visual cue for depth, and not a field in your data.
+A node is a circle with an icon, with a fixed-size plate under it carrying the label and up to two sublabels. Root
+entities are drawn at 60 px, children at 36 px. That is the only visual cue for depth, not a field in your data.
 
 ## Icons by kind
 

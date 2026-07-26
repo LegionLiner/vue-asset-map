@@ -32,7 +32,7 @@ The `#edge-label` slot replaces the rendering:
 </template>
 ```
 
-## Parallel links are preserved
+## Parallel links
 
 Two links between the same pair with different ids are two edges. That is deliberate: a second uplink to the same
 router is a fact about the infrastructure, not a duplicate to be cleaned up.

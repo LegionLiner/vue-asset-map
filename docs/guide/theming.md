@@ -45,7 +45,7 @@ Scope it to one map by adding a class of your own:
 }
 ```
 
-### The tokens worth knowing
+### Key tokens
 
 | Group     | Tokens                                                                                                                                                                     |
 | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -88,7 +88,7 @@ ignores both the theme switch and your token overrides. See [Nodes](./nodes).
 
 ## Reduced motion
 
-Transitions collapse to `0s` under `prefers-reduced-motion: reduce`. Nothing to configure.
+Transitions become instant (`0s`) under `prefers-reduced-motion: reduce`. Nothing to configure.
 
 ## Class names
 

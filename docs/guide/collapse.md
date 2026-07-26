@@ -1,7 +1,7 @@
 # Collapse
 
-Fourteen containers on one hypervisor are fourteen circles that say nothing individually. Collapsing folds siblings of
-one kind into a single group node and re-routes their edges onto it.
+Collapsing folds siblings of one kind into a single group node and re-routes their edges onto it. Fourteen containers
+on one hypervisor, for instance, turn into a single node with a count instead of fourteen separate circles.
 
 ```ts
 interface CollapseRule {
@@ -23,11 +23,11 @@ By default children are bucketed by `kind` and a bucket collapses once it holds 
   <CollapsedGroupMap />
 </LiveDemo>
 
-## What the rules guarantee
+## Collapse guarantees
 
-Collapsing runs **before** layout: positions are computed on the collapsed graph, so a single group node does not land
-in space laid out for fourteen separate ones. The function is pure and deterministic — group, node and edge order all
-follow the order of the input arrays, so the same input gives the same map.
+Collapsing runs **before** layout: positions are computed on the collapsed graph, so a group node does not land in
+space laid out for separate nodes. The function is pure and deterministic: group, node and edge order all follow the
+order of the input arrays, so the same input gives the same map.
 
 The rest of the invariants:
 
@@ -90,7 +90,7 @@ expanded.value = new Set([groupIdFor('pve-beelink', 'container')])
 />
 ```
 
-## Subtree collapse is a different thing
+## Subtree collapse vs. group collapse
 
 The button on a node hides its **descendants** while the node itself stays on the map. Group collapse hides
 **siblings** behind a synthetic node. They compose: a subtree hidden by the button is resolved before any grouping

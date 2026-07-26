@@ -1,7 +1,7 @@
 # Data model
 
-Two arrays describe everything on screen: `entities` and `links`. The map reads them and never writes to them — no
-field is added, reordered or normalised in place.
+Two arrays describe everything on screen: `entities` and `links`. The map only reads them: no field is added, reordered
+or normalised in place.
 
 ## AssetEntity
 
@@ -70,7 +70,7 @@ interface AssetLink<M = unknown> {
 Parallel links between the same pair are kept: two links with different ids are two edges, and the count survives into
 aggregation when a group collapses.
 
-## Broken input is repaired, not fatal
+## Handling invalid data
 
 `buildGraph` never throws on bad data. It reports through `onIssue` and carries on:
 
@@ -82,8 +82,8 @@ aggregation when a group collapses.
 | A cycle in the hierarchy                | The parent link is cut at the node that closed the cycle. |
 | `parentId` equal to the entity's own id | Treated as a root.                                        |
 
-That matters because asset data usually arrives from inventory systems, where a dangling reference is ordinary. A map
-that refuses to render is less useful than one that renders and tells you what it repaired:
+That matters because asset data usually arrives from inventory systems, where a dangling reference is ordinary, and the
+map needs to stay usable with that kind of data:
 
 ```ts
 import { buildGraph } from 'vue-asset-map/core'
@@ -110,9 +110,9 @@ interface AssetGraph<E = unknown, L = unknown> {
 }
 ```
 
-Two details are load-bearing. A self-loop appears in `adjacency` **once**, not twice, so a doubled loop stays
-distinguishable from two parallel links. And `parentOf` is the _effective_ parent — post-repair, so a cycle cannot make
-a traversal hang.
+Two details matter here. A self-loop appears in `adjacency` **once**, not twice, so a doubled loop stays distinguishable
+from two parallel links. `parentOf` holds the _effective_ parent, already post-repair, so a cycle in the hierarchy
+cannot make a traversal hang.
 
 Inside a component you rarely build the graph yourself; the map does it and exposes the result:
 
@@ -121,5 +121,5 @@ const map = useTemplateRef<AssetMapExposed>('map')
 const graph = map.value?.getGraph()
 ```
 
-Recomputation is tied to the array references. Editing a field inside an existing entity does not rebuild the indexes —
-replace the array to signal a change, the way an immutable store would.
+Recomputation is tied to the array references. Editing a field inside an existing entity does not rebuild the indexes.
+Replace the array to signal a change, the way an immutable store would.

@@ -6,7 +6,7 @@
 npm install vue-asset-map vue @vue-flow/core
 ```
 
-`vue` and `@vue-flow/core` are peer dependencies. Vue Flow must appear exactly once in the dependency tree — it works
+`vue` and `@vue-flow/core` are peer dependencies. Vue Flow must appear exactly once in the dependency tree. It works
 through `provide`/`inject`, and a second copy breaks the provider context.
 
 The dagre layout is optional and only pulled in if you import it:
@@ -79,7 +79,7 @@ const selection = ref<string[]>([])
 
 Three things are worth noting in that snippet.
 
-**The map fills its container.** It has no height of its own, so give it one — `height: 100vh`, a grid cell, anything.
+**The map fills its container.** It has no height of its own. Give it one: `height: 100vh`, a grid cell, anything.
 
 **A link belongs to a view when its `layers` contain the view id.** `l4` is on the `logical` layer only, so it appears
 in the VPN overlay and nowhere else. With `hideIsolated`, a node left without links in a view drops out of it.
@@ -93,14 +93,14 @@ in the VPN overlay and nowhere else. With `hideIsolated`, a node left without li
   <BasicMap />
 </LiveDemo>
 
-The demo above runs on a larger fixture and adds icons and a layout engine, which the next pages cover.
+The demo above runs on a larger fixture and adds icons and a layout engine, covered on the next pages.
 
 ## Where to go next
 
 - [Data model](./data-model) — what an entity and a link may carry.
-- [Views](./views) — projections, layers and isolated nodes.
+- [Views](./views) — views, layers and isolated nodes.
 - [Nodes](./nodes) — icons, custom node components and slots.
-- [Search and filters](./search) — IP search and consumer-defined facets.
+- [Search and filters](./search) — IP search and consumer-defined filter groups.
 
 <script setup>
 import basicSource from '../.vitepress/demos/BasicMap.vue?raw'

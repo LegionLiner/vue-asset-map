@@ -11,8 +11,8 @@ object with a `run` method can replace them.
 
 ### manual
 
-Pinned positions are kept untouched, everything else goes into a deterministic grid. The point is not to look good but
-to lose no coordinates — this is the engine to use when positions come from a backend.
+Pinned positions are kept untouched, everything else goes into a deterministic grid. Use it when positions come from a
+backend and the coordinates need to be preserved rather than recomputed.
 
 ```ts
 { engine: 'manual', options: { columns: 8, columnGap: 200, rowGap: 140, origin: { x: 0, y: 0 } } }
@@ -127,7 +127,7 @@ await map.value?.relayout()
 
 `layout-start`, `layout-done` and `error` report the progress of a run.
 
-## Fitting the view
+## Auto-fit
 
 Without a starting position, an unbound `v-model:viewport` defaults to `{ x: 0, y: 0, zoom: 1 }`, so whatever the
 layout placed at the origin ends up in the top-left corner rather than centred.
@@ -136,13 +136,14 @@ layout placed at the origin ends up in the top-left corner rather than centred.
 <AssetMap :entities="entities" :links="links" auto-fit-view />
 ```
 
-`autoFitView` fits the canvas to its content once the first layout settles, and again after anything reshapes it — a
-view switch, a group collapse or expand, a layout engine change. It waits on Vue Flow's own node-measurement signal
-rather than a fixed delay, so it fires exactly once dimensions are known and never centres on a graph that has not
-finished laying out yet.
+`autoFitView` fits the canvas to its content once the first layout settles. It fits again after anything reshapes the
+layout: a view switch, a group collapse or expand, a layout engine change.
 
-It defaults to `false`: an application that manages its own viewport — restoring a saved position, calling `focus` on
-a specific node after load — should not have that overridden on every relayout. For a one-off fit instead of a
+The fit is timed by Vue Flow's own node-measurement signal rather than a fixed delay. So it fires exactly once
+dimensions are known, and never centres on a graph that has not finished laying out yet.
+
+It defaults to `false`. An application that manages its own viewport — restoring a saved position or calling `focus`
+on a node after load — should not have that logic overridden on every relayout. For a one-off fit instead of a
 standing behaviour, call the exposed method directly:
 
 ```ts

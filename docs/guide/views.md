@@ -1,8 +1,8 @@
 # Views
 
-A view is a projection of one graph: which entities and links reach the canvas, and how they are laid out. Views are
-data. The package ships none of its own and knows no view name in advance — `physical` and `logical` in these examples
-are ids you chose.
+A view is a configuration object that defines a projection of the graph onto the canvas: which entities and links
+reach it, and how they are laid out. Views are data: the package ships none of its own and knows no view name in
+advance. `physical` and `logical` in these examples are ids you chose.
 
 ```ts
 interface AssetView {
@@ -16,7 +16,7 @@ interface AssetView {
 }
 ```
 
-## Layers are the default filter
+## Filtering by layers
 
 Without a `linkFilter`, a link belongs to a view when its `layers` contain the view id:
 
@@ -28,19 +28,19 @@ const links: AssetLink[] = [
 ]
 ```
 
-`l3` is in both views; the other two in one each. That is the whole mechanism — one array of links, several topologies.
+`l3` is in both views; the other two in one each. One array of links describes several topologies.
 
-## The order the projection applies
+## Order of application
 
-The order is fixed and observable:
+The order of projection is fixed and observable:
 
 1. `entityFilter` picks candidate entities.
 2. `linkFilter` keeps the links whose **both** ends survived step 1.
 3. `hideIsolated` drops entities left without a single visible link.
 
-`hideIsolated` is literal: no incident visible link, no node. Ancestors do not rescue descendants and descendants do
-not rescue ancestors — the hierarchy plays no part in projection at all. It belongs to collapsing, and keeping the map
-connected during search is the filter's `keepPathToRoot`.
+`hideIsolated` only considers links: an entity without a visible incident link is not drawn. Ancestors do not rescue
+descendants, and descendants do not rescue ancestors — the hierarchy plays no part in projection. It belongs to
+collapsing, and the filter's `keepPathToRoot` keeps the map connected during search.
 
 ## Switching views
 
@@ -69,7 +69,7 @@ result.entityIds.size
 result.linkIds.size
 ```
 
-## A view can carry its own layout
+## View layout
 
 ```ts
 const views: AssetView[] = [

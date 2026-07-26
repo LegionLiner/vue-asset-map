@@ -47,8 +47,8 @@ blastRadius(graph, 'vps-tailscale', { direction: 'downstream', maxDepth: 2, laye
 ```
 
 `direction` only constrains **directed** links. An undirected link is walked both ways whatever `direction` says,
-because it carries no claim about which end depends on which. That is deliberate: inferring dependency from an
-undirected edge would produce confident nonsense.
+because it carries no claim about which end depends on which. A dependency direction inferred from an undirected edge
+would be unreliable.
 
 ## Highlighting a path on the map
 
