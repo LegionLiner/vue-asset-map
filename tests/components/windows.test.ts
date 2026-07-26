@@ -42,14 +42,45 @@ async function clickNode(
 }
 
 describe('несколько окон подробностей', () => {
-  it('по умолчанию можно держать два окна', async () => {
+  it('по умолчанию клик заменяет содержимое окна, а не открывает второе', async () => {
+    // Кликая по карте, читают по узлу за раз: если каждый клик открывал бы ещё
+    // одно окно, к третьему узлу карту было бы уже не видно.
     const wrapper = await mountMap()
 
     await clickNode(wrapper, 'Dmitry')
     expect(wrapper.findAll('.vam-window')).toHaveLength(1)
 
     await clickNode(wrapper, 'Vlad')
+
+    const windows = wrapper.findAll('.vam-window')
+    expect(windows).toHaveLength(1)
+    expect(windows[0]?.text()).toContain('Vlad')
+    expect(wrapper.emitted('update:openDetails')?.at(-1)?.[0]).toEqual(['ws-vlad'])
+
+    wrapper.unmount()
+  })
+
+  it('detailsMode: stack возвращает прежнее накопление окон', async () => {
+    const wrapper = await mountMap({ detailsMode: 'stack' })
+
+    await clickNode(wrapper, 'Dmitry')
+    await clickNode(wrapper, 'Vlad')
+
     expect(wrapper.findAll('.vam-window')).toHaveLength(2)
+    wrapper.unmount()
+  })
+
+  it('повторный клик по уже открытому узлу окно не дёргает', async () => {
+    // Переприсваивание сбросило бы окну позицию, в которую его перетащили.
+    const wrapper = await mountMap()
+
+    await clickNode(wrapper, 'Dmitry')
+    const before = wrapper.emitted('update:openDetails')?.length ?? 0
+
+    await clickNode(wrapper, 'Dmitry')
+
+    expect(wrapper.emitted('update:openDetails')?.length ?? 0).toBe(before)
+    expect(wrapper.findAll('.vam-window')).toHaveLength(1)
 
     wrapper.unmount()
   })
@@ -68,7 +99,7 @@ describe('несколько окон подробностей', () => {
   })
 
   it('maxDetailsWindows позволяет держать несколько окон сразу', async () => {
-    const wrapper = await mountMap({ maxDetailsWindows: 3 })
+    const wrapper = await mountMap({ maxDetailsWindows: 3, detailsMode: 'stack' })
 
     await clickNode(wrapper, 'Dmitry')
     await clickNode(wrapper, 'Vlad')
@@ -84,7 +115,7 @@ describe('несколько окон подробностей', () => {
   })
 
   it('при достижении лимита закрывается самое старое окно', async () => {
-    const wrapper = await mountMap({ maxDetailsWindows: 2 })
+    const wrapper = await mountMap({ maxDetailsWindows: 2, detailsMode: 'stack' })
 
     await clickNode(wrapper, 'Dmitry')
     await clickNode(wrapper, 'Vlad')
@@ -99,7 +130,7 @@ describe('несколько окон подробностей', () => {
   })
 
   it('повторный клик по узлу не открывает второе окно, а поднимает его наверх', async () => {
-    const wrapper = await mountMap({ maxDetailsWindows: 3 })
+    const wrapper = await mountMap({ maxDetailsWindows: 3, detailsMode: 'stack' })
 
     await clickNode(wrapper, 'Dmitry')
     await clickNode(wrapper, 'Vlad')
@@ -112,7 +143,7 @@ describe('несколько окон подробностей', () => {
   })
 
   it('окна не ложатся ровно друг на друга', async () => {
-    const wrapper = await mountMap({ maxDetailsWindows: 2 })
+    const wrapper = await mountMap({ maxDetailsWindows: 2, detailsMode: 'stack' })
 
     await clickNode(wrapper, 'Dmitry')
     await clickNode(wrapper, 'Vlad')
@@ -125,7 +156,7 @@ describe('несколько окон подробностей', () => {
   })
 
   it('каждое окно сворачивается и закрывается независимо', async () => {
-    const wrapper = await mountMap({ maxDetailsWindows: 2 })
+    const wrapper = await mountMap({ maxDetailsWindows: 2, detailsMode: 'stack' })
 
     await clickNode(wrapper, 'Dmitry')
     await clickNode(wrapper, 'Vlad')
@@ -149,7 +180,7 @@ describe('несколько окон подробностей', () => {
   })
 
   it('Escape закрывает по одному окну, начиная с верхнего', async () => {
-    const wrapper = await mountMap({ maxDetailsWindows: 3 })
+    const wrapper = await mountMap({ maxDetailsWindows: 3, detailsMode: 'stack' })
 
     await clickNode(wrapper, 'Dmitry')
     await clickNode(wrapper, 'Vlad')
@@ -181,7 +212,7 @@ describe('несколько окон подробностей', () => {
   it('Shift+клик только выделяет и окно не открывает', async () => {
     // Модификатор — жест набора выделения: кто выбирает вторую точку для пути,
     // не хочет получить окно поверх карты на каждый узел, который тронул.
-    const wrapper = await mountMap({ maxDetailsWindows: 3 })
+    const wrapper = await mountMap({ maxDetailsWindows: 3, detailsMode: 'stack' })
 
     await clickNode(wrapper, 'Dmitry', { shift: true })
     await clickNode(wrapper, 'Vlad', { shift: true })
@@ -193,7 +224,7 @@ describe('несколько окон подробностей', () => {
   })
 
   it('Ctrl+клик окно тоже не открывает', async () => {
-    const wrapper = await mountMap({ maxDetailsWindows: 3 })
+    const wrapper = await mountMap({ maxDetailsWindows: 3, detailsMode: 'stack' })
 
     await clickNode(wrapper, 'Dmitry', { ctrl: true })
 

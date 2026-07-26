@@ -51,5 +51,15 @@
   --vam-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.45);
   --vam-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.55);
 
+  --vam-window-border: #32405d;
+  /* Darker and deeper than the light one: the same 8% black would be invisible
+     against a dark canvas. */
+  --vam-window-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.45);
+
+  --vam-menu-danger: #e57373;
+  --vam-menu-danger-soft: rgba(229, 115, 115, 0.16);
+  /* Deeper than the light one: the same 45% would barely register on a dark map. */
+  --vam-confirm-scrim: rgba(0, 0, 0, 0.6);
+
   --vam-canvas-dot: #2b3852;
 }

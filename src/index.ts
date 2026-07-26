@@ -40,7 +40,15 @@ export { default as MiniMap } from './components/MiniMap.vue'
 export { default as MapWindow } from './components/MapWindow.vue'
 export type { MiniMapNode } from './components/MiniMap.vue'
 export { default as DetailsPanel } from './components/panel/DetailsPanel.vue'
+export { default as LinkDetailsPanel } from './components/panel/LinkDetailsPanel.vue'
 export { default as DetailsSection } from './components/panel/DetailsSection.vue'
+export { default as EditableFields } from './components/panel/EditableFields.vue'
+// Menu, confirmation and legend: usable on their own, and the reason the map
+// needs neither a dialog library nor a `window.confirm`.
+export { default as ContextMenu } from './components/ContextMenu.vue'
+export type { ContextMenuItem } from './components/ContextMenu.vue'
+export { default as ConfirmDialog } from './components/ConfirmDialog.vue'
+export { default as MapLegend } from './components/MapLegend.vue'
 // The controls also work outside the map: they read the locale from context and
 // fall back to the built-in one when there is none.
 export { default as SearchInput } from './components/controls/SearchInput.vue'
@@ -82,10 +90,15 @@ export type { NodeSize } from './composables/useLayout'
 
 export { builtinLocales, createTranslator, defaultLocale, en, resolveLocale, ru } from './locale/index'
 
+export type { FieldDef, FieldOption } from './types/field'
+export type { LinkTypeDef } from './types/linkType'
+
 export type {
   DetailsHeaderSlotProps,
   DetailsSlotProps,
   DetailsTabDef,
+  LinkDetailsSlotProps,
+  EditSlotProps,
   DetailsTabsSlotProps,
   DetailsTitleSlotProps,
   EdgeLabelSlotProps,

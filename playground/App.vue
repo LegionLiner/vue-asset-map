@@ -4,6 +4,7 @@ import { MapWindow, AssetMap, type FilterState, type AssetMapExposed, type Theme
 import {
   entities as fixtureEntities,
   filterGroups,
+  linkTypes,
   links as fixtureLinks,
   nodeMarkers,
   statusColors,
@@ -78,6 +79,50 @@ function onPathChange(path: string[]): void {
 
 function clearPath(): void {
   selection.value = []
+}
+
+/*
+ * Editing. The map never writes to `entities` or `links` — it reports what was
+ * asked for and this application applies it, which is exactly the split a real
+ * one has between a map component and its store.
+ */
+const entityFields = [
+  { key: 'label', label: 'Название' },
+  {
+    key: 'status',
+    label: 'Состояние',
+    type: 'select' as const,
+    options: [
+      { value: 'online', label: 'В сети' },
+      { value: 'offline', label: 'Не в сети' },
+      { value: 'degraded', label: 'Деградация' },
+    ],
+  },
+  { key: 'meta.owner', label: 'Владелец' },
+  { key: 'meta.os', label: 'ОС' },
+  { key: 'meta.location', label: 'Размещение' },
+]
+
+function onEntityUpdate({ id, entity }: { id: string; entity: DemoEntity }): void {
+  entities.value = entities.value.map((candidate) => (candidate.id === id ? entity : candidate))
+}
+
+function onEntityDelete({ id }: { id: string }): void {
+  entities.value = entities.value.filter((candidate) => candidate.id !== id)
+  // A node's links go with it, or the graph builder would report them dangling.
+  links.value = links.value.filter((link) => link.source !== id && link.target !== id)
+}
+
+function onLinkCreate({ link }: { link: DemoLink }): void {
+  links.value = [...links.value, link]
+}
+
+function onLinkUpdate({ id, link }: { id: string; link: DemoLink }): void {
+  links.value = links.value.map((candidate) => (candidate.id === id ? link : candidate))
+}
+
+function onLinkDelete({ id }: { id: string }): void {
+  links.value = links.value.filter((candidate) => candidate.id !== id)
 }
 
 const addOpen = ref(false)
@@ -222,7 +267,7 @@ const historyControls = [
         <template v-if="lastPath">Путь: {{ lastPath.join(' → ') }}</template>
         <template v-else-if="canTracePath">Между выбранными узлами пути нет</template>
         <template v-else>
-          Выделено: {{ selection.length }} · Shift+клик набирает узлы, на двух путь строится сам
+          Shift+клик — путь · правый клик — меню · тяните от узла к узлу, чтобы связать
         </template>
       </span>
     </div>
@@ -247,10 +292,20 @@ const historyControls = [
       :max-details-windows="3"
       :infected="infected"
       :infection-options="{ maxDepth: infectionDepth }"
+      :link-types="linkTypes"
+      :entity-fields="entityFields"
+      show-legend
+      show-context-menu
+      editable
       show-minimap
       auto-fit-view
       auto-path
       @path-change="onPathChange"
+      @entity-update="onEntityUpdate"
+      @entity-delete="onEntityDelete"
+      @link-create="onLinkCreate"
+      @link-update="onLinkUpdate"
+      @link-delete="onLinkDelete"
     >
       <template #toolbar-right>
         <button type="button" class="pg-add" @click="openAdd">Добавить</button>

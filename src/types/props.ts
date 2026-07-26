@@ -6,6 +6,8 @@ import type { CollapsedGroup, CollapseRule } from './collapse'
 import type { AssetGraph } from './graph'
 import type { NodeMarkerDef } from './marker'
 import type { FilterOptions, FilterState } from './filter'
+import type { FieldDef } from './field'
+import type { LinkTypeDef } from './linkType'
 import type { PartialLocaleMessages } from './locale'
 import type { ThemeConfig, ThemeMode } from './theme'
 import type { LayoutEngine } from '../layout/types'
@@ -98,6 +100,25 @@ export interface AssetMapProps<E = unknown, L = unknown> {
   locale?: string | PartialLocaleMessages
 
   /**
+   * The kinds of connection the data uses: colour, dash and human name.
+   *
+   * One declaration drives three things — how an edge of that kind is drawn, the
+   * legend, and the options offered when a link's type is edited — so a colour
+   * in the legend always belongs to an edge someone can actually draw.
+   */
+  linkTypes?: LinkTypeDef[]
+  /**
+   * Show the connection legend, bottom-left.
+   *
+   * Only kinds that are drawn differently appear in it: one with neither colour
+   * nor dash is indistinguishable from the default and would be a row that
+   * explains nothing.
+   *
+   * @default false
+   */
+  showLegend?: boolean
+
+  /**
    * Render the built-in controls. Turn off to drive everything through slots.
    *
    * @default true
@@ -164,6 +185,60 @@ export interface AssetMapProps<E = unknown, L = unknown> {
    * @default the built-in tabs
    */
   detailsTabs?: DetailsTabDef[] | false
+
+  /**
+   * Show a menu on right-click, over nodes and over edges.
+   *
+   * A node's offers "open in a new window" and "delete"; an edge's offers
+   * "delete". Deleting always goes through a confirmation first. Both delete
+   * items are hidden unless the matching `on…Delete` handling is wanted — see
+   * `editable`.
+   *
+   * Off by default: the `node-context-menu` event has always been the way to
+   * put an application's own menu there, and a built-in one appearing over it
+   * would be a surprise for anyone already doing that.
+   *
+   * @default false
+   */
+  showContextMenu?: boolean
+  /**
+   * Allow editing from the map: the edit button in details windows, the delete
+   * items in the context menus, and drawing new links between nodes.
+   *
+   * The map never writes to `entities` or `links` itself — it reports what was
+   * asked for through `entity-update`, `entity-delete`, `link-create`,
+   * `link-update` and `link-delete`, and the application decides.
+   *
+   * @default false
+   */
+  editable?: boolean
+  /**
+   * Fields offered when an entity is edited. Without them there is nothing to
+   * edit and no edit button, however `editable` is set.
+   */
+  entityFields?: FieldDef[]
+  /**
+   * Fields offered when a link is edited.
+   *
+   * Omitted while `editable`, the map offers a sensible default: the type, as a
+   * select over `linkTypes`, plus a label and a speed. That covers the shape
+   * nearly every link has without the consumer restating it.
+   */
+  linkFields?: FieldDef[]
+
+  /**
+   * What a plain click on a node does to the open windows.
+   *
+   * `'replace'` swaps the window's contents for the node just clicked, so
+   * clicking around the map reads one node at a time. `'stack'` opens another
+   * window each time, up to `maxDetailsWindows`.
+   *
+   * Either way "open in a new window" from the context menu still stacks — that
+   * is what it is for.
+   *
+   * @default 'replace'
+   */
+  detailsMode?: 'replace' | 'stack'
 
   /**
    * How many details windows may stay open at once.
@@ -268,6 +343,38 @@ export interface AssetMapModels {
   expanded?: Set<string>
   filters?: FilterState
   viewport?: Viewport
+}
+
+/**
+ * What an edit-form slot receives.
+ *
+ * Everything needed to build the form out of a consumer's own controls: the
+ * record, the declared fields, the draft, a writer for it, and the two actions
+ * the built-in buttons perform. Nothing here is a component — a form tied to the
+ * package's inputs would be exactly the thing these slots exist to escape.
+ *
+ * @typeParam T - the record being edited: an entity or a link.
+ */
+export interface EditSlotProps<T> {
+  /** The record as it stands, before the draft is applied. */
+  value: T
+  fields: readonly FieldDef[]
+  /** Draft values by field key; only the fields that have been touched. */
+  values: Readonly<Record<string, unknown>>
+  /** Writes one draft value. Keys are field paths, e.g. `'meta.speed'`. */
+  setValue: (key: string, value: unknown) => void
+  /** Applies the draft and leaves edit mode — what the Save button does. */
+  save: () => void
+  /** Drops the draft and leaves edit mode. */
+  cancel: () => void
+}
+
+/** Parameters of the `link-details` slot: the body of a connection window. */
+export interface LinkDetailsSlotProps<L = unknown> {
+  link: AssetLink<L>
+  /** `true` while the window is in edit mode. */
+  editing: boolean
+  close: () => void
 }
 
 /** Payload of the node events. Exactly one of `entity` / `group` is set. */
@@ -392,6 +499,12 @@ export type AssetMapSlots<E = unknown, L = unknown> = {
   /** Replaces the whole tab strip. Rendered only while `detailsTabs` is not `false`. */
   'details-tabs'?(props: DetailsTabsSlotProps<E>): unknown
   'edge-label'?(props: EdgeLabelSlotProps<L>): unknown
+  /** Body of a connection window, replacing the package's own rows. */
+  'link-details'?(props: LinkDetailsSlotProps<L>): unknown
+  /** The edit form of an entity window, replacing the package's own controls. */
+  'details-edit'?(props: EditSlotProps<AssetEntity<E>>): unknown
+  /** The edit form of a connection window. */
+  'link-edit'?(props: EditSlotProps<AssetLink<L>>): unknown
 } & {
   [type: `node-${string}`]: ((props: NodeSlotProps<E>) => unknown) | undefined
 }

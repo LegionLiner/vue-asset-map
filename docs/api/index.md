@@ -33,6 +33,13 @@ The map. Generic over the payload types of `entity.meta` and `link.meta`: `Asset
 | `showToolbar`               | `boolean`                         | `true`                 | Visibility of the built-in controls.                  |
 | `showDetailsPanel`          | `boolean`                         | `true`                 | Opening of details windows on click.                  |
 | `showMinimap`               | `boolean`                         | `false`                | Visibility of the overview map.                       |
+| `linkTypes`                 | `LinkTypeDef[]`                   | —                      | Connection kinds: colour, dash, name.                 |
+| `showLegend`                | `boolean`                         | `false`                | Connection legend, bottom-left.                       |
+| `showContextMenu`           | `boolean`                         | `false`                | Menu on right-click, over nodes and edges.            |
+| `editable`                  | `boolean`                         | `false`                | Edit button, delete items, link drawing.              |
+| `entityFields`              | `FieldDef[]`                      | —                      | Fields offered when an entity is edited.              |
+| `linkFields`                | `FieldDef[]`                      | type, label, speed     | Fields offered when a link is edited.                 |
+| `detailsMode`               | `'replace' \| 'stack'`            | `'replace'`            | What a plain click does to the open windows.          |
 | `showNodeStatus`            | `boolean`                         | `true`                 | Status dot on the node circle.                        |
 | `showNodeToggle`            | `boolean`                         | `true`                 | Subtree fold button on a node.                        |
 | `showNodeLabel`             | `boolean`                         | `true`                 | Label plate under the circle.                         |
@@ -67,6 +74,7 @@ Without `views`, everything is drawn.
 | `filters`          | `FilterState`           | Query, filter groups, group selection.            |
 | `viewport`         | `Viewport`              | Pan in px plus zoom.                              |
 | `openDetails`      | `EntityId[]`            | Entities with an open window; the last is on top. |
+| `openLinks`        | `string[]`              | Links with an open window; the last is on top.    |
 | `collapsedNodes`   | `Set<EntityId>`         | Nodes whose subtree is folded.                    |
 | `openFilterGroups` | `string[] \| undefined` | Expanded filter lists.                            |
 
@@ -74,33 +82,41 @@ Each works without a `v-model`; the component then owns that state.
 
 #### Events
 
-| Event                                              | Payload                                                   |
-| -------------------------------------------------- | --------------------------------------------------------- |
-| `node-click`, `node-dblclick`, `node-context-menu` | `NodeEventPayload`                                        |
-| `edge-click`                                       | `{ id: string; event: MouseEvent }`                       |
-| `pane-click`                                       | `MouseEvent`                                              |
-| `expand`, `collapse`                               | `{ groupId: string; group: CollapsedGroup \| undefined }` |
-| `node-expand`, `node-collapse`                     | `{ id: EntityId; entity: AssetEntity<E> \| undefined }`   |
-| `selection-change`                                 | `EntityId[]`                                              |
-| `path-change`                                      | `EntityId[]` — the traced path, empty when dropped        |
-| `layout-start`                                     | `string` — engine name                                    |
-| `layout-done`                                      | `{ engine: string; positions: number }`                   |
-| `error`                                            | `unknown`                                                 |
+| Event                                              | Payload                                                      |
+| -------------------------------------------------- | ------------------------------------------------------------ |
+| `node-click`, `node-dblclick`, `node-context-menu` | `NodeEventPayload`                                           |
+| `edge-click`                                       | `{ id: string; event: MouseEvent }`                          |
+| `pane-click`                                       | `MouseEvent`                                                 |
+| `expand`, `collapse`                               | `{ groupId: string; group: CollapsedGroup \| undefined }`    |
+| `node-expand`, `node-collapse`                     | `{ id: EntityId; entity: AssetEntity<E> \| undefined }`      |
+| `selection-change`                                 | `EntityId[]`                                                 |
+| `path-change`                                      | `EntityId[]` — the traced path, empty when dropped           |
+| `entity-update`                                    | `{ id: EntityId; entity: AssetEntity<E> }` — a new object    |
+| `link-update`                                      | `{ id: string; link: AssetLink<L> }` — a new object          |
+| `entity-delete`                                    | `{ id: EntityId; entity: AssetEntity<E> \| undefined }`      |
+| `link-delete`                                      | `{ id: string; link: AssetLink<L> \| undefined }`            |
+| `link-create`                                      | `{ link: AssetLink<L>; source: EntityId; target: EntityId }` |
+| `layout-start`                                     | `string` — engine name                                       |
+| `layout-done`                                      | `{ engine: string; positions: number }`                      |
+| `error`                                            | `unknown`                                                    |
 
 #### Slots
 
-| Slot                            | Props                       |
-| ------------------------------- | --------------------------- |
-| `toolbar-left`, `toolbar-right` | —                           |
-| `empty`, `loading`              | —                           |
-| `windows`                       | —                           |
-| `details`                       | `DetailsSlotProps<E>`       |
-| `details-header`                | `DetailsHeaderSlotProps<E>` |
-| `details-title`                 | `DetailsTitleSlotProps<E>`  |
-| `details-tabs`                  | `DetailsTabsSlotProps<E>`   |
-| `edge-label`                    | `EdgeLabelSlotProps<L>`     |
-| `node-{type}`, `node-badge`     | `NodeSlotProps<E>`          |
-| `node-label`, `node-status`     | `NodeSlotProps<E>`          |
+| Slot                            | Props                           |
+| ------------------------------- | ------------------------------- |
+| `toolbar-left`, `toolbar-right` | —                               |
+| `empty`, `loading`              | —                               |
+| `windows`                       | —                               |
+| `details`                       | `DetailsSlotProps<E>`           |
+| `details-header`                | `DetailsHeaderSlotProps<E>`     |
+| `details-title`                 | `DetailsTitleSlotProps<E>`      |
+| `details-tabs`                  | `DetailsTabsSlotProps<E>`       |
+| `edge-label`                    | `EdgeLabelSlotProps<L>`         |
+| `link-details`                  | `LinkDetailsSlotProps<L>`       |
+| `details-edit`                  | `EditSlotProps<AssetEntity<E>>` |
+| `link-edit`                     | `EditSlotProps<AssetLink<L>>`   |
+| `node-{type}`, `node-badge`     | `NodeSlotProps<E>`              |
+| `node-label`, `node-status`     | `NodeSlotProps<E>`              |
 
 `NodeSlotProps` carries `entity`, `nodeId` and `simplified` for every `node-*` slot, plus one field for the slot that
 needs it: `badge` for `node-badge`, `sublabels` for `node-label`, `status` and `statusColor` for `node-status`.
@@ -122,7 +138,12 @@ needs it: `badge` for `node-badge`, `sublabels` for `node-label`, `status` and `
 | ------------------------------------------- | ----------------------------------------------------------- |
 | `MapWindow`                                 | Floating window chrome: bar, dragging, collapsing, closing. |
 | `DetailsPanel`                              | Default details window.                                     |
+| `LinkDetailsPanel`                          | Default connection window.                                  |
 | `DetailsSection`                            | One section of a details panel: heading plus content.       |
+| `EditableFields`                            | Field rows that switch between reading and editing.         |
+| `ContextMenu`                               | Menu at a point on the canvas.                              |
+| `ConfirmDialog`                             | The package's own confirmation, not `window.confirm`.       |
+| `MapLegend`                                 | Connection legend.                                          |
 | `BaseNode`, `GroupNode`                     | Default node and group node.                                |
 | `AssetEdge`                                 | Default edge.                                               |
 | `MiniMap`                                   | Overview map.                                               |
@@ -157,8 +178,12 @@ needs it: `badge` for `node-badge`, `sublabels` for `node-label`, `status` and `
 `AssetMapProps<E, L>`, `AssetMapModels`, `AssetMapSlots<E, L>`, `AssetMapExposed<E, L>`, `AssetMapLayoutSpec`,
 `Viewport`, `FocusOptions`, `InfectionOptions`, `PathOptions`, `NodeEventPayload`, `NodeSlotProps<E>`,
 `DetailsSlotProps<E>`, `DetailsHeaderSlotProps<E>`, `DetailsTitleSlotProps<E>`, `DetailsTabsSlotProps<E>`,
-`DetailsTabDef`, `EdgeLabelSlotProps<L>`, `EmptySlotProps`, `MiniMapNode`, `MapContext`, `AssetNodeData<E>`,
-`EntityNodeData<E>`, `GroupNodeData`, `AssetEdgeData`.
+`DetailsTabDef`, `LinkDetailsSlotProps<L>`, `EdgeLabelSlotProps<L>`, `EmptySlotProps`, `MiniMapNode`, `MapContext`,
+`AssetNodeData<E>`, `EntityNodeData<E>`, `GroupNodeData`, `AssetEdgeData`, `ContextMenuItem`.
+
+### Connections and editing
+
+`LinkTypeDef`, `FieldDef`, `FieldOption`, `EditSlotProps<T>`.
 
 ### Theme and locale
 
@@ -391,6 +416,14 @@ Available from both `vue-asset-map` and `vue-asset-map/core`.
 ### Markers
 
 `connectionMarkers(anchors, options?)`, `topAnchors(graph, count, layers?)`.
+
+### Fields
+
+Pure helpers behind the edit forms. `readField(source, path)` and `writeField(source, path, value)` read and set a
+dotted path (`'meta.speed'`); `writeField` copies every level it touches and creates missing branches, so an entity
+without `meta` can still have `meta.speed` set. `applyFields(source, values)` applies a whole draft at once and returns
+the **same object** when nothing actually changed, which is how an untouched form is told from a real edit.
+`fieldLabel`, `fieldToInput` and `fieldFromInput` convert between stored values and what an `<input>` holds.
 
 ### IP
 

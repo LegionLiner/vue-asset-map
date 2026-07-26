@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import DetailsSection from './DetailsSection.vue'
+import EditableFields from './EditableFields.vue'
 import MapWindow from '../MapWindow.vue'
 import { useMapContext } from '../../composables/useMapContext'
 import { incidentLinks, otherEnd } from '../../core/graph'
+import { applyFields, fieldFromInput } from '../../core/field'
 import type { AssetEntity, XY } from '../../types/entity'
+import type { FieldDef } from '../../types/field'
 import type { DetailsTabDef } from '../../types/props'
 
 /**
@@ -38,11 +41,16 @@ const props = withDefaults(
      * Tabs to draw. `false` removes the strip; omitted keeps the built-in pair.
      */
     tabs?: readonly DetailsTabDef[] | false
+    /** Fields offered when editing. No fields means no edit button. */
+    fields?: readonly FieldDef[]
   }>(),
   { showHeading: true, tabs: undefined },
 )
 
-const emit = defineEmits<{ close: [] }>()
+const emit = defineEmits<{
+  close: []
+  save: [entity: AssetEntity<unknown>]
+}>()
 
 const map = useMapContext()
 
@@ -87,7 +95,13 @@ const neighbors = computed(() =>
   }),
 )
 
-/** Flat list of `meta` fields, for the fallback rendering only. */
+/**
+ * Flat list of `meta` fields, for the fallback rendering only.
+ *
+ * Nothing is filtered out on the grounds of also being editable: the form only
+ * exists while editing, so hiding a field here would mean the value is
+ * unreadable the rest of the time.
+ */
 const metaRows = computed(() => {
   const meta = props.entity.meta
   if (meta === null || typeof meta !== 'object') return []
@@ -104,8 +118,73 @@ const detailsSlot = computed(() => map.slot('details'))
 const headerSlot = computed(() => map.slot('details-header'))
 const titleSlot = computed(() => map.slot('details-title'))
 const tabsSlot = computed(() => map.slot('details-tabs'))
+/** `#details-edit` replaces the form with the consumer's own controls. */
+const editSlot = computed(() => map.slot('details-edit'))
 
 const close = (): void => emit('close')
+
+const canEdit = computed(() => (props.fields?.length ?? 0) > 0)
+
+const editing = ref(false)
+/** Draft values, by field key. Empty until something is actually typed. */
+const draft = ref<Record<string, unknown>>({})
+
+function startEdit(): void {
+  draft.value = {}
+  editing.value = true
+}
+
+function cancelEdit(): void {
+  draft.value = {}
+  editing.value = false
+}
+
+/** Draft writer handed to `#details-edit`, so a custom form needs no plumbing. */
+function setValue(key: string, value: unknown): void {
+  draft.value = { ...draft.value, [key]: value }
+}
+
+/** Everything `#details-edit` needs to build a form out of its own controls. */
+const editSlotProps = computed(() => ({
+  value: props.entity,
+  fields: props.fields ?? [],
+  values: draft.value,
+  setValue,
+  save,
+  cancel: cancelEdit,
+}))
+
+/**
+ * Second press of the same button saves.
+ *
+ * The draft holds raw input strings; each is converted by its field on the way
+ * out, so a number field yields a number rather than the text of one.
+ */
+function save(): void {
+  const values: Record<string, unknown> = {}
+  for (const field of props.fields ?? []) {
+    if (!Object.prototype.hasOwnProperty.call(draft.value, field.key)) continue
+    const raw = draft.value[field.key]
+    values[field.key] = typeof raw === 'string' ? fieldFromInput(raw, field) : raw
+  }
+
+  const next = applyFields(props.entity, values)
+  editing.value = false
+  draft.value = {}
+
+  // Unchanged means unchanged: opening the form and closing it again is not an
+  // edit, and should not reach the application as one.
+  if (next !== props.entity) emit('save', next)
+}
+
+// An entity replaced underneath an open window drops the draft: the values on
+// screen would otherwise describe a record that no longer exists.
+watch(
+  () => props.entity,
+  () => {
+    draft.value = {}
+  },
+)
 </script>
 
 <template>
@@ -168,7 +247,27 @@ const close = (): void => emit('close')
     </template>
 
     <div class="vam-window__content" role="tabpanel">
-      <component :is="detailsSlot" v-if="detailsSlot" :entity="entity" :close="close" :tab="activeTab" />
+      <!-- Editing takes the body over entirely. The read view has nothing to
+           type into, and this holds whoever owns it: a consumer who filled
+           `#details` still gets a working form for the fields they declared,
+           instead of an Edit button that promises something it cannot do. -->
+      <!-- `v-bind` of an object, not attribute by attribute: a slot is invoked
+           as a functional component with no declared props, so `:set-value`
+           would arrive as `set-value` and the documented `setValue` would read
+           as undefined. -->
+      <component :is="editSlot" v-if="editing && editSlot" v-bind="editSlotProps" />
+
+      <DetailsSection v-else-if="editing" :title="map.t('edit.fields')">
+        <EditableFields
+          :fields="fields ?? []"
+          :source="entity"
+          :editing="true"
+          :values="draft"
+          @update:values="draft = $event"
+        />
+      </DetailsSection>
+
+      <component :is="detailsSlot" v-else-if="detailsSlot" :entity="entity" :close="close" :tab="activeTab" />
 
       <!-- Fallback: just enough for the package to be usable without the slot.
            Skipped once custom tabs are in play — the package has no content to
@@ -210,6 +309,22 @@ const close = (): void => emit('close')
           </template>
         </DetailsSection>
       </template>
+    </div>
+
+    <!-- Pinned under the body rather than in the title bar: the bar is 24px of
+         drag handle with two 20px buttons already, and a third that rewrites the
+         whole window would be the easiest of the three to hit by accident. -->
+    <div v-if="canEdit" class="vam-window__actions">
+      <button v-if="editing" type="button" class="vam-window__action" @click="cancelEdit">
+        {{ map.t('confirm.cancel') }}
+      </button>
+      <button
+        type="button"
+        class="vam-window__action vam-window__action--primary"
+        @click="editing ? save() : startEdit()"
+      >
+        {{ editing ? map.t('edit.save') : map.t('edit.start') }}
+      </button>
     </div>
   </MapWindow>
 </template>

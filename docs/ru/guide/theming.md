@@ -41,26 +41,28 @@
 ```css
 .compact-map.vam-root {
   --vam-node-size: 28px;
-  --vam-node-label-width: 96px;
+  --vam-node-label-max-width: 96px;
 }
 ```
 
 ### Основные токены
 
-| Группа      | Токены                                                                                                                                                                     |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Поверхности | `--vam-bg`, `--vam-surface`, `--vam-surface-raised`, `--vam-surface-sunken`                                                                                                |
-| Текст       | `--vam-fg`, `--vam-fg-muted`, `--vam-fg-subtle`                                                                                                                            |
-| Акцент      | `--vam-accent`, `--vam-accent-fg`, `--vam-accent-soft`, `--vam-selection`, `--vam-focus-ring`                                                                              |
-| Рёбра       | `--vam-edge`, `--vam-edge-active`, `--vam-edge-width`                                                                                                                      |
-| Узел        | `--vam-node-size`, `--vam-node-size-root`, `--vam-node-label-width`, `--vam-node-label-height`, `--vam-node-label-gap`, `--vam-node-toggle-size`, `--vam-node-status-size` |
-| Текст узла  | `--vam-node-label-color`, `--vam-node-sublabel-color`, `--vam-node-overlay-color`                                                                                          |
-| Маркеры     | `--vam-marker-1`, `--vam-marker-2`, `--vam-marker-3`, `--vam-marker-infected`, `--vam-marker-size`, `--vam-marker-gap`, `--vam-marker-offset`                              |
-| Заражение   | `--vam-infected-bg`, `--vam-infected-border`, `--vam-infected-fg`                                                                                                          |
-| Окна        | `--vam-window-width`, `--vam-window-radius`, `--vam-window-header-height`, `--vam-windows-top`, `--vam-details-top`                                                        |
-| Фильтры     | `--vam-filter-width`, `--vam-filter-height`                                                                                                                                |
-| Холст       | `--vam-canvas-dot`, `--vam-canvas-dot-size`, `--vam-canvas-grid`                                                                                                           |
-| Анимация    | `--vam-transition`, `--vam-dimmed-opacity`                                                                                                                                 |
+| Группа      | Токены                                                                                                                                                                                                       |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Поверхности | `--vam-bg`, `--vam-surface`, `--vam-surface-raised`, `--vam-surface-sunken`                                                                                                                                  |
+| Текст       | `--vam-fg`, `--vam-fg-muted`, `--vam-fg-subtle`                                                                                                                                                              |
+| Акцент      | `--vam-accent`, `--vam-accent-fg`, `--vam-accent-soft`, `--vam-selection`, `--vam-focus-ring`                                                                                                                |
+| Рёбра       | `--vam-edge`, `--vam-edge-active`, `--vam-edge-width`                                                                                                                                                        |
+| Узел        | `--vam-node-size`, `--vam-node-size-root`, `--vam-node-label-max-width`, `--vam-node-label-min-width`, `--vam-node-label-height`, `--vam-node-label-gap`, `--vam-node-toggle-size`, `--vam-node-status-size` |
+| Текст узла  | `--vam-node-label-color`, `--vam-node-sublabel-color`, `--vam-node-overlay-color`                                                                                                                            |
+| Маркеры     | `--vam-marker-1`, `--vam-marker-2`, `--vam-marker-3`, `--vam-marker-infected`, `--vam-marker-size`, `--vam-marker-gap`, `--vam-marker-offset`                                                                |
+| Заражение   | `--vam-infected-bg`, `--vam-infected-border`, `--vam-infected-fg`                                                                                                                                            |
+| Окна        | `--vam-window-width`, `--vam-window-radius`, `--vam-window-header-height`, `--vam-window-border`, `--vam-window-shadow`, `--vam-window-caption-padding`, `--vam-windows-top`, `--vam-details-top`            |
+| Меню        | `--vam-menu-min-width`, `--vam-menu-danger`, `--vam-menu-danger-soft`, `--vam-confirm-scrim`                                                                                                                 |
+| Легенда     | `--vam-legend-swatch-size`                                                                                                                                                                                   |
+| Фильтры     | `--vam-filter-width`, `--vam-filter-height`                                                                                                                                                                  |
+| Холст       | `--vam-canvas-dot`, `--vam-canvas-dot-size`, `--vam-canvas-grid`                                                                                                                                             |
+| Анимация    | `--vam-transition`, `--vam-dimmed-opacity`                                                                                                                                                                   |
 
 У плашки подписей ширина фиксирована намеренно: при смене представления подписи появляются и исчезают, и меняющийся
 размер плашки дёргал бы всю раскладку.

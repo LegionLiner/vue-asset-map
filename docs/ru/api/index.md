@@ -33,6 +33,13 @@
 | `showToolbar`               | `boolean`                         | `true`                 | Видимость встроенных контролов.                      |
 | `showDetailsPanel`          | `boolean`                         | `true`                 | Открытие окон подробностей по клику.                 |
 | `showMinimap`               | `boolean`                         | `false`                | Видимость обзорной карты.                            |
+| `linkTypes`                 | `LinkTypeDef[]`                   | —                      | Виды соединений: цвет, штрих, название.              |
+| `showLegend`                | `boolean`                         | `false`                | Легенда соединений слева снизу.                      |
+| `showContextMenu`           | `boolean`                         | `false`                | Меню по правому клику: на узлах и на связях.         |
+| `editable`                  | `boolean`                         | `false`                | Кнопка правки, пункты удаления, рисование связей.    |
+| `entityFields`              | `FieldDef[]`                      | —                      | Поля, предлагаемые при правке сущности.              |
+| `linkFields`                | `FieldDef[]`                      | тип, подпись, скорость | Поля, предлагаемые при правке связи.                 |
+| `detailsMode`               | `'replace' \| 'stack'`            | `'replace'`            | Что обычный клик делает с открытыми окнами.          |
 | `showNodeStatus`            | `boolean`                         | `true`                 | Плашка состояния на круге узла.                      |
 | `showNodeToggle`            | `boolean`                         | `true`                 | Кнопка свёртки поддерева на узле.                    |
 | `showNodeLabel`             | `boolean`                         | `true`                 | Плашка с подписями под кругом.                       |
@@ -67,6 +74,7 @@
 | `filters`          | `FilterState`           | Запрос, группы фильтров, выбор по группам.   |
 | `viewport`         | `Viewport`              | Сдвиг в пикселях плюс масштаб.               |
 | `openDetails`      | `EntityId[]`            | Сущности с открытым окном; последняя сверху. |
+| `openLinks`        | `string[]`              | Связи с открытым окном; последняя сверху.    |
 | `collapsedNodes`   | `Set<EntityId>`         | Узлы со свёрнутым поддеревом.                |
 | `openFilterGroups` | `string[] \| undefined` | Раскрытые списки фильтров.                   |
 
@@ -74,33 +82,41 @@
 
 #### События
 
-| Событие                                            | Данные события                                            |
-| -------------------------------------------------- | --------------------------------------------------------- |
-| `node-click`, `node-dblclick`, `node-context-menu` | `NodeEventPayload`                                        |
-| `edge-click`                                       | `{ id: string; event: MouseEvent }`                       |
-| `pane-click`                                       | `MouseEvent`                                              |
-| `expand`, `collapse`                               | `{ groupId: string; group: CollapsedGroup \| undefined }` |
-| `node-expand`, `node-collapse`                     | `{ id: EntityId; entity: AssetEntity<E> \| undefined }`   |
-| `selection-change`                                 | `EntityId[]`                                              |
-| `path-change`                                      | `EntityId[]` — путь; пустой, когда подсветку сняли        |
-| `layout-start`                                     | `string` — имя алгоритма                                  |
-| `layout-done`                                      | `{ engine: string; positions: number }`                   |
-| `error`                                            | `unknown`                                                 |
+| Событие                                            | Данные события                                               |
+| -------------------------------------------------- | ------------------------------------------------------------ |
+| `node-click`, `node-dblclick`, `node-context-menu` | `NodeEventPayload`                                           |
+| `edge-click`                                       | `{ id: string; event: MouseEvent }`                          |
+| `pane-click`                                       | `MouseEvent`                                                 |
+| `expand`, `collapse`                               | `{ groupId: string; group: CollapsedGroup \| undefined }`    |
+| `node-expand`, `node-collapse`                     | `{ id: EntityId; entity: AssetEntity<E> \| undefined }`      |
+| `selection-change`                                 | `EntityId[]`                                                 |
+| `path-change`                                      | `EntityId[]` — путь; пустой, когда подсветку сняли           |
+| `entity-update`                                    | `{ id: EntityId; entity: AssetEntity<E> }` — новый объект    |
+| `link-update`                                      | `{ id: string; link: AssetLink<L> }` — новый объект          |
+| `entity-delete`                                    | `{ id: EntityId; entity: AssetEntity<E> \| undefined }`      |
+| `link-delete`                                      | `{ id: string; link: AssetLink<L> \| undefined }`            |
+| `link-create`                                      | `{ link: AssetLink<L>; source: EntityId; target: EntityId }` |
+| `layout-start`                                     | `string` — имя алгоритма                                     |
+| `layout-done`                                      | `{ engine: string; positions: number }`                      |
+| `error`                                            | `unknown`                                                    |
 
 #### Слоты
 
-| Слот                            | Параметры                   |
-| ------------------------------- | --------------------------- |
-| `toolbar-left`, `toolbar-right` | —                           |
-| `empty`, `loading`              | —                           |
-| `windows`                       | —                           |
-| `details`                       | `DetailsSlotProps<E>`       |
-| `details-header`                | `DetailsHeaderSlotProps<E>` |
-| `details-title`                 | `DetailsTitleSlotProps<E>`  |
-| `details-tabs`                  | `DetailsTabsSlotProps<E>`   |
-| `edge-label`                    | `EdgeLabelSlotProps<L>`     |
-| `node-{type}`, `node-badge`     | `NodeSlotProps<E>`          |
-| `node-label`, `node-status`     | `NodeSlotProps<E>`          |
+| Слот                            | Параметры                       |
+| ------------------------------- | ------------------------------- |
+| `toolbar-left`, `toolbar-right` | —                               |
+| `empty`, `loading`              | —                               |
+| `windows`                       | —                               |
+| `details`                       | `DetailsSlotProps<E>`           |
+| `details-header`                | `DetailsHeaderSlotProps<E>`     |
+| `details-title`                 | `DetailsTitleSlotProps<E>`      |
+| `details-tabs`                  | `DetailsTabsSlotProps<E>`       |
+| `edge-label`                    | `EdgeLabelSlotProps<L>`         |
+| `link-details`                  | `LinkDetailsSlotProps<L>`       |
+| `details-edit`                  | `EditSlotProps<AssetEntity<E>>` |
+| `link-edit`                     | `EditSlotProps<AssetLink<L>>`   |
+| `node-{type}`, `node-badge`     | `NodeSlotProps<E>`              |
+| `node-label`, `node-status`     | `NodeSlotProps<E>`              |
 
 `NodeSlotProps` несёт `entity`, `nodeId` и `simplified` для всех слотов `node-*` плюс по одному полю тому слоту, которому
 оно нужно: `badge` для `node-badge`, `sublabels` для `node-label`, `status` и `statusColor` для `node-status`.
@@ -122,7 +138,12 @@
 | ------------------------------------------- | ---------------------------------------------------------------- |
 | `MapWindow`                                 | Каркас плавающего окна: шапка, перетаскивание, сжатие, закрытие. |
 | `DetailsPanel`                              | Окно подробностей по умолчанию.                                  |
+| `LinkDetailsPanel`                          | Окно соединения по умолчанию.                                    |
 | `DetailsSection`                            | Секция панели: заголовок плюс содержимое.                        |
+| `EditableFields`                            | Строки полей, переключающиеся между чтением и правкой.           |
+| `ContextMenu`                               | Меню в точке полотна.                                            |
+| `ConfirmDialog`                             | Подтверждение пакета, а не `window.confirm`.                     |
+| `MapLegend`                                 | Легенда соединений.                                              |
 | `BaseNode`, `GroupNode`                     | Узел и групповой узел по умолчанию.                              |
 | `AssetEdge`                                 | Ребро по умолчанию.                                              |
 | `MiniMap`                                   | Обзорная карта.                                                  |
@@ -157,8 +178,12 @@
 `AssetMapProps<E, L>`, `AssetMapModels`, `AssetMapSlots<E, L>`, `AssetMapExposed<E, L>`, `AssetMapLayoutSpec`,
 `Viewport`, `FocusOptions`, `InfectionOptions`, `PathOptions`, `NodeEventPayload`, `NodeSlotProps<E>`,
 `DetailsSlotProps<E>`, `DetailsHeaderSlotProps<E>`, `DetailsTitleSlotProps<E>`, `DetailsTabsSlotProps<E>`,
-`DetailsTabDef`, `EdgeLabelSlotProps<L>`, `EmptySlotProps`, `MiniMapNode`, `MapContext`, `AssetNodeData<E>`,
-`EntityNodeData<E>`, `GroupNodeData`, `AssetEdgeData`.
+`DetailsTabDef`, `LinkDetailsSlotProps<L>`, `EdgeLabelSlotProps<L>`, `EmptySlotProps`, `MiniMapNode`, `MapContext`,
+`AssetNodeData<E>`, `EntityNodeData<E>`, `GroupNodeData`, `AssetEdgeData`, `ContextMenuItem`.
+
+### Соединения и правка
+
+`LinkTypeDef`, `FieldDef`, `FieldOption`, `EditSlotProps<T>`.
 
 ### Тема и локаль
 
@@ -393,6 +418,15 @@ Flow, поэтому поведение одинаково независимо 
 ### Маркеры
 
 `connectionMarkers(anchors, options?)`, `topAnchors(graph, count, layers?)`.
+
+### Поля
+
+Чистые функции, на которых держатся формы правки. `readField(source, path)` и `writeField(source, path, value)` читают
+и пишут по точечному пути (`'meta.speed'`); `writeField` копирует каждый затронутый уровень и создаёт недостающие ветки,
+поэтому `meta.speed` можно задать сущности, у которой `meta` ещё нет. `applyFields(source, values)` применяет весь
+черновик разом и возвращает **тот же объект**, если ничего фактически не изменилось, — так нетронутая форма отличается
+от настоящей правки. `fieldLabel`, `fieldToInput` и `fieldFromInput` переводят между хранимым значением и тем, что
+лежит в `<input>`.
 
 ### IP
 

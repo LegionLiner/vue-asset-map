@@ -46,6 +46,34 @@ export const ru: LocaleMessages = {
 
   'link.aggregated': 'Связей: {count}',
   'link.direction': 'Направление: {source} → {target}',
+  'link.title': 'Соединение',
+  'link.from': 'Откуда',
+  'link.to': 'Куда',
+  'link.type': 'Тип',
+  'link.speed': 'Скорость',
+  'link.layers': 'Слои',
+  'link.meta': 'Дополнительно',
+  'link.untyped': 'Не задан',
+
+  'legend.label': 'Соединения',
+
+  'menu.openInNewWindow': 'Открыть в новом окне',
+  'menu.openDetails': 'Открыть подробности',
+  'menu.delete': 'Удалить',
+  'menu.deleteLink': 'Удалить соединение',
+
+  'confirm.deleteEntity.title': 'Удалить узел?',
+  'confirm.deleteEntity.body': '«{label}» и все его связи будут удалены с карты.',
+  'confirm.deleteLink.title': 'Удалить соединение?',
+  'confirm.deleteLink.body': 'Соединение между «{source}» и «{target}» будет удалено.',
+  'confirm.confirm': 'Удалить',
+  'confirm.cancel': 'Отмена',
+
+  'edit.start': 'Редактировать',
+  'edit.save': 'Сохранить',
+  'edit.cancel': 'Отменить редактирование',
+  'edit.fields': 'Свойства',
+  'edit.empty': 'Здесь нечего редактировать',
 
   'canvas.label': 'Карта сети',
   'canvas.empty': 'Нет данных для отображения',

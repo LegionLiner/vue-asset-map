@@ -65,9 +65,14 @@
   --vam-node-size: 36px;
   --vam-node-size-root: 60px;
   --vam-node-label-gap: 6px;
-  /* The label plate has a fixed width: sublabels appear and disappear as views
-     change, and a breathing size would jolt the whole layout. */
-  --vam-node-label-width: 127.5px;
+  /*
+   * The label plate is sized by its contents up to this ceiling: a short name
+   * gets a short plate, a long one is clipped rather than allowed to push its
+   * neighbours around. Layout reserves the ceiling for every node whatever its
+   * text, so plates cannot collide when a view swaps the labels underneath them.
+   */
+  --vam-node-label-max-width: 127.5px;
+  --vam-node-label-min-width: 48px;
   --vam-node-label-height: auto;
   --vam-node-label-padding: 3px 4.5px;
   --vam-node-label-radius: 4.5px;
@@ -76,6 +81,9 @@
   --vam-node-radius: 4px;
   --vam-node-toggle-size: 18px;
   --vam-node-status-size: 9px;
+  /* Grab points for drawing a link: big enough to hit, small enough that four
+     of them do not swamp a 36px circle. */
+  --vam-connector-size: 9px;
 
   /* External and overlay addresses are told apart by color alone. */
   --vam-node-label-color: #1b2636;
@@ -111,6 +119,25 @@
   --vam-window-width: 480px;
   --vam-window-radius: 8px;
   --vam-window-header-height: 24px;
+  /* A window is outlined as well as shadowed: over a busy canvas the shadow
+     alone does not separate it from what is behind it. */
+  --vam-window-border: #cad3e1;
+  --vam-window-shadow: 0 2px 4px 0 rgba(27, 38, 54, 0.08);
+  /* Padding either side of a collapsed window's caption, which is sized by its
+     text rather than by the shared window width. */
+  --vam-window-caption-padding: var(--vam-space-2);
+
+  /* Context menu, confirm dialog and the legend: surfaces that float over the
+     canvas the way a window does, and are outlined the same way. */
+  --vam-menu-min-width: 200px;
+  --vam-menu-danger: #cb5555;
+  --vam-menu-danger-soft: rgba(203, 85, 85, 0.1);
+
+  --vam-legend-swatch-size: 12px;
+
+  /* Scrim behind the confirm dialog: dark enough to push the map back, light
+     enough to still see what is about to be deleted. */
+  --vam-confirm-scrim: rgba(27, 38, 54, 0.45);
   /*
    * Top offset of the floating windows.
    *

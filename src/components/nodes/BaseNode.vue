@@ -25,6 +25,8 @@ import { IconExpand } from '../icons/index'
 const props = defineProps<{
   id: string
   data?: AssetNodeData
+  /** Passed by VueFlow from the node's own `connectable`. */
+  connectable?: boolean
 }>()
 
 const map = useMapContext()
@@ -113,6 +115,29 @@ const ariaLabel = computed(() => {
 
 const toggleLabel = computed(() => (subtreeCollapsed.value ? map.t('group.expand') : map.t('group.collapse')))
 
+/**
+ * Whether this node offers grab points for drawing a link.
+ *
+ * Read from the node's own `connectable`, which the map sets from `editable`,
+ * rather than from the context: VueFlow reads the per-node flag last, so this is
+ * the value that actually decides whether a drag would do anything.
+ */
+const connectable = computed(() => props.connectable === true)
+
+/**
+ * The four sides a link can be drawn from.
+ *
+ * Four rather than one because the direction someone drags in is a statement
+ * about where the link should run, and a single handle would force every link
+ * out of the same edge of the circle.
+ */
+const CONNECTOR_SIDES = [
+  { id: 'top', position: Position.Top },
+  { id: 'right', position: Position.Right },
+  { id: 'bottom', position: Position.Bottom },
+  { id: 'left', position: Position.Left },
+] as const
+
 const arrowKeys: Readonly<Record<string, ArrowDirection>> = {
   ArrowUp: 'up',
   ArrowDown: 'down',
@@ -162,11 +187,28 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
     @keydown="onKeydown"
   >
     <!-- Handles sit at the centre of the circle: edges run centre to centre, or
-         a radial layout would have every line leave from the same edge. -->
+         a radial layout would have every line leave from the same edge.
+         Declared first on purpose — an edge that names no handle resolves to
+         the first of its type, so these stay the anchors for drawn edges even
+         once the connectors below exist. -->
     <Handle type="target" :position="Position.Top" class="vam-node__handle" />
     <Handle type="source" :position="Position.Bottom" class="vam-node__handle" />
 
     <div class="vam-node__circle">
+      <!-- One grab point per side of the circle, revealed on hover. They are
+           inside the circle rather than on the node box because the node is
+           circle plus label plate: hung off the node, "bottom" would land under
+           the text instead of on the ring. -->
+      <template v-if="connectable">
+        <Handle
+          v-for="side in CONNECTOR_SIDES"
+          :id="`vam-connect-${side.id}`"
+          :key="side.id"
+          type="source"
+          :position="side.position"
+          :class="['vam-node__connector', `vam-node__connector--${side.id}`]"
+        />
+      </template>
       <component :is="kindSlot" v-if="kindSlot" v-bind="slotProps" />
       <template v-else>
         <component :is="icon" v-if="icon" class="vam-node__icon" />
@@ -218,6 +260,7 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
         :key="marker.id"
         type="button"
         class="vam-node__marker"
+        :class="{ 'vam-node__marker--dimmed': map.isMarkerDimmed(marker.id) }"
         :aria-label="map.t('marker.membership', { label: marker.label })"
         :title="marker.label"
         @mouseenter="map.onMarkerEnter(marker.id)"
@@ -251,12 +294,19 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
 </template>
 
 <style>
+/*
+ * The node is sized by its widest part, capped at the plate's ceiling: a host
+ * called "NAS" gets a plate the width of the word, not a fixed slab with air
+ * either side. Layout still reserves the ceiling for every node, so shrinking
+ * one plate never lets a neighbour drift into its space.
+ */
 .vam-node {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--vam-node-label-gap);
-  width: var(--vam-node-label-width);
+  width: max-content;
+  max-width: var(--vam-node-label-max-width);
   color: var(--vam-fg);
   font-family: var(--vam-font);
   font-size: var(--vam-font-size-sm);
@@ -366,6 +416,78 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
   transform: translate(-50%, -50%);
 }
 
+/*
+ * Grab points for drawing a link, one per side of the circle.
+ *
+ * Hidden until the node is hovered or focused: four dots on every node at rest
+ * would be four pieces of chrome per node on a map built to hold hundreds.
+ * `!important` beats VueFlow's own `.vue-flow__handle` rules, which set position
+ * and size inline-equivalent on the same element.
+ */
+.vam-node__connector {
+  position: absolute !important;
+  z-index: 5;
+  width: var(--vam-connector-size) !important;
+  height: var(--vam-connector-size) !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  border: 2px solid var(--vam-surface) !important;
+  border-radius: 50%;
+  background: var(--vam-accent) !important;
+  opacity: 0;
+  cursor: crosshair;
+  transition: opacity var(--vam-transition);
+  pointer-events: all !important;
+}
+
+.vam-node:hover .vam-node__connector,
+.vam-node:focus-within .vam-node__connector {
+  opacity: 1;
+}
+
+.vam-node__connector:hover {
+  background: var(--vam-selection) !important;
+  transform: scale(1.25);
+}
+
+/* Centred on the ring itself, half the dot outside and half in. The transform
+   is repeated per side because VueFlow sets one of its own. */
+.vam-node__connector--top {
+  top: calc(var(--vam-connector-size) / -2) !important;
+  left: 50% !important;
+  transform: translateX(-50%);
+}
+
+.vam-node__connector--bottom {
+  top: auto !important;
+  bottom: calc(var(--vam-connector-size) / -2) !important;
+  left: 50% !important;
+  transform: translateX(-50%);
+}
+
+.vam-node__connector--left {
+  top: 50% !important;
+  left: calc(var(--vam-connector-size) / -2) !important;
+  transform: translateY(-50%);
+}
+
+.vam-node__connector--right {
+  top: 50% !important;
+  right: calc(var(--vam-connector-size) / -2) !important;
+  left: auto !important;
+  transform: translateY(-50%);
+}
+
+.vam-node__connector--top:hover,
+.vam-node__connector--bottom:hover {
+  transform: translateX(-50%) scale(1.25);
+}
+
+.vam-node__connector--left:hover,
+.vam-node__connector--right:hover {
+  transform: translateY(-50%) scale(1.25);
+}
+
 .vam-node__status {
   position: absolute;
   top: 0;
@@ -417,7 +539,11 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  width: var(--vam-node-label-width);
+  /* Follows the node's own width, which is its widest line up to the ceiling.
+     The floor keeps a two-letter name from collapsing to a sliver. */
+  width: 100%;
+  min-width: var(--vam-node-label-min-width);
+  max-width: var(--vam-node-label-max-width);
   height: var(--vam-node-label-height);
   padding: var(--vam-node-label-padding);
   /* Always present but transparent, so selecting a node cannot shift its
@@ -479,11 +605,18 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
   /* Opaque backing, so a dot reads both over the plate and over the canvas. */
   background: var(--vam-marker-bg);
   cursor: pointer;
+  transition: opacity var(--vam-transition);
 }
 
 .vam-node__marker:focus-visible {
   outline: 2px solid var(--vam-focus-ring);
   outline-offset: 1px;
+}
+
+/* Hovering one dot steps every other one back, on this node and on all the
+   rest, so the row reads as "this membership, not those". */
+.vam-node__marker--dimmed {
+  opacity: var(--vam-dimmed-opacity);
 }
 
 .vam-node__marker-dot {
@@ -510,9 +643,11 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
   line-height: 14px;
 }
 
-/* LOD: below the zoom threshold only the circle with its icon remains. */
+/* LOD: below the zoom threshold only the circle with its icon remains, so the
+   plate's ceiling no longer applies. */
 .vam-node--simplified {
-  width: auto;
+  width: max-content;
+  max-width: none;
   gap: 0;
 }
 </style>

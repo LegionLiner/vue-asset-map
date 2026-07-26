@@ -65,6 +65,29 @@ const classes = computed(() => [
   },
 ])
 
+const linkType = computed(() => map.linkTypeOf(link.value?.type))
+
+/**
+ * Per-kind stroke, applied inline because the colour is data rather than theme.
+ *
+ * Withheld while the edge is in a state of its own — highlighted, dimmed or
+ * infected — since an inline `stroke` beats every class and would leave those
+ * states silently unpainted. In those moments what the edge *is* matters less
+ * than what is happening to it.
+ */
+const typeStyle = computed<Record<string, string> | undefined>(() => {
+  if (highlighted.value || dimmed.value || infected.value) return undefined
+
+  const type = linkType.value
+  if (!type) return undefined
+
+  const style: Record<string, string> = {}
+  if (type.color !== undefined) style.stroke = type.color
+  if (type.dash !== undefined) style.strokeDasharray = type.dash
+  if (type.width !== undefined) style.strokeWidth = `${type.width}px`
+  return Object.keys(style).length > 0 ? style : undefined
+})
+
 const labelSlot = computed(() => map.slot('edge-label'))
 
 // Own label first, then the aggregate count; nothing at all when simplified.
@@ -77,7 +100,17 @@ const labelText = computed(() => {
 </script>
 
 <template>
-  <BaseEdge :id="id" :path="path.d" :marker-end="markerEnd" :class="classes" />
+  <BaseEdge :id="id" :path="path.d" :marker-end="markerEnd" :class="classes" :style="typeStyle" />
+
+  <!-- A transparent overlay along the same path, wide enough to actually hit.
+       The edge itself is 1px, which is not a click target; without this a right
+       click or a plain click would land on the canvas nine times in ten. -->
+  <path
+    :d="path.d"
+    class="vam-edge__hit"
+    @click="map.onEdgeClick(id, $event)"
+    @contextmenu="map.onEdgeContextMenu(id, $event)"
+  />
 
   <EdgeLabelRenderer v-if="labelText !== undefined || labelSlot">
     <div
@@ -85,6 +118,7 @@ const labelText = computed(() => {
       :class="{ 'vam-edge__label--dimmed': dimmed }"
       :style="{ transform: `translate(-50%, -50%) translate(${path.labelX}px, ${path.labelY}px)` }"
       @click="map.onEdgeClick(id, $event)"
+      @contextmenu="map.onEdgeContextMenu(id, $event)"
     >
       <component :is="labelSlot" v-if="labelSlot" :link="link" :aggregated="aggregated" :count="count" />
       <template v-else>{{ labelText }}</template>
@@ -134,6 +168,19 @@ const labelText = computed(() => {
   stroke: var(--vam-infected-edge);
   stroke-width: var(--vam-edge-width-active);
   opacity: 1;
+}
+
+/*
+ * The click target. Invisible and thick: `stroke: transparent` still takes
+ * pointer events with `pointer-events: stroke`, which is what makes a 1px line
+ * clickable without drawing anything 16px wide.
+ */
+.vam-edge__hit {
+  stroke: transparent;
+  stroke-width: 16px;
+  fill: none;
+  pointer-events: stroke;
+  cursor: pointer;
 }
 
 .vam-edge__label {

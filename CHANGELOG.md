@@ -3,6 +3,61 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+
+- `linkTypes` prop: the kinds of connection the data uses, each with a colour, a dash and a name. One declaration drives
+  the edge stroke, the legend and the type select when a link is edited, so the three can never disagree.
+- `showLegend` prop: a legend of connection kinds bottom-left. Only kinds drawn differently appear in it, and each
+  swatch draws the real line rather than an approximation of it.
+- A window for connections, opened by clicking an edge: what it joins, its kind, its layers and its `meta`. Driven by
+  `v-model:openLinks`, replaceable through the `#link-details` slot. Edges also gained a transparent hit area, so a 1px
+  line is actually clickable.
+- `showContextMenu` prop: a menu on right-click over nodes and edges — "open in a new window" for a node, "open details"
+  for an edge, and "delete" for either while `editable`.
+- `editable` prop plus `entityFields` / `linkFields` schemas: an edit button in details windows that turns the body into
+  a form and back, connection handles for drawing new links, and the delete items in the context menus. The map never
+  writes to `entities` or `links` — it reports through the new `entity-update`, `entity-delete`, `link-create`,
+  `link-update` and `link-delete` events.
+- `ConfirmDialog`, `ContextMenu`, `MapLegend`, `LinkDetailsPanel` and `EditableFields` are exported. Deleting is
+  confirmed by the package's own dialog rather than `window.confirm` or a dialog dependency.
+- Field helpers on the core subpath: `readField`, `writeField`, `applyFields`, `fieldLabel`, `fieldToInput`,
+  `fieldFromInput`. `writeField` copies every level it touches and creates missing branches; `applyFields` returns the
+  same object when nothing changed, so an untouched form is told from a real edit.
+- `#details-edit` and `#link-edit` slots: replace the edit form with your own controls. Each receives the record, the
+  declared fields, the draft, a writer for it and the save/cancel actions — nothing tied to the package's inputs.
+- Hovering a node reveals four grab points, one per side of its circle, for drawing a link. Four rather than one because
+  the direction of the drag says where the link should run. They are declared after the centre handles, so existing
+  edges still anchor centre to centre, and group nodes get none.
+- `--vam-window-border`, `--vam-window-shadow`, `--vam-window-caption-padding`, `--vam-menu-*`, `--vam-confirm-scrim`,
+  `--vam-connector-size` and `--vam-legend-swatch-size` tokens, in both themes.
+
+### Changed
+
+- **A plain click on a node now replaces the open details window instead of opening another.** Clicking around the map
+  reads one node at a time rather than burying it under windows. `detailsMode: 'stack'` restores the previous
+  behaviour; "open in a new window" from the context menu stacks either way.
+- Hovering a membership dot now dims the other dots along with the nodes. Leaving the whole row at full strength made
+  it read as unaffected while the map behind it faded.
+- A node's label plate is sized by its contents up to `--vam-node-label-max-width`, rather than always filling a fixed
+  slab. Layout still reserves the ceiling for every node, so a shorter plate never lets a neighbour drift into its
+  space. `--vam-node-label-width` is now `--vam-node-label-max-width`.
+- A collapsed window shrinks to the width of its caption instead of holding a 480px box open, and windows are outlined
+  as well as shadowed — over a busy canvas the shadow alone did not separate them from what was behind.
+- Window title-bar buttons are 20px with a hover plate and a pressed state; at 16px with only a colour change it was
+  hard to tell whether a click had landed.
+
+### Fixed
+
+- **Links could not be drawn at all.** Every node was built with `connectable: false`, which VueFlow reads after the
+  graph-wide `nodesConnectable`, so the `editable` prop was silently defeated. Nodes now follow `editable`, groups stay
+  unconnectable, and the connection mode is loose so a drag can end on any handle.
+- The edit form was squeezed into the label column of the details section's two-column grid, leaving every control at
+  roughly 40% of the window. Fields now span the full width, one per row with the label above.
+- The edit form now replaces the window body even when `#details` is filled. It used to render only inside the fallback
+  branch, so a consumer with a custom body got an Edit button that produced no inputs at all.
+
 ## 1.0.4 — 2026-07-26
 
 ### Added

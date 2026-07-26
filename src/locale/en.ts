@@ -46,6 +46,34 @@ export const en: LocaleMessages = {
 
   'link.aggregated': 'Links: {count}',
   'link.direction': 'Direction: {source} → {target}',
+  'link.title': 'Connection',
+  'link.from': 'From',
+  'link.to': 'To',
+  'link.type': 'Type',
+  'link.speed': 'Speed',
+  'link.layers': 'Layers',
+  'link.meta': 'Additional',
+  'link.untyped': 'Not set',
+
+  'legend.label': 'Connections',
+
+  'menu.openInNewWindow': 'Open in a new window',
+  'menu.openDetails': 'Open details',
+  'menu.delete': 'Delete',
+  'menu.deleteLink': 'Delete connection',
+
+  'confirm.deleteEntity.title': 'Delete node?',
+  'confirm.deleteEntity.body': '“{label}” and every connection to it will be removed from the map.',
+  'confirm.deleteLink.title': 'Delete connection?',
+  'confirm.deleteLink.body': 'The connection between “{source}” and “{target}” will be removed.',
+  'confirm.confirm': 'Delete',
+  'confirm.cancel': 'Cancel',
+
+  'edit.start': 'Edit',
+  'edit.save': 'Save',
+  'edit.cancel': 'Cancel editing',
+  'edit.fields': 'Properties',
+  'edit.empty': 'Nothing to edit here',
 
   'canvas.label': 'Network map',
   'canvas.empty': 'Nothing to display',

@@ -31,6 +31,11 @@ Interactive infrastructure asset map for Vue 3, built on Vue Flow.
   its own and arrives through `path-change`. Shift-click builds the pair up and opens no window while doing it.
 - **A node design you can take apart.** The status dot, the fold button, the label plate and the sublabels each switch
   off with a prop or swap out through a slot; `nodeTypes` replaces the node wholesale.
+- **Connection kinds and a legend.** `linkTypes` declares colour, dash and name once; it drives the edge stroke, the
+  legend and the type select when a link is edited, so the three cannot disagree.
+- **Editing, without owning the data.** An edit button turns a details window into a form, right-click menus delete
+  behind the package's own confirmation, and links are drawn by dragging between nodes. The map never writes to
+  `entities` or `links` — it reports through events and the application decides.
 - **Pluggable layouts.** `manual` and `radial` are built in, `dagre` ships behind a subpath. Any object with
   `run(graph, options, signal)` can be passed instead.
 - **Framework-free core.** `vue-asset-map/core` imports neither Vue nor Vue Flow, so projections, filtering and blast
@@ -124,6 +129,11 @@ The ones reached for most often; the full list is in the
 | `showNodeStatus`    | `boolean`                         | `true`         | `false` removes the status dot from every node.           |
 | `maxSublabels`      | `number`                          | unlimited      | Caps the sublabel lines; `0` hides them.                  |
 | `autoPath`          | `boolean`                         | `false`        | Trace the path between two selected nodes on its own.     |
+| `linkTypes`         | `LinkTypeDef[]`                   | —              | Connection kinds: colour, dash, name.                     |
+| `showLegend`        | `boolean`                         | `false`        | Connection legend, bottom-left.                           |
+| `showContextMenu`   | `boolean`                         | `false`        | Menu on right-click, over nodes and edges.                |
+| `editable`          | `boolean`                         | `false`        | Edit button, delete items, link drawing.                  |
+| `detailsMode`       | `'replace'                        | 'stack'`       | `'replace'`                                               | What a plain click does to the open windows. |
 | `locale`            | `string \| PartialLocaleMessages` | `ru`           | Locale code, or a dictionary of overrides.                |
 | `autoFitView`       | `boolean`                         | `false`        | Fit the canvas to its content after every layout.         |
 

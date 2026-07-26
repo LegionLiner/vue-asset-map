@@ -5,6 +5,7 @@ import type {
   AssetView,
   NodeMarkerDef,
   MarkerAnchor,
+  LinkTypeDef,
 } from '../src/types/index'
 import { connectionMarkers } from '../src/core/markers'
 
@@ -283,24 +284,24 @@ const link = (
 ): DemoLink => ({ id, source, target, layers, ...extra })
 
 export const links: DemoLink[] = [
-  link('l-inet-cf', 'internet', 'cloudflare', [LAYER_PHYSICAL], { type: 'solid' }),
-  link('l-inet-tailscale', 'internet', 'vps-tailscale', [LAYER_PHYSICAL], { type: 'solid' }),
+  link('l-inet-cf', 'internet', 'cloudflare', [LAYER_PHYSICAL], { type: 'fiber' }),
+  link('l-inet-tailscale', 'internet', 'vps-tailscale', [LAYER_PHYSICAL], { type: 'fiber' }),
   link('l-inet-brainstorm', 'internet', 'vps-brainstorm', [LAYER_PHYSICAL], { type: 'solid' }),
   link('l-inet-160', 'internet', 'vps-160-usa', [LAYER_PHYSICAL], { type: 'solid' }),
-  link('l-inet-nginx', 'internet', 'vps-nginx', [LAYER_PHYSICAL], { type: 'solid' }),
-  link('l-inet-keen1', 'internet', 'keenetic-1', [LAYER_PHYSICAL], { type: 'solid' }),
-  link('l-inet-keen2', 'internet', 'keenetic-2', [LAYER_PHYSICAL], { type: 'solid' }),
+  link('l-inet-nginx', 'internet', 'vps-nginx', [LAYER_PHYSICAL], { type: 'fiber' }),
+  link('l-inet-keen1', 'internet', 'keenetic-1', [LAYER_PHYSICAL], { type: 'fiber' }),
+  link('l-inet-keen2', 'internet', 'keenetic-2', [LAYER_PHYSICAL], { type: 'fiber' }),
   link('l-cf-nginx', 'cloudflare', 'vps-nginx', [LAYER_PHYSICAL], { type: 'solid', directed: true }),
 
   link('l-keen1-pve-artjom', 'keenetic-1', 'pve-artjom', [LAYER_PHYSICAL], { type: 'solid' }),
   link('l-keen2-pve-beelink', 'keenetic-2', 'pve-beelink', [LAYER_PHYSICAL], { type: 'solid' }),
   link('l-keen2-pve-gpu', 'keenetic-2', 'pve-gpu', [LAYER_PHYSICAL], { type: 'solid' }),
 
-  link('l-keen1-ws-artjom', 'keenetic-1', 'ws-artjom', [LAYER_PHYSICAL], { type: 'solid' }),
-  link('l-keen1-ws-sergey', 'keenetic-1', 'ws-sergey', [LAYER_PHYSICAL], { type: 'solid' }),
-  link('l-keen2-ws-dmitry', 'keenetic-2', 'ws-dmitry', [LAYER_PHYSICAL], { type: 'solid' }),
-  link('l-keen2-ws-vlad', 'keenetic-2', 'ws-vlad', [LAYER_PHYSICAL], { type: 'solid' }),
-  link('l-keen2-ws-andrey', 'keenetic-2', 'ws-andrey', [LAYER_PHYSICAL], { type: 'solid' }),
+  link('l-keen1-ws-artjom', 'keenetic-1', 'ws-artjom', [LAYER_PHYSICAL], { type: 'wifi' }),
+  link('l-keen1-ws-sergey', 'keenetic-1', 'ws-sergey', [LAYER_PHYSICAL], { type: 'wifi' }),
+  link('l-keen2-ws-dmitry', 'keenetic-2', 'ws-dmitry', [LAYER_PHYSICAL], { type: 'wifi' }),
+  link('l-keen2-ws-vlad', 'keenetic-2', 'ws-vlad', [LAYER_PHYSICAL], { type: 'wifi' }),
+  link('l-keen2-ws-andrey', 'keenetic-2', 'ws-andrey', [LAYER_PHYSICAL], { type: 'wifi' }),
 
   link('l-keen2-inet-backup', 'keenetic-2', 'internet', [LAYER_PHYSICAL], { type: 'dashed' }),
 
@@ -392,6 +393,20 @@ export const statusColors: Record<string, string> = {
   offline: 'var(--vam-status-offline)',
   degraded: 'var(--vam-status-warning)',
 }
+
+/**
+ * The kinds of connection this fixture uses.
+ *
+ * Each carries a dash as well as a colour: colour alone does not survive a
+ * monochrome print or a red-green deficiency, and the legend is meant to be
+ * readable by everyone who can see the map.
+ */
+export const linkTypes: LinkTypeDef[] = [
+  { id: 'fiber', label: 'Оптоволокно', color: '#2f7d4f', width: 2 },
+  { id: 'wifi', label: 'Wi-Fi', color: '#c07b1e', dash: '2 3' },
+  { id: 'solid', label: 'Ethernet', color: '#4d6d9a' },
+  { id: 'dashed', label: 'VPN-туннель', color: '#5a5ee7', dash: '6 4' },
+]
 
 export function generateLargeGraph(
   nodeCount: number,

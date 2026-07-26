@@ -3,6 +3,7 @@ import type { EntityId, AssetEntity } from '../types/entity'
 import type { AssetGraph } from '../types/graph'
 import type { CollapsedGroup } from '../types/collapse'
 import type { Translate } from '../types/locale'
+import type { LinkTypeDef } from '../types/linkType'
 import type { ResolvedNodeMarker } from '../types/marker'
 
 /** Direction of an arrow-key move across the map. */
@@ -51,6 +52,8 @@ export interface MapContext {
 
   statusColorOf: (status: string | undefined) => string | undefined
   iconFor: (type: string) => Component | undefined
+  /** The declared kind behind a `link.type`, if the consumer declared one. */
+  linkTypeOf: (type: string | undefined) => LinkTypeDef | undefined
   groupById: (groupId: string) => CollapsedGroup | undefined
   entityById: (id: EntityId) => AssetEntity<unknown> | undefined
 
@@ -70,6 +73,14 @@ export interface MapContext {
 
   /** Membership markers of a node: the dots under its label. */
   markersFor: (id: EntityId) => readonly ResolvedNodeMarker[]
+  /**
+   * A different marker is hovered, so this dot steps back.
+   *
+   * The dots fade along with the nodes rather than staying at full strength
+   * while the map behind them dims: the dot is the control being pointed at, and
+   * leaving every other one bright makes the row read as unaffected.
+   */
+  isMarkerDimmed: (markerId: string) => boolean
   onMarkerEnter: (markerId: string) => void
   onMarkerLeave: () => void
   onMarkerFocus: (markerId: string) => void
@@ -85,6 +96,7 @@ export interface MapContext {
   onNodeContextMenu: (id: string, event: MouseEvent) => void
   onGroupToggle: (groupId: string, event: Event) => void
   onEdgeClick: (edgeId: string, event: MouseEvent) => void
+  onEdgeContextMenu: (edgeId: string, event: MouseEvent) => void
 
   /** Keyboard: move to a neighbour in the given direction. */
   onArrowNavigate: (id: string, direction: ArrowDirection) => void

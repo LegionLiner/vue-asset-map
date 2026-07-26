@@ -153,18 +153,26 @@ defineExpose({
   width: var(--vam-window-width);
   max-width: calc(100% - var(--vam-space-5));
   max-height: calc(100% - var(--vam-space-5));
+  border: 1px solid var(--vam-window-border);
   border-radius: var(--vam-window-radius);
   background: var(--vam-surface);
-  box-shadow: var(--vam-shadow-lg);
+  box-shadow: var(--vam-window-shadow);
   color: var(--vam-fg);
   font-family: var(--vam-font);
   font-size: var(--vam-font-size);
   line-height: var(--vam-line-height);
 }
 
-/* A bar-only window is sized by its content, not by the shared width token. */
-.vam-window--header-only {
-  width: auto;
+/*
+ * A window with nothing under its bar is sized by that bar's contents rather
+ * than by the shared width token — a caption of three words has no business
+ * holding a 480px box open. `max-content` over `auto` because the bar is a flex
+ * row: `auto` would let the caption wrap instead of setting the width.
+ */
+.vam-window--header-only,
+.vam-window--collapsed {
+  width: max-content;
+  max-width: calc(100% - var(--vam-space-5));
 }
 
 .vam-window__header {
@@ -208,6 +216,9 @@ defineExpose({
   justify-content: center;
   gap: var(--vam-space-2);
   min-width: 0;
+  /* Breathing room either side, so a caption sized by its own text does not end
+     up touching the buttons once the window is collapsed. */
+  padding: 0 var(--vam-window-caption-padding);
   overflow: hidden;
   color: var(--vam-fg-subtle);
   font-size: var(--vam-font-size-sm);
@@ -215,23 +226,37 @@ defineExpose({
   white-space: nowrap;
 }
 
+/*
+ * The buttons are 16px of icon, which is a small target and an easy one to
+ * doubt having hit. A plate on hover and a pressed state on `:active` say the
+ * click landed — a color change alone is too quiet at this size.
+ */
 .vam-window__button {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   padding: 0;
   border: 0;
   border-radius: var(--vam-radius-sm);
   background: transparent;
   color: var(--vam-fg-muted);
   cursor: pointer;
+  transition:
+    background var(--vam-transition),
+    color var(--vam-transition);
 }
 
 .vam-window__button:hover {
-  color: var(--vam-fg-subtle);
+  background: var(--vam-accent-soft);
+  color: var(--vam-fg);
+}
+
+.vam-window__button:active {
+  background: var(--vam-surface-sunken);
+  color: var(--vam-accent);
 }
 
 .vam-window__button:focus-visible {

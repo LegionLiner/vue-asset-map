@@ -1,10 +1,16 @@
 <script setup lang="ts" generic="E = unknown, L = unknown">
 import { computed, nextTick, onMounted, ref, shallowRef, useSlots, watch, type Slot } from 'vue'
-import { VueFlow, useNodesInitialized, useVueFlow, type NodeDragEvent } from '@vue-flow/core'
+// `ConnectionMode.Loose` lets a drag end on any handle rather than only on one
+// typed `target`. The connectors are all sources — a side of a circle is not
+// inherently an inbound or an outbound side — so strict mode would let a link
+// start anywhere and land nowhere.
+import { ConnectionMode, VueFlow, useNodesInitialized, useVueFlow, type NodeDragEvent } from '@vue-flow/core'
 import type { EntityId, AssetEntity, XY } from '../types/entity'
 import type { CollapsedGroup } from '../types/collapse'
+import type { FieldDef } from '../types/field'
 import type { FilterState } from '../types/filter'
 import type { AssetGraph } from '../types/graph'
+import type { AssetLink } from '../types/link'
 import type {
   FocusOptions,
   AssetMapExposed,
@@ -24,9 +30,13 @@ import { useNodeMarkers } from '../composables/useNodeMarkers'
 import { useFlowElements } from '../composables/useFlowElements'
 import { provideMapContext, type ArrowDirection, type MapContext } from '../composables/useMapContext'
 import DetailsPanel from './panel/DetailsPanel.vue'
+import LinkDetailsPanel from './panel/LinkDetailsPanel.vue'
 import SearchInput from './controls/SearchInput.vue'
 import ViewSwitcher from './controls/ViewSwitcher.vue'
 import FilterMenu from './controls/FilterMenu.vue'
+import ContextMenu, { type ContextMenuItem } from './ContextMenu.vue'
+import ConfirmDialog from './ConfirmDialog.vue'
+import MapLegend from './MapLegend.vue'
 import MiniMap, { type MiniMapNode } from './MiniMap.vue'
 import { buildEdgeTypes, buildNodeTypes } from '../registry/nodeRegistry'
 import { createTranslator, resolveLocale } from '../locale/index'
@@ -41,6 +51,10 @@ const props = withDefaults(defineProps<AssetMapProps<E, L>>(), {
   showNodeToggle: true,
   showNodeLabel: true,
   showDetailsHeading: true,
+  showLegend: false,
+  showContextMenu: false,
+  editable: false,
+  detailsMode: 'replace',
   onlyRenderVisibleElements: true,
   lodThreshold: 0.5,
   loading: false,
@@ -70,6 +84,24 @@ const emit = defineEmits<{
   'selection-change': [ids: EntityId[]]
   /** The traced path changed: entity ids in order, or empty when it was dropped. */
   'path-change': [ids: EntityId[]]
+
+  /**
+   * An edit was saved. The payload is a **new** object — the map never writes to
+   * the arrays it was given, so applying it is the application's move.
+   */
+  'entity-update': [payload: { id: EntityId; entity: AssetEntity<E> }]
+  'link-update': [payload: { id: string; link: AssetLink<L> }]
+  /** Delete was confirmed. The map has already closed any window showing it. */
+  'entity-delete': [payload: { id: EntityId; entity: AssetEntity<E> | undefined }]
+  'link-delete': [payload: { id: string; link: AssetLink<L> | undefined }]
+  /**
+   * A link was drawn between two nodes.
+   *
+   * `link` is a candidate the map made up, with a generated id: nothing exists
+   * until the application puts it in `links`. Its window opens in edit mode
+   * regardless, so the kind and speed can be filled in straight away.
+   */
+  'link-create': [payload: { link: AssetLink<L>; source: EntityId; target: EntityId }]
   'layout-start': [engine: string]
   'layout-done': [payload: { engine: string; positions: number }]
   error: [error: unknown]
@@ -90,6 +122,8 @@ const filters = defineModel<FilterState>('filters', {
 const viewport = defineModel<Viewport>('viewport', { default: () => ({ x: 0, y: 0, zoom: 1 }) })
 /** Entities with an open details window; the last one is on top. */
 const openDetails = defineModel<EntityId[]>('openDetails', { default: () => [] })
+/** Links with an open connection window; the last one is on top. */
+const openLinks = defineModel<string[]>('openLinks', { default: () => [] })
 /** Nodes whose descendants are folded by the button on the node itself. */
 const collapsedNodes = defineModel<Set<EntityId>>('collapsedNodes', {
   default: () => new Set<EntityId>(),
@@ -214,6 +248,9 @@ watch(
 const nodeTypes = computed(() => buildNodeTypes(props.nodeTypes))
 const edgeTypes = computed(() => buildEdgeTypes(props.edgeTypes))
 
+/** Declared connection kinds by id, for the edges, the legend and the type select. */
+const linkTypeById = computed(() => new Map((props.linkTypes ?? []).map((type) => [type.id, type])))
+
 const { nodes, edges } = useFlowElements({
   graph,
   collapsed: collapseState.collapsed,
@@ -222,6 +259,7 @@ const { nodes, edges } = useFlowElements({
   nodeTypes,
   edgeTypes,
   draggable: ref(true),
+  connectable: computed(() => props.editable),
 })
 
 const {
@@ -400,7 +438,12 @@ function onNodeDoubleClick(id: string, event: MouseEvent): void {
 }
 
 function onNodeContextMenu(id: string, event: MouseEvent): void {
+  if (props.showContextMenu) openMenu('node', id, event)
   emit('node-context-menu', payloadFor(id, event))
+}
+
+function onEdgeContextMenu(id: string, event: MouseEvent): void {
+  if (props.showContextMenu) openMenu('link', id, event)
 }
 
 function onGroupToggle(groupId: string): void {
@@ -411,6 +454,9 @@ function onGroupToggle(groupId: string): void {
 }
 
 function onEdgeClick(id: string, event: MouseEvent): void {
+  // An aggregated edge stands for several links at once and has no single
+  // record to describe, so it opens no window — the click still reports.
+  if (linkById.value.has(id)) openLink(id)
   emit('edge-click', { id, event })
 }
 
@@ -506,6 +552,9 @@ const maxDetailWindows = computed(() => Math.max(0, props.maxDetailsWindows ?? 2
 
 const windowsLayer = ref<HTMLElement>()
 
+/** The canvas box, for placing a context menu in canvas coordinates. */
+const canvasElement = ref<HTMLElement>()
+
 /** Height taken by the consumer's own windows at the top of their layer, in px. */
 const customWindowsHeight = ref(0)
 
@@ -569,12 +618,25 @@ const canvasStyle = computed<Record<string, string> | undefined>(() => {
 /**
  * Opens a window for an entity.
  *
- * An already open window is raised rather than duplicated. Once the limit is
- * reached the oldest one closes: silently ignoring the click would be worse, as
- * the user would read it as the map not responding.
+ * An already open window is raised rather than duplicated. In `'replace'` mode
+ * a plain click swaps whatever was open for this node, so clicking around the
+ * map reads one node at a time instead of burying it under windows; `newWindow`
+ * is the context menu asking for another one regardless. Once the limit is
+ * reached the oldest closes — silently ignoring the click would be worse, as the
+ * user would read it as the map not responding.
  */
-function openDetail(id: EntityId): void {
+function openDetail(id: EntityId, options?: { newWindow?: boolean }): void {
   if (!props.showDetailsPanel || maxDetailWindows.value === 0) return
+
+  const stacking = options?.newWindow === true || props.detailsMode === 'stack'
+
+  if (!stacking) {
+    // Already the only window open: nothing to do, and reassigning would reset
+    // the window's dragged position for no reason.
+    if (openDetails.value.length === 1 && openDetails.value[0] === id) return
+    openDetails.value = [id]
+    return
+  }
 
   const rest = openDetails.value.filter((candidate) => candidate !== id)
   const next = [...rest, id]
@@ -585,6 +647,40 @@ function openDetail(id: EntityId): void {
 function closeDetail(id: EntityId): void {
   if (!openDetails.value.includes(id)) return
   openDetails.value = openDetails.value.filter((candidate) => candidate !== id)
+}
+
+/** Links by id, for the windows and the menus. Aggregated edges are absent. */
+const linkById = computed(() => graph.value.links)
+
+/**
+ * Opens a connection window.
+ *
+ * Follows `detailsMode` the same way entity windows do, and shares the same cap:
+ * the two kinds of window sit in the same corner and compete for the same space.
+ */
+function openLink(id: string, options?: { newWindow?: boolean }): void {
+  if (!props.showDetailsPanel || maxDetailWindows.value === 0) return
+
+  const stacking = options?.newWindow === true || props.detailsMode === 'stack'
+
+  if (!stacking) {
+    if (openLinks.value.length === 1 && openLinks.value[0] === id) return
+    openLinks.value = [id]
+    return
+  }
+
+  const rest = openLinks.value.filter((candidate) => candidate !== id)
+  const next = [...rest, id]
+  openLinks.value =
+    next.length > maxDetailWindows.value ? next.slice(next.length - maxDetailWindows.value) : next
+}
+
+function closeLink(id: string): void {
+  if (!openLinks.value.includes(id)) return
+  openLinks.value = openLinks.value.filter((candidate) => candidate !== id)
+  // A link abandoned before its first save leaves with its window: it was never
+  // in the data, and keeping the id around would reopen an empty form later.
+  if (pendingLinkId.value === id) pendingLinkId.value = undefined
 }
 
 /**
@@ -605,6 +701,194 @@ const detailWindows = computed(() =>
     .map((id) => graph.value.entities.get(id))
     .filter((entity): entity is AssetEntity<E> => entity !== undefined),
 )
+
+/**
+ * Links of the open connection windows.
+ *
+ * A link drawn but not yet accepted by the application is not in the graph, so
+ * it is carried separately until it either arrives in `links` or is abandoned.
+ */
+const linkWindows = computed<AssetLink<L>[]>(() =>
+  openLinks.value
+    .map((id) => graph.value.links.get(id) ?? (pendingLinkId.value === id ? pendingLink.value : undefined))
+    .filter((link): link is AssetLink<L> => link !== undefined),
+)
+
+/* ------------------------------------------------------------------ menus -- */
+
+type MenuTarget = { kind: 'node' | 'link'; id: string; x: number; y: number }
+
+const menu = shallowRef<MenuTarget | undefined>(undefined)
+
+function openMenu(kind: 'node' | 'link', id: string, event: MouseEvent): void {
+  // Suppressing the browser menu is only justified once ours is actually going
+  // to appear, which is why this sits here and not in the node component.
+  event.preventDefault()
+  event.stopPropagation()
+
+  const bounds = canvasElement.value?.getBoundingClientRect()
+  menu.value = {
+    kind,
+    id,
+    // Canvas-relative: the menu is positioned inside the canvas, so it stays
+    // put if the page scrolls under it.
+    x: event.clientX - (bounds?.left ?? 0),
+    y: event.clientY - (bounds?.top ?? 0),
+  }
+}
+
+function closeMenu(): void {
+  menu.value = undefined
+}
+
+/** Rows of the open menu, resolved against what the target actually is. */
+const menuItems = computed<ContextMenuItem[]>(() => {
+  const target = menu.value
+  if (!target) return []
+
+  if (target.kind === 'node') {
+    // A group node has no entity behind it, so neither item applies to it.
+    if (!graph.value.entities.has(target.id)) return []
+    const items: ContextMenuItem[] = [{ id: 'open-new', label: t.value('menu.openInNewWindow') }]
+    if (props.editable) items.push({ id: 'delete', label: t.value('menu.delete'), danger: true })
+    return items
+  }
+
+  const items: ContextMenuItem[] = [{ id: 'open-new', label: t.value('menu.openDetails') }]
+  if (props.editable) items.push({ id: 'delete', label: t.value('menu.deleteLink'), danger: true })
+  return items
+})
+
+function onMenuSelect(action: string): void {
+  const target = menu.value
+  closeMenu()
+  if (!target) return
+
+  if (action === 'open-new') {
+    if (target.kind === 'node') openDetail(target.id, { newWindow: true })
+    else openLink(target.id, { newWindow: true })
+    return
+  }
+
+  if (action === 'delete') confirming.value = { kind: target.kind, id: target.id }
+}
+
+/* --------------------------------------------------------------- deleting -- */
+
+const confirming = shallowRef<{ kind: 'node' | 'link'; id: string } | undefined>(undefined)
+
+const confirmText = computed(() => {
+  const target = confirming.value
+  if (!target) return undefined
+
+  if (target.kind === 'node') {
+    const entity = graph.value.entities.get(target.id)
+    return {
+      title: t.value('confirm.deleteEntity.title'),
+      body: t.value('confirm.deleteEntity.body', { label: entity?.label ?? target.id }),
+    }
+  }
+
+  const link = graph.value.links.get(target.id)
+  return {
+    title: t.value('confirm.deleteLink.title'),
+    body: t.value('confirm.deleteLink.body', {
+      source: graph.value.entities.get(link?.source ?? '')?.label ?? link?.source ?? '—',
+      target: graph.value.entities.get(link?.target ?? '')?.label ?? link?.target ?? '—',
+    }),
+  }
+})
+
+function onConfirmDelete(): void {
+  const target = confirming.value
+  confirming.value = undefined
+  if (!target) return
+
+  if (target.kind === 'node') {
+    // Its window goes first: leaving one open over a node that no longer exists
+    // would show a record the application has just been told to drop.
+    closeDetail(target.id)
+    selectionState.deselect(target.id)
+    emit('entity-delete', { id: target.id, entity: graph.value.entities.get(target.id) })
+    return
+  }
+
+  closeLink(target.id)
+  emit('link-delete', { id: target.id, link: graph.value.links.get(target.id) })
+}
+
+/* ---------------------------------------------------------------- editing -- */
+
+/**
+ * Link fields offered when the consumer declares none.
+ *
+ * Type, label and speed: the shape almost every link has. The type is a select
+ * over the declared `linkTypes`, so the two features stay in step without the
+ * consumer wiring them together.
+ */
+const resolvedLinkFields = computed<FieldDef[]>(() => {
+  if (props.linkFields) return props.linkFields
+  if (!props.editable) return []
+
+  return [
+    {
+      key: 'type',
+      label: t.value('link.type'),
+      type: 'select',
+      options: (props.linkTypes ?? []).map((type) => ({ value: type.id, label: type.label ?? type.id })),
+    },
+    { key: 'label', label: t.value('details.title') },
+    { key: 'meta.speed', label: t.value('link.speed') },
+  ]
+})
+
+const entityFields = computed<FieldDef[]>(() => (props.editable ? (props.entityFields ?? []) : []))
+
+function onEntitySave(entity: AssetEntity<E>): void {
+  emit('entity-update', { id: entity.id, entity })
+}
+
+function onLinkSave(link: AssetLink<L>): void {
+  // The first save of a drawn link is what brings it into being; after that it
+  // is an ordinary update and the map stops carrying it.
+  if (pendingLinkId.value === link.id) {
+    pendingLinkId.value = undefined
+    pendingLink.value = undefined
+    emit('link-create', { link, source: link.source, target: link.target })
+    return
+  }
+  emit('link-update', { id: link.id, link })
+}
+
+/* --------------------------------------------------------- drawing a link -- */
+
+/** A link drawn on the canvas but not yet accepted into `links`. */
+const pendingLink = shallowRef<AssetLink<L> | undefined>(undefined)
+const pendingLinkId = shallowRef<string | undefined>(undefined)
+
+/**
+ * Vue Flow reports a completed drag between two handles.
+ *
+ * The candidate is given the current view's layer so it is visible in the view
+ * it was drawn in — a new link that immediately disappears because it belongs to
+ * no layer is the obvious trap here.
+ */
+function onConnect(connection: { source?: string | null; target?: string | null }): void {
+  const { source, target } = connection
+  if (!source || !target || source === target) return
+
+  const id = `vam-link-${source}-${target}-${Date.now()}`
+  const link = {
+    id,
+    source,
+    target,
+    layers: view.value ? [view.value.id] : [],
+  } as AssetLink<L>
+
+  pendingLink.value = link
+  pendingLinkId.value = id
+  openLink(id, { newWindow: true })
+}
 
 /** A hidden node resolves to whatever hides it: a group or a collapsed parent. */
 const resolveVisual = (id: EntityId): string => collapseState.collapsed.value.groupOf.get(id) ?? id
@@ -776,9 +1060,14 @@ const context: MapContext = {
   slot: (name) => (slots as Record<string, Slot | undefined>)[name],
   statusColorOf: (status) => (status ? props.themeConfig?.statusColors?.[status] : undefined),
   iconFor: (type) => props.themeConfig?.kindIcons?.[type],
+  linkTypeOf: (type) => (type ? linkTypeById.value.get(type) : undefined),
   groupById: (groupId) => collapseState.groupById.value.get(groupId),
   entityById: (id) => graph.value.entities.get(id),
   markersFor: markerState.markersFor,
+  isMarkerDimmed: (markerId) => {
+    const hovered = markerState.hoveredMarker.value
+    return hovered !== undefined && hovered !== markerId
+  },
   onMarkerEnter: markerState.onMarkerEnter,
   onMarkerLeave: markerState.onMarkerLeave,
   onMarkerFocus: markerState.onMarkerFocus,
@@ -800,6 +1089,7 @@ const context: MapContext = {
   onNodeContextMenu,
   onGroupToggle,
   onEdgeClick,
+  onEdgeContextMenu,
   onArrowNavigate,
   registerNodeElement: (id, element) => {
     if (element) nodeElements.set(id, element)
@@ -841,7 +1131,13 @@ defineExpose({
 <template>
   <div :class="['vam-root', `vam-theme-${theme}`]" @keydown="onRootKeydown">
     <div class="vam-body">
-      <div class="vam-canvas" role="application" :aria-label="t('canvas.label')" :style="canvasStyle">
+      <div
+        ref="canvasElement"
+        class="vam-canvas"
+        role="application"
+        :aria-label="t('canvas.label')"
+        :style="canvasStyle"
+      >
         <!-- The toolbar floats over the canvas with no background of its own;
              only the controls carry one, so the map loses no vertical space. -->
         <div v-if="showToolbar" class="vam-toolbar">
@@ -886,14 +1182,18 @@ defineExpose({
           :edge-types="edgeTypes"
           :only-render-visible-elements="onlyRenderVisibleElements"
           :nodes-draggable="true"
-          :nodes-connectable="false"
+          :nodes-connectable="editable"
+          :connection-mode="ConnectionMode.Loose"
           :elements-selectable="false"
           :min-zoom="0.1"
           :max-zoom="2.5"
           :default-viewport="viewport"
           @node-drag-stop="onNodeDragStop"
           @pane-click="onPaneClick"
+          @connect="onConnect"
         />
+
+        <MapLegend v-if="showLegend && linkTypes" :types="linkTypes" />
 
         <MiniMap
           v-if="showMinimap"
@@ -923,7 +1223,23 @@ defineExpose({
           :title="detailsTitleOf(entity)"
           :show-heading="showDetailsHeading"
           :tabs="detailsTabs"
+          :fields="entityFields"
           @close="closeDetail(entity.id)"
+          @save="onEntitySave($event as AssetEntity<E>)"
+        />
+
+        <!-- Connection windows are offset past the entity ones, so opening a
+             link while a node is open does not bury it. -->
+        <LinkDetailsPanel
+          v-for="(link, index) in linkWindows"
+          :key="link.id"
+          :link="link"
+          :offset="{ x: (detailWindows.length + index) * -24, y: (detailWindows.length + index) * 24 }"
+          :style="{ zIndex: 20 + detailWindows.length + index }"
+          :fields="resolvedLinkFields"
+          :start-editing="link.id === pendingLinkId"
+          @close="closeLink(link.id)"
+          @save="onLinkSave($event as AssetLink<L>)"
         />
 
         <!-- Consumer windows, above the details windows. The wrapper does not
@@ -931,6 +1247,24 @@ defineExpose({
         <div v-if="slots.windows" ref="windowsLayer" class="vam-windows">
           <slot name="windows" />
         </div>
+
+        <ContextMenu
+          v-if="menu && menuItems.length > 0"
+          :x="menu.x"
+          :y="menu.y"
+          :items="menuItems"
+          :aria-label="t('details.title')"
+          @select="onMenuSelect"
+          @close="closeMenu"
+        />
+
+        <ConfirmDialog
+          v-if="confirming && confirmText"
+          :title="confirmText.title"
+          :body="confirmText.body"
+          @confirm="onConfirmDelete"
+          @cancel="confirming = undefined"
+        />
       </div>
     </div>
   </div>

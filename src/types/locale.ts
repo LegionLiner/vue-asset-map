@@ -48,6 +48,34 @@ export interface LocaleMessages {
 
   'link.aggregated': string
   'link.direction': string
+  'link.title': string
+  'link.from': string
+  'link.to': string
+  'link.type': string
+  'link.speed': string
+  'link.layers': string
+  'link.meta': string
+  'link.untyped': string
+
+  'legend.label': string
+
+  'menu.openInNewWindow': string
+  'menu.openDetails': string
+  'menu.delete': string
+  'menu.deleteLink': string
+
+  'confirm.deleteEntity.title': string
+  'confirm.deleteEntity.body': string
+  'confirm.deleteLink.title': string
+  'confirm.deleteLink.body': string
+  'confirm.confirm': string
+  'confirm.cancel': string
+
+  'edit.start': string
+  'edit.save': string
+  'edit.cancel': string
+  'edit.fields': string
+  'edit.empty': string
 
   'canvas.label': string
   'canvas.empty': string

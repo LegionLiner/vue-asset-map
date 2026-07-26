@@ -40,6 +40,8 @@ export interface UseFlowElementsParams<E, L> {
   nodeTypes: ComputedRef<Readonly<Record<string, Component>>>
   edgeTypes: ComputedRef<Readonly<Record<string, Component>>>
   draggable: Ref<boolean>
+  /** Whether a node may start or receive a drawn link. */
+  connectable: Ref<boolean>
 }
 
 /** Return value of {@link useFlowElements}: ready to feed to `<VueFlow>`. */
@@ -63,7 +65,8 @@ const FALLBACK_POSITION: XY = { x: 0, y: 0 }
  *    would vanish when searching for something inside it.
  */
 export function useFlowElements<E, L>(params: UseFlowElementsParams<E, L>): UseFlowElementsReturn {
-  const { graph, collapsed, positionOf, filterVisibleIds, nodeTypes, edgeTypes, draggable } = params
+  const { graph, collapsed, positionOf, filterVisibleIds, nodeTypes, edgeTypes, draggable, connectable } =
+    params
 
   const groupById = computed(() => new Map(collapsed.value.groups.map((group) => [group.id, group])))
 
@@ -80,20 +83,31 @@ export function useFlowElements<E, L>(params: UseFlowElementsParams<E, L>): UseF
   const nodes = computed<Node[]>(() => {
     const types = nodeTypes.value
     const canDrag = draggable.value
+    const canConnect = connectable.value
 
     return collapsed.value.nodeIds.map((id) => {
       const group = groupById.value.get(id)
       const position = positionOf(id) ?? FALLBACK_POSITION
 
       if (group) {
-        return buildNode(id, NODE_TYPE_GROUP, position, { variant: 'group', group }, canDrag, isVisible(id))
+        // A group is not a record, so nothing can be linked to or from it: a
+        // link to a group would have no entity at one of its ends.
+        return buildNode(
+          id,
+          NODE_TYPE_GROUP,
+          position,
+          { variant: 'group', group },
+          canDrag,
+          false,
+          isVisible(id),
+        )
       }
 
       const entity = graph.value.entities.get(id)
       if (!entity) {
         // A node without an entity can only mean a bug in the core, but that is
         // no reason to blank the render — fall back to the base node type.
-        return buildNode(id, nodeTypeFor('', types), position, undefined, canDrag, isVisible(id))
+        return buildNode(id, nodeTypeFor('', types), position, undefined, canDrag, false, isVisible(id))
       }
 
       return buildNode(
@@ -102,6 +116,7 @@ export function useFlowElements<E, L>(params: UseFlowElementsParams<E, L>): UseF
         position,
         { variant: 'entity', entity },
         canDrag,
+        canConnect,
         isVisible(id),
       )
     })
@@ -149,6 +164,7 @@ function buildNode(
   position: XY,
   data: AssetNodeData | undefined,
   draggable: boolean,
+  connectable: boolean,
   visible: boolean,
 ): Node {
   return {
@@ -157,11 +173,13 @@ function buildNode(
     position,
     ...(data ? { data } : {}),
     draggable,
+    // Per-node, not just the graph-wide `nodesConnectable`: VueFlow reads this
+    // one last, so a hardcoded `false` here silently defeats the prop.
+    connectable,
     // Selection and focus belong to the map: VueFlow keeps selection state of
     // its own, and two sources of truth for one selection always drift apart.
     selectable: false,
     focusable: false,
-    connectable: false,
     hidden: !visible,
   }
 }

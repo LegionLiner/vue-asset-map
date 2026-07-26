@@ -173,6 +173,41 @@ describe('подсветка по наведению на маркер', () => {
     wrapper.unmount()
   })
 
+  it('остальные кружки гаснут вместе с узлами', async () => {
+    // Кружок — это тот самый элемент, на который наводят: оставить все прочие в
+    // полную силу значило бы показать ряд нетронутым, пока карта за ним гаснет.
+    const wrapper = await mountMap()
+
+    await hover(wrapper, 'Tailscale VPS', 'Tailscale VPS', 500)
+
+    expect(marker(wrapper, 'Tailscale VPS', 'Tailscale VPS')?.classes()).not.toContain(
+      'vam-node__marker--dimmed',
+    )
+    expect(marker(wrapper, 'Keenetic 1', 'Keenetic 1')?.classes()).toContain('vam-node__marker--dimmed')
+
+    wrapper.unmount()
+  })
+
+  it('пока ничего не наведено, не гаснет ни один кружок', async () => {
+    const wrapper = await mountMap()
+
+    expect(wrapper.findAll('.vam-node__marker--dimmed')).toHaveLength(0)
+    wrapper.unmount()
+  })
+
+  it('уход курсора возвращает кружки', async () => {
+    const wrapper = await mountMap()
+
+    await hover(wrapper, 'Tailscale VPS', 'Tailscale VPS', 500)
+    expect(wrapper.findAll('.vam-node__marker--dimmed').length).toBeGreaterThan(0)
+
+    await marker(wrapper, 'Tailscale VPS', 'Tailscale VPS')?.trigger('mouseleave')
+    await nextTick()
+
+    expect(wrapper.findAll('.vam-node__marker--dimmed')).toHaveLength(0)
+    wrapper.unmount()
+  })
+
   it('уход курсора снимает подсветку', async () => {
     const wrapper = await mountMap()
 

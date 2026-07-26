@@ -30,6 +30,10 @@ export type { CollapseOptions } from './collapse'
 export { blastRadius, findPaths, neighbors } from './traverse'
 
 export { connectionMarkers, topAnchors } from './markers'
+
+// Field reading and writing: pure, and the only part of editing that has any
+// logic worth testing without a DOM.
+export { applyFields, fieldFromInput, fieldLabel, fieldToInput, readField, writeField } from './field'
 export type { BlastRadiusOptions, FindPathsOptions } from './traverse'
 
 export {
