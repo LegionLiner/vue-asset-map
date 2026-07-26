@@ -57,7 +57,7 @@ export interface AssetMapProps<E = unknown, L = unknown> {
   /** Available projections. With none, every entity and link is drawn. */
   views?: AssetView[]
 
-  /** Node component registry: `kind` → component. Merged over the built-in one. */
+  /** Node component registry: `type` → component. Merged over the built-in one. */
   nodeTypes?: Record<string, Component>
   edgeTypes?: Record<string, Component>
 
@@ -202,7 +202,7 @@ export type EmptySlotProps = Record<string, never>
 /**
  * Parameters of the `node-*` slots.
  *
- * One type covers the whole family — both `#node-{kind}` and `#node-badge`.
+ * One type covers the whole family — both `#node-{type}` and `#node-badge`.
  * Otherwise they cannot share the `node-${string}` signature, and without that
  * signature TypeScript rejects an arbitrary slot name such as `#node-router`.
  */
@@ -259,7 +259,7 @@ export type AssetMapSlots<E = unknown, L = unknown> = {
   'details-header'?(props: DetailsHeaderSlotProps<E>): unknown
   'edge-label'?(props: EdgeLabelSlotProps<L>): unknown
 } & {
-  [kind: `node-${string}`]: ((props: NodeSlotProps<E>) => unknown) | undefined
+  [type: `node-${string}`]: ((props: NodeSlotProps<E>) => unknown) | undefined
 }
 
 /**

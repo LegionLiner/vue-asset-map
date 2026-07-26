@@ -22,8 +22,8 @@ The map. Generic over the payload types of `entity.meta` and `link.meta`: `Asset
 | `entities`                  | `AssetEntity<E>[]`                 | —                      | The map's nodes.                                     |
 | `links`                     | `AssetLink<L>[]`                   | —                      | The map's edges.                                     |
 | `views`                     | `AssetView[]`                      | —                      | The views.                                            |
-| `nodeTypes`                 | `Record<string, Component>`        | —                      | Node components by `kind`, merged over the built-ins. |
-| `edgeTypes`                 | `Record<string, Component>`        | —                      | Edge components by `kind`.                            |
+| `nodeTypes`                 | `Record<string, Component>`        | —                      | Node components by `type`, merged over the built-ins. |
+| `edgeTypes`                 | `Record<string, Component>`        | —                      | Edge components by `type`.                            |
 | `layout`                    | `AssetMapLayoutSpec`               | `{ engine: 'manual' }` | Layout engine by name or instance, plus its options.  |
 | `collapse`                  | `CollapseRule \| false`            | `{ threshold: 10 }`    | Group collapse rule; `false` disables collapsing.     |
 | `filterOptions`             | `FilterOptions`                    | —                      | Search fields, neighbour depth, filter groups.        |
@@ -87,7 +87,7 @@ Each works without a `v-model`; the component then owns that state.
 | `details`                       | `DetailsSlotProps<E>`       |
 | `details-header`                | `DetailsHeaderSlotProps<E>` |
 | `edge-label`                    | `EdgeLabelSlotProps<L>`     |
-| `node-{kind}`, `node-badge`     | `NodeSlotProps<E>`          |
+| `node-{type}`, `node-badge`     | `NodeSlotProps<E>`          |
 
 #### Exposed methods — `AssetMapExposed<E, L>`
 
@@ -219,7 +219,7 @@ Available from both `vue-asset-map` and `vue-asset-map/core`.
 
 ### Registry
 
-`buildNodeTypes(custom?)`, `buildEdgeTypes(custom?)`, `nodeTypeFor(kind, types)`, `edgeTypeFor(kind, types)`,
+`buildNodeTypes(custom?)`, `buildEdgeTypes(custom?)`, `nodeTypeFor(type, types)`, `edgeTypeFor(type, types)`,
 `NODE_TYPE_BASE`, `NODE_TYPE_GROUP`, `EDGE_TYPE_BASE`.
 
 ### Locale

@@ -33,7 +33,7 @@ export {
 
 export type { AssetMeta, DemoEntity, DemoLink } from '../../../fixtures/infra'
 
-/** `kind` → icon component, exactly as a consumer would declare it. */
+/** `type` → icon component, exactly as a consumer would declare it. */
 export const kindIcons = {
   cloud: CloudIcon,
   router: RouterIcon,

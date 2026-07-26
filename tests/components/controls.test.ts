@@ -118,7 +118,7 @@ async function openFilters(wrapper: {
 
 describe('FilterMenu', () => {
   const facets: FacetCounts = {
-    kinds: new Map([
+    types: new Map([
       ['router', 2],
       ['vps', 4],
     ]),
@@ -128,7 +128,7 @@ describe('FilterMenu', () => {
 
   const state = (partial: Partial<FilterState> = {}): FilterState => ({
     query: '',
-    kinds: [],
+    types: [],
     statuses: [],
     ...partial,
   })
@@ -153,9 +153,9 @@ describe('FilterMenu', () => {
     await wrapper.findAll('input[type="checkbox"]')[0]?.setValue(true)
 
     const emitted = wrapper.emitted('update:modelValue')?.at(-1)?.[0] as FilterState
-    expect(emitted.kinds).toEqual(['router'])
+    expect(emitted.types).toEqual(['router'])
     // Исходный объект не тронут.
-    expect(original.kinds).toEqual([])
+    expect(original.types).toEqual([])
     expect(emitted).not.toBe(original)
 
     wrapper.unmount()
@@ -163,21 +163,21 @@ describe('FilterMenu', () => {
 
   it('повторная отметка снимает значение', async () => {
     const wrapper = mount(FilterMenu, {
-      props: { facets, modelValue: state({ kinds: ['router'] }) },
+      props: { facets, modelValue: state({ types: ['router'] }) },
     })
     await openFilters(wrapper)
 
     await wrapper.findAll('input[type="checkbox"]')[0]?.setValue(false)
 
     const emitted = wrapper.emitted('update:modelValue')?.at(-1)?.[0] as FilterState
-    expect(emitted.kinds).toEqual([])
+    expect(emitted.types).toEqual([])
 
     wrapper.unmount()
   })
 
   it('счётчик активных фильтров считает оба фасета', async () => {
     const wrapper = mount(FilterMenu, {
-      props: { facets, modelValue: state({ kinds: ['router'], statuses: ['offline'] }) },
+      props: { facets, modelValue: state({ types: ['router'], statuses: ['offline'] }) },
     })
     await openFilters(wrapper)
 
@@ -187,14 +187,14 @@ describe('FilterMenu', () => {
 
   it('сброс очищает фасеты, но не поисковый запрос', async () => {
     const wrapper = mount(FilterMenu, {
-      props: { facets, modelValue: state({ query: 'dmitry', kinds: ['router'] }) },
+      props: { facets, modelValue: state({ query: 'dmitry', types: ['router'] }) },
     })
     await openFilters(wrapper)
 
     await wrapper.find('.vam-filter__reset').trigger('click')
 
     const emitted = wrapper.emitted('update:modelValue')?.at(-1)?.[0] as FilterState
-    expect(emitted.kinds).toEqual([])
+    expect(emitted.types).toEqual([])
     expect(emitted.query).toBe('dmitry')
 
     wrapper.unmount()
@@ -209,7 +209,7 @@ describe('FilterMenu', () => {
 
   it('пустой фасет показывает подпись, а не пустоту', async () => {
     const wrapper = mount(FilterMenu, {
-      props: { facets: { kinds: new Map(), statuses: new Map(), groups: new Map() }, modelValue: state() },
+      props: { facets: { types: new Map(), statuses: new Map(), groups: new Map() }, modelValue: state() },
     })
     await openFilters(wrapper)
 
@@ -364,7 +364,7 @@ describe('контролы внутри <AssetMap>', () => {
   })
 
   it('v-model:filters получает обновления от контролов', async () => {
-    const wrapper = await mountMap({ filters: { query: '', kinds: [], statuses: [] } })
+    const wrapper = await mountMap({ filters: { query: '', types: [], statuses: [] } })
 
     await wrapper.find('.vam-search__input').setValue('vlad')
     await flushPromises()

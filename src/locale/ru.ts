@@ -11,7 +11,7 @@ export const ru: LocaleMessages = {
   'view.switch': 'Переключить вид карты',
 
   'filter.label': 'Фильтры',
-  'filter.kinds': 'Типы узлов',
+  'filter.types': 'Типы узлов',
   'filter.statuses': 'Состояние',
   'filter.reset': 'Сбросить фильтры',
   'filter.empty': 'Нет доступных значений',
@@ -21,7 +21,7 @@ export const ru: LocaleMessages = {
 
   'details.title': 'Сведения',
   'details.close': 'Закрыть панель',
-  'details.kind': 'Тип',
+  'details.type': 'Тип',
   'details.status': 'Состояние',
   'details.id': 'Идентификатор',
   'details.addresses': 'Адреса',

@@ -124,7 +124,7 @@ describe('панель подробностей: fallback-содержимое',
 
   it('узел без meta показывает пустую секцию, а не пропадает', async () => {
     const wrapper = await mountMap({
-      entities: [{ id: 'bare', kind: 'host', label: 'Без метаданных' }],
+      entities: [{ id: 'bare', type: 'host', label: 'Без метаданных' }],
       links: [],
       views: undefined,
     })

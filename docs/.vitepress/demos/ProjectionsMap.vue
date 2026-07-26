@@ -4,7 +4,10 @@ import { AssetMap } from 'vue-asset-map'
 import type { AssetView } from 'vue-asset-map'
 import { projectGraph, buildGraph, resolveView } from 'vue-asset-map/core'
 import { dagreLayout } from 'vue-asset-map/layout-dagre'
+import { useSiteTheme } from '../theme/useSiteTheme'
 import { entities, links, views as sourceViews, statusColors, kindIcons } from './fixture'
+
+const theme = useSiteTheme()
 
 // A view can carry its own layout (see the "Views" guide page): copied here so
 // each projection is not just a filtered subset of the same picture but visibly
@@ -33,6 +36,7 @@ const visible = computed(() => {
     :entities="entities"
     :links="links"
     :views="views"
+    :theme="theme"
     :theme-config="{ statusColors, kindIcons }"
     auto-fit-view
   >

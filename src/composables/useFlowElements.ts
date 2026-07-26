@@ -98,7 +98,7 @@ export function useFlowElements<E, L>(params: UseFlowElementsParams<E, L>): UseF
 
       return buildNode(
         id,
-        nodeTypeFor(entity.kind, types),
+        nodeTypeFor(entity.type, types),
         position,
         { variant: 'entity', entity },
         canDrag,
@@ -118,7 +118,7 @@ export function useFlowElements<E, L>(params: UseFlowElementsParams<E, L>): UseF
         id: link.id,
         source: link.source,
         target: link.target,
-        type: edgeTypeFor(link.kind, types),
+        type: edgeTypeFor(link.type, types),
         data: {
           link,
           aggregated,

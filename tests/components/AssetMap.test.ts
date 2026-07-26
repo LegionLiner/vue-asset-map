@@ -26,7 +26,7 @@ function spyEngine(): LayoutEngine & { calls: number } {
 
 /**
  * Слоты типизируются публичным контрактом компонента: так тест заодно проверяет,
- * что `#node-{kind}` с произвольным именем вообще проходит проверку типов.
+ * что `#node-{type}` с произвольным именем вообще проходит проверку типов.
  */
 async function mountMap(props: Record<string, unknown> = {}, slots: AssetMapSlots = {}) {
   const wrapper = mount(AssetMap, {
@@ -337,7 +337,7 @@ describe('<AssetMap> раскладка', () => {
 })
 
 describe('<AssetMap> слоты', () => {
-  it('слот #node-{kind} подменяет рендер узлов этого типа', async () => {
+  it('слот #node-{type} подменяет рендер узлов этого типа', async () => {
     const wrapper = await mountMap(
       {},
       {
@@ -429,7 +429,7 @@ describe('<AssetMap> вид и фильтр', () => {
 
   it('поиск подсвечивает совпадения и гасит остальное, не разрывая граф', async () => {
     const wrapper = await mountMap({
-      filters: { query: 'Dmitry', kinds: [], statuses: [] },
+      filters: { query: 'Dmitry', types: [], statuses: [] },
     })
     await flushPromises()
     await nextTick()
@@ -448,7 +448,7 @@ describe('<AssetMap> вид и фильтр', () => {
 
   it('поиск по маске подсети находит рабочие станции', async () => {
     const wrapper = await mountMap({
-      filters: { query: '10.38.24.*', kinds: [], statuses: [] },
+      filters: { query: '10.38.24.*', types: [], statuses: [] },
     })
     await flushPromises()
     await nextTick()
@@ -522,7 +522,7 @@ describe('<AssetMap> устойчивость', () => {
 
   it('битые связи не мешают отрисовке', async () => {
     const wrapper = await mountMap({
-      entities: [{ id: 'a', kind: 'host', label: 'A' }],
+      entities: [{ id: 'a', type: 'host', label: 'A' }],
       links: [{ id: 'ghost', source: 'a', target: 'nope', layers: ['physical'] }],
       views: undefined,
     })

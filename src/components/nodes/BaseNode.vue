@@ -50,12 +50,12 @@ const markers = computed(() => map.markersFor(props.id))
 function markerColor(marker: { color: string }): string {
   return map.isInfected(props.id) ? 'var(--vam-marker-infected)' : marker.color
 }
-const icon = computed(() => (entity.value ? map.iconFor(entity.value.kind) : undefined))
+const icon = computed(() => (entity.value ? map.iconFor(entity.value.type) : undefined))
 
-/** `#node-{kind}` replaces the contents of the circle. */
+/** `#node-{type}` replaces the contents of the circle. */
 const kindSlot = computed(() => {
-  const kind = entity.value?.kind
-  return kind ? map.slot(`node-${kind}`) : undefined
+  const type = entity.value?.type
+  return type ? map.slot(`node-${type}`) : undefined
 })
 
 const badgeSlot = computed(() => map.slot('node-badge'))
@@ -64,7 +64,7 @@ const selected = computed(() => map.isSelected(props.id))
 
 const classes = computed(() => [
   'vam-node',
-  `vam-node--kind-${entity.value?.kind ?? 'unknown'}`,
+  `vam-node--type-${entity.value?.type ?? 'unknown'}`,
   isRoot.value ? 'vam-node--root' : 'vam-node--child',
   {
     'vam-node--selected': selected.value,
@@ -149,7 +149,7 @@ onBeforeUnmount(() => map.registerNodeElement(props.id, undefined))
       <template v-else>
         <component :is="icon" v-if="icon" class="vam-node__icon" />
         <span v-else class="vam-node__initials" aria-hidden="true">
-          {{ (entity?.kind ?? '?').slice(0, 2) }}
+          {{ (entity?.type ?? '?').slice(0, 2) }}
         </span>
       </template>
 

@@ -7,7 +7,7 @@ import { entities, links, views } from '../../fixtures/infra'
 
 const e = (id: string, extra: Partial<AssetEntity> = {}): AssetEntity => ({
   id,
-  kind: 'host',
+  type: 'host',
   label: id,
   ...extra,
 })
@@ -73,11 +73,11 @@ describe('projectGraph', () => {
   })
 
   it('entityFilter применяется до отбора рёбер: ребро в отфильтрованный узел исчезает', () => {
-    const graph = buildGraph([e('a'), e('b', { kind: 'skipme' })], [l('ab', 'a', 'b', ['physical'])])
+    const graph = buildGraph([e('a'), e('b', { type: 'skipme' })], [l('ab', 'a', 'b', ['physical'])])
 
     const result = projectGraph(graph, {
       ...physical,
-      entityFilter: (entity) => entity.kind !== 'skipme',
+      entityFilter: (entity) => entity.type !== 'skipme',
     })
 
     expect([...result.entityIds]).toEqual(['a'])

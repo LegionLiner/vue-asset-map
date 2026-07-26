@@ -83,7 +83,7 @@
 
 ## Типы связей и подписи
 
-`kind` выбирает стиль ребра, `directed` добавляет стрелку, а `#edge-label` подменяет подпись.
+`type` выбирает стиль ребра, `directed` добавляет стрелку, а `#edge-label` подменяет подпись.
 
 <LiveDemo :source="edgeKindSource" source-label="Показать исходник">
   <EdgeKindMap />

@@ -36,9 +36,9 @@ export const KIND_HYPERVISOR = 'hypervisor'
 export const KIND_WORKSTATION = 'workstation'
 export const KIND_CONTAINER = 'container'
 
-const entity = (id: string, kind: string, label: string, extra: Partial<DemoEntity> = {}): DemoEntity => ({
+const entity = (id: string, type: string, label: string, extra: Partial<DemoEntity> = {}): DemoEntity => ({
   id,
-  kind,
+  type,
   label,
   ...extra,
 })
@@ -283,46 +283,46 @@ const link = (
 ): DemoLink => ({ id, source, target, layers, ...extra })
 
 export const links: DemoLink[] = [
-  link('l-inet-cf', 'internet', 'cloudflare', [LAYER_PHYSICAL], { kind: 'solid' }),
-  link('l-inet-tailscale', 'internet', 'vps-tailscale', [LAYER_PHYSICAL], { kind: 'solid' }),
-  link('l-inet-brainstorm', 'internet', 'vps-brainstorm', [LAYER_PHYSICAL], { kind: 'solid' }),
-  link('l-inet-160', 'internet', 'vps-160-usa', [LAYER_PHYSICAL], { kind: 'solid' }),
-  link('l-inet-nginx', 'internet', 'vps-nginx', [LAYER_PHYSICAL], { kind: 'solid' }),
-  link('l-inet-keen1', 'internet', 'keenetic-1', [LAYER_PHYSICAL], { kind: 'solid' }),
-  link('l-inet-keen2', 'internet', 'keenetic-2', [LAYER_PHYSICAL], { kind: 'solid' }),
-  link('l-cf-nginx', 'cloudflare', 'vps-nginx', [LAYER_PHYSICAL], { kind: 'solid', directed: true }),
+  link('l-inet-cf', 'internet', 'cloudflare', [LAYER_PHYSICAL], { type: 'solid' }),
+  link('l-inet-tailscale', 'internet', 'vps-tailscale', [LAYER_PHYSICAL], { type: 'solid' }),
+  link('l-inet-brainstorm', 'internet', 'vps-brainstorm', [LAYER_PHYSICAL], { type: 'solid' }),
+  link('l-inet-160', 'internet', 'vps-160-usa', [LAYER_PHYSICAL], { type: 'solid' }),
+  link('l-inet-nginx', 'internet', 'vps-nginx', [LAYER_PHYSICAL], { type: 'solid' }),
+  link('l-inet-keen1', 'internet', 'keenetic-1', [LAYER_PHYSICAL], { type: 'solid' }),
+  link('l-inet-keen2', 'internet', 'keenetic-2', [LAYER_PHYSICAL], { type: 'solid' }),
+  link('l-cf-nginx', 'cloudflare', 'vps-nginx', [LAYER_PHYSICAL], { type: 'solid', directed: true }),
 
-  link('l-keen1-pve-artjom', 'keenetic-1', 'pve-artjom', [LAYER_PHYSICAL], { kind: 'solid' }),
-  link('l-keen2-pve-beelink', 'keenetic-2', 'pve-beelink', [LAYER_PHYSICAL], { kind: 'solid' }),
-  link('l-keen2-pve-gpu', 'keenetic-2', 'pve-gpu', [LAYER_PHYSICAL], { kind: 'solid' }),
+  link('l-keen1-pve-artjom', 'keenetic-1', 'pve-artjom', [LAYER_PHYSICAL], { type: 'solid' }),
+  link('l-keen2-pve-beelink', 'keenetic-2', 'pve-beelink', [LAYER_PHYSICAL], { type: 'solid' }),
+  link('l-keen2-pve-gpu', 'keenetic-2', 'pve-gpu', [LAYER_PHYSICAL], { type: 'solid' }),
 
-  link('l-keen1-ws-artjom', 'keenetic-1', 'ws-artjom', [LAYER_PHYSICAL], { kind: 'solid' }),
-  link('l-keen1-ws-sergey', 'keenetic-1', 'ws-sergey', [LAYER_PHYSICAL], { kind: 'solid' }),
-  link('l-keen2-ws-dmitry', 'keenetic-2', 'ws-dmitry', [LAYER_PHYSICAL], { kind: 'solid' }),
-  link('l-keen2-ws-vlad', 'keenetic-2', 'ws-vlad', [LAYER_PHYSICAL], { kind: 'solid' }),
-  link('l-keen2-ws-andrey', 'keenetic-2', 'ws-andrey', [LAYER_PHYSICAL], { kind: 'solid' }),
+  link('l-keen1-ws-artjom', 'keenetic-1', 'ws-artjom', [LAYER_PHYSICAL], { type: 'solid' }),
+  link('l-keen1-ws-sergey', 'keenetic-1', 'ws-sergey', [LAYER_PHYSICAL], { type: 'solid' }),
+  link('l-keen2-ws-dmitry', 'keenetic-2', 'ws-dmitry', [LAYER_PHYSICAL], { type: 'solid' }),
+  link('l-keen2-ws-vlad', 'keenetic-2', 'ws-vlad', [LAYER_PHYSICAL], { type: 'solid' }),
+  link('l-keen2-ws-andrey', 'keenetic-2', 'ws-andrey', [LAYER_PHYSICAL], { type: 'solid' }),
 
-  link('l-keen2-inet-backup', 'keenetic-2', 'internet', [LAYER_PHYSICAL], { kind: 'dashed' }),
+  link('l-keen2-inet-backup', 'keenetic-2', 'internet', [LAYER_PHYSICAL], { type: 'dashed' }),
 
   ...Array.from({ length: 14 }, (_, index) =>
     link(`l-beelink-ct-${index + 1}`, 'pve-beelink', `ct-web-${index + 1}`, [LAYER_PHYSICAL], {
-      kind: 'solid',
+      type: 'solid',
     }),
   ),
-  link('l-ct-1-2', 'ct-web-1', 'ct-web-2', [LAYER_PHYSICAL], { kind: 'solid' }),
-  link('l-ct-2-3', 'ct-web-2', 'ct-web-3', [LAYER_PHYSICAL], { kind: 'solid' }),
+  link('l-ct-1-2', 'ct-web-1', 'ct-web-2', [LAYER_PHYSICAL], { type: 'solid' }),
+  link('l-ct-2-3', 'ct-web-2', 'ct-web-3', [LAYER_PHYSICAL], { type: 'solid' }),
 
-  link('o-ts-brainstorm', 'vps-tailscale', 'vps-brainstorm', [LAYER_LOGICAL], { kind: 'dashed' }),
-  link('o-ts-nginx', 'vps-tailscale', 'vps-nginx', [LAYER_LOGICAL], { kind: 'dashed' }),
-  link('o-ts-artjom', 'vps-tailscale', 'ws-artjom', [LAYER_LOGICAL], { kind: 'dashed' }),
-  link('o-ts-sergey', 'vps-tailscale', 'ws-sergey', [LAYER_LOGICAL], { kind: 'dashed' }),
-  link('o-ts-dmitry', 'vps-tailscale', 'ws-dmitry', [LAYER_LOGICAL], { kind: 'dashed' }),
-  link('o-ts-vlad', 'vps-tailscale', 'ws-vlad', [LAYER_LOGICAL], { kind: 'dashed' }),
-  link('o-ts-andrey', 'vps-tailscale', 'ws-andrey', [LAYER_LOGICAL], { kind: 'dashed' }),
-  link('o-ts-pve-artjom', 'vps-tailscale', 'pve-artjom', [LAYER_LOGICAL], { kind: 'dashed' }),
-  link('o-ts-pve-beelink', 'vps-tailscale', 'pve-beelink', [LAYER_LOGICAL], { kind: 'dashed' }),
-  link('o-ts-pve-gpu', 'vps-tailscale', 'pve-gpu', [LAYER_LOGICAL], { kind: 'dashed' }),
-  link('o-artjom-dmitry', 'ws-artjom', 'ws-dmitry', [LAYER_LOGICAL], { kind: 'dashed' }),
+  link('o-ts-brainstorm', 'vps-tailscale', 'vps-brainstorm', [LAYER_LOGICAL], { type: 'dashed' }),
+  link('o-ts-nginx', 'vps-tailscale', 'vps-nginx', [LAYER_LOGICAL], { type: 'dashed' }),
+  link('o-ts-artjom', 'vps-tailscale', 'ws-artjom', [LAYER_LOGICAL], { type: 'dashed' }),
+  link('o-ts-sergey', 'vps-tailscale', 'ws-sergey', [LAYER_LOGICAL], { type: 'dashed' }),
+  link('o-ts-dmitry', 'vps-tailscale', 'ws-dmitry', [LAYER_LOGICAL], { type: 'dashed' }),
+  link('o-ts-vlad', 'vps-tailscale', 'ws-vlad', [LAYER_LOGICAL], { type: 'dashed' }),
+  link('o-ts-andrey', 'vps-tailscale', 'ws-andrey', [LAYER_LOGICAL], { type: 'dashed' }),
+  link('o-ts-pve-artjom', 'vps-tailscale', 'pve-artjom', [LAYER_LOGICAL], { type: 'dashed' }),
+  link('o-ts-pve-beelink', 'vps-tailscale', 'pve-beelink', [LAYER_LOGICAL], { type: 'dashed' }),
+  link('o-ts-pve-gpu', 'vps-tailscale', 'pve-gpu', [LAYER_LOGICAL], { type: 'dashed' }),
+  link('o-artjom-dmitry', 'ws-artjom', 'ws-dmitry', [LAYER_LOGICAL], { type: 'dashed' }),
 ]
 
 export const views: AssetView[] = [
@@ -397,16 +397,16 @@ export function generateLargeGraph(
   nodeCount: number,
   edgeCount: number,
 ): { entities: DemoEntity[]; links: DemoLink[] } {
-  const kinds = [KIND_VPS, KIND_ROUTER, KIND_HYPERVISOR, KIND_WORKSTATION, KIND_CONTAINER]
+  const types = [KIND_VPS, KIND_ROUTER, KIND_HYPERVISOR, KIND_WORKSTATION, KIND_CONTAINER]
   const bigEntities: DemoEntity[] = []
 
   for (let index = 0; index < nodeCount; index += 1) {
-    const kind = kinds[index % kinds.length] ?? KIND_WORKSTATION
+    const type = types[index % types.length] ?? KIND_WORKSTATION
     const isShelf = index % 20 === 0
     const shelfIndex = Math.floor(index / 20) * 20
     bigEntities.push({
       id: `n-${index}`,
-      kind,
+      type,
       label: `node-${index}`,
       status: index % 7 === 0 ? 'offline' : 'online',
       sublabels: [`10.${(index >> 16) & 255}.${(index >> 8) & 255}.${index & 255}`],
@@ -424,7 +424,7 @@ export function generateLargeGraph(
       source: `n-${source}`,
       target: `n-${target}`,
       layers: [LAYER_PHYSICAL],
-      kind: 'solid',
+      type: 'solid',
     })
   }
 

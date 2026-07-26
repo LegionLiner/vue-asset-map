@@ -8,14 +8,14 @@ const DEFAULT_NEIGHBOR_DEPTH = 1
 
 /** Filter state with nothing selected — the initial value for `v-model:filters`. */
 export function emptyFilterState(): FilterState {
-  return { query: '', kinds: [], statuses: [] }
+  return { query: '', types: [], statuses: [] }
 }
 
 /** Whether any criterion is set. While `false`, the whole graph stays visible. */
 export function isFilterActive(state: FilterState): boolean {
   return (
     state.query.trim().length > 0 ||
-    state.kinds.length > 0 ||
+    state.types.length > 0 ||
     state.statuses.length > 0 ||
     state.predicate !== undefined ||
     selectedGroupCount(state) > 0
@@ -30,9 +30,9 @@ export function selectedGroupCount(state: FilterState): number {
   return total
 }
 
-/** Values an entity carries in a group; falls back to its `kind`. */
+/** Values an entity carries in a group; falls back to its `type`. */
 export function groupValuesOf(group: FilterGroupDef, entity: AssetEntity): readonly string[] {
-  return group.valuesOf ? group.valuesOf(entity) : [entity.kind]
+  return group.valuesOf ? group.valuesOf(entity) : [entity.type]
 }
 
 /**
@@ -87,7 +87,7 @@ export function matchesQuery(fields: readonly string[], query: string): boolean 
  * Computes the direct hits and the resulting visible set.
  *
  * Criteria combine with AND: an entity matches when it passes the text query,
- * the kind facet, the status facet, the groups and the custom predicate. While
+ * the type facet, the status facet, the groups and the custom predicate. While
  * no criterion is active there is nothing to highlight — `matchedIds` is empty
  * and the whole graph is visible.
  *
@@ -121,7 +121,7 @@ export function applyFilters<E, L>(
 
   for (const entity of graph.entities.values()) {
     if (!inScope(entity.id)) continue
-    if (state.kinds.length > 0 && !state.kinds.includes(entity.kind)) continue
+    if (state.types.length > 0 && !state.types.includes(entity.type)) continue
     if (state.statuses.length > 0 && !state.statuses.includes(entity.status ?? '')) continue
     if (state.predicate && !state.predicate(entity)) continue
     if (!matchesGroups(entity, state, options.groups)) continue
@@ -188,7 +188,7 @@ export function facetCounts<E, L>(
   restrictTo?: ReadonlySet<EntityId>,
   groups?: readonly FilterGroupDef[],
 ): FacetCounts {
-  const kinds = new Map<string, number>()
+  const types = new Map<string, number>()
   const statuses = new Map<string, number>()
   const groupCounts = new Map<string, Map<string, number>>()
 
@@ -201,7 +201,7 @@ export function facetCounts<E, L>(
   for (const entity of graph.entities.values()) {
     if (restrictTo && !restrictTo.has(entity.id)) continue
 
-    kinds.set(entity.kind, (kinds.get(entity.kind) ?? 0) + 1)
+    types.set(entity.type, (types.get(entity.type) ?? 0) + 1)
     if (entity.status !== undefined) {
       statuses.set(entity.status, (statuses.get(entity.status) ?? 0) + 1)
     }
@@ -215,5 +215,5 @@ export function facetCounts<E, L>(
     }
   }
 
-  return { kinds, statuses, groups: groupCounts }
+  return { types, statuses, groups: groupCounts }
 }

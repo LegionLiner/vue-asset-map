@@ -3,6 +3,7 @@ import type { Theme } from 'vitepress'
 
 import '@vue-flow/core/dist/style.css'
 import 'vue-asset-map/style.css'
+import './fonts.css'
 import './demo.css'
 
 import LiveDemo from './LiveDemo.vue'

@@ -83,7 +83,7 @@ const statusColors = {
 
 ## Icons
 
-`kindIcons` maps a `kind` to a component. Use `currentColor` for every stroke and fill — an icon with a baked-in color
+`kindIcons` maps a `type` to a component. Use `currentColor` for every stroke and fill — an icon with a baked-in color
 ignores both the theme switch and your token overrides. See [Nodes](./nodes).
 
 ## Reduced motion

@@ -11,7 +11,7 @@ export const en: LocaleMessages = {
   'view.switch': 'Switch map view',
 
   'filter.label': 'Filters',
-  'filter.kinds': 'Node types',
+  'filter.types': 'Node types',
   'filter.statuses': 'Status',
   'filter.reset': 'Reset filters',
   'filter.empty': 'No values available',
@@ -21,7 +21,7 @@ export const en: LocaleMessages = {
 
   'details.title': 'Details',
   'details.close': 'Close panel',
-  'details.kind': 'Type',
+  'details.type': 'Type',
   'details.status': 'Status',
   'details.id': 'Identifier',
   'details.addresses': 'Addresses',

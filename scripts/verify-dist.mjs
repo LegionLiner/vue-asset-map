@@ -37,8 +37,8 @@ check('экспортирует локали ru и en', typeof main.ru === 'obje
 
 const graph = main.buildGraph(
   [
-    { id: 'a', kind: 'router', label: 'A' },
-    { id: 'b', kind: 'host', label: 'B', parentId: 'a' },
+    { id: 'a', type: 'router', label: 'A' },
+    { id: 'b', type: 'host', label: 'B', parentId: 'a' },
   ],
   [{ id: 'e', source: 'a', target: 'b', layers: ['physical'] }],
 )

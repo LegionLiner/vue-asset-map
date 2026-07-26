@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { AssetMap } from 'vue-asset-map'
+import { useSiteTheme } from '../theme/useSiteTheme'
 import { entities, links, views, statusColors, kindIcons } from './fixture'
 
 const view = ref('physical')
 const selection = ref<string[]>([])
+const theme = useSiteTheme()
 </script>
 
 <template>
@@ -15,6 +17,7 @@ const selection = ref<string[]>([])
     :entities="entities"
     :links="links"
     :views="views"
+    :theme="theme"
     :theme-config="{ statusColors, kindIcons }"
     :layout="{ engine: 'radial', options: { rootId: 'internet' } }"
     auto-fit-view

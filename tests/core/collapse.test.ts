@@ -7,7 +7,7 @@ import { entities, links, views } from '../../fixtures/infra'
 
 const e = (id: string, extra: Partial<AssetEntity> = {}): AssetEntity => ({
   id,
-  kind: 'host',
+  type: 'host',
   label: id,
   ...extra,
 })
@@ -21,12 +21,12 @@ const l = (id: string, source: string, target: string, extra: Partial<AssetLink>
 })
 
 /** Родитель + `count` однотипных детей, все подключённые к родителю. */
-function farm(count: number, kind = 'container') {
-  const farmEntities: AssetEntity[] = [e('parent', { kind: 'hypervisor' }), e('peer', { kind: 'router' })]
+function farm(count: number, type = 'container') {
+  const farmEntities: AssetEntity[] = [e('parent', { type: 'hypervisor' }), e('peer', { type: 'router' })]
   const farmLinks: AssetLink[] = [l('parent-peer', 'parent', 'peer')]
 
   for (let index = 1; index <= count; index += 1) {
-    farmEntities.push(e(`c${index}`, { kind, parentId: 'parent' }))
+    farmEntities.push(e(`c${index}`, { type, parentId: 'parent' }))
     farmLinks.push(l(`parent-c${index}`, 'parent', `c${index}`))
   }
 
@@ -82,7 +82,7 @@ describe('collapseGraph: базовое решение о свёртке', () =>
     expect(byStatus.groups).toEqual([])
 
     const custom = collapseGraph(graph, {
-      rule: { groupBy: (entity) => (entity.kind === 'container' ? 'lxc' : null) },
+      rule: { groupBy: (entity) => (entity.type === 'container' ? 'lxc' : null) },
     })
     expect(custom.groups[0]?.id).toBe(groupIdFor('parent', 'lxc'))
   })
@@ -135,7 +135,7 @@ describe('collapseGraph: рёбра', () => {
 
   it('одиночное перенесённое ребро сохраняет свой id и не становится агрегатом', () => {
     const graph = buildGraph(
-      [...farm(14).entities, e('mgmt', { kind: 'router' })],
+      [...farm(14).entities, e('mgmt', { type: 'router' })],
       [...farm(14).links, l('mgmt-c1', 'mgmt', 'c1')],
     )
 
@@ -164,19 +164,19 @@ describe('collapseGraph: рёбра', () => {
     expect(result.links[0]?.id).toBe('loop')
   })
 
-  it('kind и направленность не смешиваются в одном агрегате', () => {
+  it('type и направленность не смешиваются в одном агрегате', () => {
     const { entities: farmEntities, links: farmLinks } = farm(14)
     const graph = buildGraph(
       farmEntities,
       farmLinks.map((link, index) =>
-        index === 0 ? link : { ...link, kind: index % 2 === 0 ? 'solid' : 'dashed' },
+        index === 0 ? link : { ...link, type: index % 2 === 0 ? 'solid' : 'dashed' },
       ),
     )
 
     const aggregated = collapseGraph(graph).links.filter(isAggregatedLink)
 
     expect(aggregated.length).toBe(2)
-    expect(aggregated.map((link) => link.kind).sort()).toEqual(['dashed', 'solid'])
+    expect(aggregated.map((link) => link.type).sort()).toEqual(['dashed', 'solid'])
     expect(aggregated.reduce((sum, link) => sum + link.count, 0)).toBe(14)
   })
 
@@ -221,11 +221,11 @@ describe('collapseGraph: ручное раскрытие', () => {
   })
 
   it('раскрытие одной группы не раскрывает другую', () => {
-    const farmEntities: AssetEntity[] = [e('parent', { kind: 'hypervisor' })]
+    const farmEntities: AssetEntity[] = [e('parent', { type: 'hypervisor' })]
     const farmLinks: AssetLink[] = []
     for (let index = 1; index <= 12; index += 1) {
-      farmEntities.push(e(`c${index}`, { kind: 'container', parentId: 'parent' }))
-      farmEntities.push(e(`v${index}`, { kind: 'vm', parentId: 'parent' }))
+      farmEntities.push(e(`c${index}`, { type: 'container', parentId: 'parent' }))
+      farmEntities.push(e(`v${index}`, { type: 'vm', parentId: 'parent' }))
     }
 
     const graph = buildGraph(farmEntities, farmLinks)
@@ -264,9 +264,9 @@ describe('collapseGraph: детерминизм и чистота', () => {
   it('порядок узлов привязан к входным данным: группа встаёт на место первого участника', () => {
     const graph = buildGraph(
       [
-        e('first', { kind: 'router' }),
-        ...Array.from({ length: 11 }, (_, index) => e(`c${index}`, { kind: 'container' })),
-        e('last', { kind: 'router' }),
+        e('first', { type: 'router' }),
+        ...Array.from({ length: 11 }, (_, index) => e(`c${index}`, { type: 'container' })),
+        e('last', { type: 'router' }),
       ],
       [],
     )
@@ -293,10 +293,10 @@ describe('collapseGraph: детерминизм и чистота', () => {
 
 describe('collapseGraph: взаимодействие с иерархией и видимостью', () => {
   it('поддерево участника уходит внутрь группы целиком', () => {
-    const farmEntities: AssetEntity[] = [e('parent', { kind: 'hypervisor' })]
+    const farmEntities: AssetEntity[] = [e('parent', { type: 'hypervisor' })]
     for (let index = 1; index <= 11; index += 1) {
-      farmEntities.push(e(`c${index}`, { kind: 'container', parentId: 'parent' }))
-      farmEntities.push(e(`c${index}-child`, { kind: 'process', parentId: `c${index}` }))
+      farmEntities.push(e(`c${index}`, { type: 'container', parentId: 'parent' }))
+      farmEntities.push(e(`c${index}-child`, { type: 'process', parentId: `c${index}` }))
     }
 
     const graph = buildGraph(farmEntities, [])
@@ -312,11 +312,11 @@ describe('collapseGraph: взаимодействие с иерархией и �
 
   it('скрытый проекцией родитель не становится ключом группировки', () => {
     const farmEntities: AssetEntity[] = [
-      e('root', { kind: 'cloud' }),
-      e('mid', { kind: 'router', parentId: 'root' }),
+      e('root', { type: 'cloud' }),
+      e('mid', { type: 'router', parentId: 'root' }),
     ]
     for (let index = 1; index <= 11; index += 1) {
-      farmEntities.push(e(`c${index}`, { kind: 'container', parentId: 'mid' }))
+      farmEntities.push(e(`c${index}`, { type: 'container', parentId: 'mid' }))
     }
 
     const graph = buildGraph(farmEntities, [])

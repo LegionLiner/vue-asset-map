@@ -62,10 +62,10 @@ import { AssetMap } from 'vue-asset-map'
 import type { AssetEntity, AssetLink, AssetView } from 'vue-asset-map'
 
 const entities: AssetEntity[] = [
-  { id: 'internet', kind: 'cloud', label: 'Интернет' },
-  { id: 'router', kind: 'router', label: 'Роутер офиса', parentId: 'internet', sublabels: ['10.0.0.1'] },
-  { id: 'vpn', kind: 'vps', label: 'Координатор VPN', parentId: 'internet', status: 'online' },
-  { id: 'laptop', kind: 'host', label: 'Ноутбук', parentId: 'router', sublabels: ['10.0.0.14'] },
+  { id: 'internet', type: 'cloud', label: 'Интернет' },
+  { id: 'router', type: 'router', label: 'Роутер офиса', parentId: 'internet', sublabels: ['10.0.0.1'] },
+  { id: 'vpn', type: 'vps', label: 'Координатор VPN', parentId: 'internet', status: 'online' },
+  { id: 'laptop', type: 'host', label: 'Ноутбук', parentId: 'router', sublabels: ['10.0.0.14'] },
 ]
 
 const links: AssetLink[] = [
@@ -135,7 +135,7 @@ const selection = ref<string[]>([])
 | Слот                             | Параметры                        | Зачем                               |
 | -------------------------------- | -------------------------------- | ----------------------------------- |
 | `details`                        | `{ entity, close, tab }`         | Тело окна подробностей.             |
-| `node-{kind}`                    | `{ entity, nodeId, simplified }` | Подменяет содержимое круга узла.    |
+| `node-{type}`                    | `{ entity, nodeId, simplified }` | Подменяет содержимое круга узла.    |
 | `toolbar-left` / `toolbar-right` | —                                | Свои контролы в шапке карты.        |
 | `windows`                        | —                                | Свои плавающие окна поверх полотна. |
 | `edge-label`                     | `{ link, aggregated, count }`    | Подменяет подпись связи.            |

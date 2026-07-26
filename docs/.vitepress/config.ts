@@ -29,13 +29,40 @@ const guideRu = [
   { text: 'Обходы графа', link: '/ru/guide/traversal' },
 ]
 
+// Must match the repository name: GitHub Pages serves the site from a subpath.
+// `head` link hrefs are not rewritten with `base` by VitePress the way
+// theme-config asset fields (e.g. `logo`) are, so favicon links below prefix
+// it by hand.
+const base = '/vue-asset-map/'
+
 export default defineConfig({
-  // Must match the repository name: GitHub Pages serves the site from a subpath.
-  base: '/vue-asset-map/',
+  base,
   title: 'vue-asset-map',
   lastUpdated: true,
   cleanUrls: true,
   ignoreDeadLinks: false,
+
+  head: [
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: `${base}logo-light.svg` }],
+    [
+      'link',
+      {
+        rel: 'icon',
+        type: 'image/svg+xml',
+        media: '(prefers-color-scheme: light)',
+        href: `${base}logo-light.svg`,
+      },
+    ],
+    [
+      'link',
+      {
+        rel: 'icon',
+        type: 'image/svg+xml',
+        media: '(prefers-color-scheme: dark)',
+        href: `${base}logo-dark.svg`,
+      },
+    ],
+  ],
 
   vite: {
     resolve: {
@@ -120,7 +147,7 @@ export default defineConfig({
   },
 
   themeConfig: {
-    logo: '/logo.png',
+    logo: { light: '/logo-light.svg', dark: '/logo-dark.svg' },
     socialLinks: [{ icon: 'github', link: 'https://github.com/LegionLiner/vue-asset-map' }],
     search: { provider: 'local' },
     footer: {

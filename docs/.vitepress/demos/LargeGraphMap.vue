@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { shallowRef } from 'vue'
 import { AssetMap } from 'vue-asset-map'
+import { useSiteTheme } from '../theme/useSiteTheme'
 import { generateLargeGraph } from './fixture'
 
 // 1000 nodes and roughly 1400 links, generated deterministically so the demo
@@ -8,6 +9,7 @@ import { generateLargeGraph } from './fixture'
 // distinct from the other demos and because it is cheaper to compute at
 // this size.
 const large = shallowRef(generateLargeGraph(1000, 1400))
+const theme = useSiteTheme()
 </script>
 
 <template>
@@ -15,6 +17,7 @@ const large = shallowRef(generateLargeGraph(1000, 1400))
     class="demo-map"
     :entities="large.entities"
     :links="large.links"
+    :theme="theme"
     :collapse="{ threshold: 12 }"
     :layout="{ engine: 'manual', options: { columns: 32 } }"
     :only-render-visible-elements="true"

@@ -12,7 +12,7 @@ import type { AssetGraph } from './graph'
  *  - `members` — the whole set at once, computed from the graph. Cheaper, and
  *    the right choice when membership follows from links: one traversal total;
  *  - `match` — a per-entity predicate. Simpler when membership is visible on the
- *    entity itself (a field in `meta`, its `kind`, its `status`).
+ *    entity itself (a field in `meta`, its `type`, its `status`).
  *
  * `members` wins when both are given.
  */

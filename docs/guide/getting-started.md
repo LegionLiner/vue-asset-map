@@ -43,10 +43,10 @@ import { AssetMap } from 'vue-asset-map'
 import type { AssetEntity, AssetLink, AssetView } from 'vue-asset-map'
 
 const entities: AssetEntity[] = [
-  { id: 'internet', kind: 'cloud', label: 'Internet' },
-  { id: 'router', kind: 'router', label: 'Office router', parentId: 'internet', sublabels: ['10.0.0.1'] },
-  { id: 'vpn', kind: 'vps', label: 'VPN coordinator', parentId: 'internet', status: 'online' },
-  { id: 'laptop', kind: 'host', label: 'Laptop', parentId: 'router', sublabels: ['10.0.0.14'] },
+  { id: 'internet', type: 'cloud', label: 'Internet' },
+  { id: 'router', type: 'router', label: 'Office router', parentId: 'internet', sublabels: ['10.0.0.1'] },
+  { id: 'vpn', type: 'vps', label: 'VPN coordinator', parentId: 'internet', status: 'online' },
+  { id: 'laptop', type: 'host', label: 'Laptop', parentId: 'router', sublabels: ['10.0.0.14'] },
 ]
 
 const links: AssetLink[] = [

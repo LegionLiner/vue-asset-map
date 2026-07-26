@@ -10,14 +10,14 @@ import type { FacetCounts, FilterGroupDef, FilterState } from '../../types/filte
  *
  * The lists are data, not code. "Subnet", "Asset type" and "Severity" all come
  * from the consumer through `groups`; without them the panel falls back to the
- * built-in kind and status facets collected from the entities themselves.
+ * built-in type and status facets collected from the entities themselves.
  *
  * Filter state is always replaced with a new object, never edited in place: it
  * may be controlled from outside through `v-model:filters`, and a mutation would
  * not raise an update event.
  */
 const model = defineModel<FilterState>({
-  default: (): FilterState => ({ query: '', kinds: [], statuses: [] }),
+  default: (): FilterState => ({ query: '', types: [], statuses: [] }),
 })
 
 /**
@@ -31,7 +31,7 @@ const openGroups = defineModel<string[] | undefined>('openGroups', { default: un
 
 const props = defineProps<{
   facets: FacetCounts
-  /** List definitions. Without them the kind and status facets are shown. */
+  /** List definitions. Without them the type and status facets are shown. */
   groups?: readonly FilterGroupDef[]
 }>()
 
@@ -42,7 +42,7 @@ const query = ref('')
 
 /** Built-in lists used when the consumer declared none. */
 const fallbackGroups = computed<FilterGroupDef[]>(() => [
-  { id: 'kinds', label: t.value('filter.kinds') },
+  { id: 'types', label: t.value('filter.types') },
   { id: 'statuses', label: t.value('filter.statuses'), valuesOf: (entity) => [entity.status ?? ''] },
 ])
 
@@ -71,9 +71,9 @@ function optionsOf(group: FilterGroupDef): { value: string; label: string; count
   return options.filter((option) => option.label.toLowerCase().includes(needle))
 }
 
-/** The built-in lists read their counts from the kind and status facets. */
+/** The built-in lists read their counts from the type and status facets. */
 function fallbackCounts(groupId: string): ReadonlyMap<string, number> {
-  if (groupId === 'kinds') return props.facets.kinds
+  if (groupId === 'types') return props.facets.types
   if (groupId === 'statuses') return props.facets.statuses
   return new Map()
 }
@@ -83,7 +83,7 @@ function byLabel(a: { label: string }, b: { label: string }): number {
 }
 
 const activeCount = computed(
-  () => model.value.kinds.length + model.value.statuses.length + selectedGroupCount(model.value),
+  () => model.value.types.length + model.value.statuses.length + selectedGroupCount(model.value),
 )
 
 function isOpen(group: FilterGroupDef): boolean {
@@ -100,7 +100,7 @@ function toggleGroup(group: FilterGroupDef): void {
 
 /** Selected values of a list; the built-in lists live in their own state fields. */
 function selectedOf(groupId: string): readonly string[] {
-  if (groupId === 'kinds' && !props.groups) return model.value.kinds
+  if (groupId === 'types' && !props.groups) return model.value.types
   if (groupId === 'statuses' && !props.groups) return model.value.statuses
   return model.value.groups?.[groupId] ?? []
 }
@@ -115,8 +115,8 @@ function toggleValue(groupId: string, value: string): void {
     ? current.filter((candidate) => candidate !== value)
     : [...current, value]
 
-  if (groupId === 'kinds' && !props.groups) {
-    model.value = { ...model.value, kinds: next }
+  if (groupId === 'types' && !props.groups) {
+    model.value = { ...model.value, types: next }
     return
   }
   if (groupId === 'statuses' && !props.groups) {
@@ -130,7 +130,7 @@ function toggleValue(groupId: string, value: string): void {
 function reset(): void {
   if (activeCount.value === 0) return
   // The query is left alone: clearing facets and clearing search are separate acts.
-  model.value = { ...model.value, kinds: [], statuses: [], groups: {} }
+  model.value = { ...model.value, types: [], statuses: [], groups: {} }
 }
 
 /** Re-exported for consumers building lists of their own. */

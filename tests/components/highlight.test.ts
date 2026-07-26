@@ -126,7 +126,7 @@ describe('выделение подсвечивает связи и затемн
   it('поиск главнее выделения: пока фильтр активен, он и решает', async () => {
     const wrapper = await mountMap({
       view: 'logical',
-      filters: { query: 'Vlad', kinds: [], statuses: [] },
+      filters: { query: 'Vlad', types: [], statuses: [] },
     })
     await flushPromises()
     await nextTick()

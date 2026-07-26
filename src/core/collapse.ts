@@ -54,10 +54,10 @@ export function groupIdFor(parentId: EntityId | null, bucket: string): string {
   return `group:${parentId ?? ''}:${bucket}`
 }
 
-const defaultGroupBy = (entity: AssetEntity): string | null => entity.kind
+const defaultGroupBy = (entity: AssetEntity): string | null => entity.type
 
 /**
- * Folds oversized sets of same-kind siblings into single group nodes and
+ * Folds oversized sets of same-type siblings into single group nodes and
  * re-routes their edges. Runs before layout: positions are computed on the
  * collapsed graph, never on the original one.
  *
@@ -376,13 +376,13 @@ function remapLinks<L>(
 
 /**
  * Bundle key. Undirected ends are normalised so `a→b` and `b→a` share a bundle;
- * `kind` and direction stay separate, or an aggregate would lose its edge style.
+ * `type` and direction stay separate, or an aggregate would lose its edge style.
  */
 function bundleKey<L>(source: string, target: string, link: AssetLink<L>): string {
-  const kind = link.kind ?? ''
-  if (link.directed === true) return ['d', source, target, kind].join(KEY_SEPARATOR)
+  const type = link.type ?? ''
+  if (link.directed === true) return ['d', source, target, type].join(KEY_SEPARATOR)
   const [a, b] = source <= target ? [source, target] : [target, source]
-  return ['u', a, b, kind].join(KEY_SEPARATOR)
+  return ['u', a, b, type].join(KEY_SEPARATOR)
 }
 
 function aggregate<L>(bundle: LinkBundle<L>, first: AssetLink<L>): AggregatedLink<L> {
@@ -394,7 +394,7 @@ function aggregate<L>(bundle: LinkBundle<L>, first: AssetLink<L>): AggregatedLin
   }
 
   const aggregated: AggregatedLink<L> = {
-    id: `agg:${bundle.source}->${bundle.target}#${first.kind ?? ''}`,
+    id: `agg:${bundle.source}->${bundle.target}#${first.type ?? ''}`,
     source: bundle.source,
     target: bundle.target,
     // Sorted for determinism: layer order must not depend on the order the
@@ -404,7 +404,7 @@ function aggregate<L>(bundle: LinkBundle<L>, first: AssetLink<L>): AggregatedLin
     count: bundle.links.length,
     sourceLinkIds,
   }
-  if (first.kind !== undefined) aggregated.kind = first.kind
+  if (first.type !== undefined) aggregated.type = first.type
   if (first.directed !== undefined) aggregated.directed = first.directed
   return aggregated
 }

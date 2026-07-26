@@ -3,8 +3,8 @@ import type { EntityId, AssetEntity } from './entity'
 /** Current filter selection. Owned by the consumer through `v-model:filters`. */
 export interface FilterState {
   query: string
-  /** Empty array means every kind. */
-  kinds: string[]
+  /** Empty array means every type. */
+  types: string[]
   statuses: string[]
   predicate?: (entity: AssetEntity) => boolean
   /**
@@ -41,7 +41,7 @@ export interface FilterGroupDef {
    * Drives value collection, facet counts and matching alike, so one function
    * is enough to describe a group.
    *
-   * @default entity kind
+   * @default entity type
    */
   valuesOf?: (entity: AssetEntity) => readonly string[]
   /**
@@ -97,7 +97,7 @@ export interface FilterOptions {
 
 /** How many entities fall under each facet value; used for the counters in the UI. */
 export interface FacetCounts {
-  kinds: ReadonlyMap<string, number>
+  types: ReadonlyMap<string, number>
   statuses: ReadonlyMap<string, number>
   /** Group id → value → entity count. */
   groups: ReadonlyMap<string, ReadonlyMap<string, number>>

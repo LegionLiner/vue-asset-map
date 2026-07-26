@@ -10,7 +10,7 @@ import type { AssetEntity, XY } from '../../types/entity'
  * Entity details inside a floating window.
  *
  * The window chrome is `<MapWindow>`; this is only its contents. The package
- * fills them in minimally — label, kind, tabs and a flat list of `meta` fields as
+ * fills them in minimally — label, type, tabs and a flat list of `meta` fields as
  * a fallback. Real content belongs in the `#details` slot: the package knows
  * neither the consumer's field names nor which of them matter.
  */
@@ -84,7 +84,7 @@ const headerSlot = computed(() => map.slot('details-header'))
       <template v-else>
         <span class="vam-window__title">{{ entity.label }}</span>
         <span class="vam-window__subtitle">
-          <span class="vam-window__kind">{{ entity.kind }}</span>
+          <span class="vam-window__kind">{{ entity.type }}</span>
           <template v-if="entity.status">
             <span
               class="vam-window__status"
@@ -125,8 +125,8 @@ const headerSlot = computed(() => map.slot('details-header'))
         <DetailsSection :title="map.t('details.id')">
           <span class="vam-field__key">{{ map.t('details.id') }}</span>
           <span class="vam-field__value">{{ entity.id }}</span>
-          <span class="vam-field__key">{{ map.t('details.kind') }}</span>
-          <span class="vam-field__value">{{ entity.kind }}</span>
+          <span class="vam-field__key">{{ map.t('details.type') }}</span>
+          <span class="vam-field__value">{{ entity.type }}</span>
           <template v-if="entity.status">
             <span class="vam-field__key">{{ map.t('details.status') }}</span>
             <span class="vam-field__value">{{ entity.status }}</span>

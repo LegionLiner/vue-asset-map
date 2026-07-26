@@ -525,7 +525,7 @@ describe('панель фильтров: списки из данных потр
   it('сброс очищает и группы, и встроенные фасеты', async () => {
     const wrapper = await mountMap({
       filterOptions: { groups: filterGroups },
-      filters: { query: 'dmitry', kinds: [], statuses: [], groups: { subnet: ['vpn'] } },
+      filters: { query: 'dmitry', types: [], statuses: [], groups: { subnet: ['vpn'] } },
     })
     await openFilters(wrapper)
 

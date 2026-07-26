@@ -31,7 +31,7 @@ const viewId = ref(views[0]?.id)
 const selection = ref<string[]>([])
 const expanded = ref(new Set<string>())
 const collapsedNodes = ref(new Set<string>())
-const filters = ref<FilterState>({ query: '', kinds: [], statuses: [] })
+const filters = ref<FilterState>({ query: '', types: [], statuses: [] })
 const openDetails = ref<string[]>([])
 
 const infectedSource = 'vps-tailscale'
@@ -88,7 +88,7 @@ const addOpen = ref(false)
 
 const draft = reactive({
   label: '',
-  kind: 'workstation',
+  type: 'workstation',
   parentId: 'keenetic-2',
   externalIp: '',
   overlayIp: '',
@@ -113,7 +113,7 @@ function submitAdd(): void {
     ...entities.value,
     {
       id,
-      kind: draft.kind,
+      type: draft.type,
       label: draft.label.trim(),
       status: 'online',
       parentId: draft.parentId,
@@ -129,7 +129,7 @@ function submitAdd(): void {
 
   links.value = [
     ...links.value,
-    { id: `l-${id}`, source: draft.parentId, target: id, layers: ['physical'], kind: 'solid' },
+    { id: `l-${id}`, source: draft.parentId, target: id, layers: ['physical'], type: 'solid' },
   ]
 
   addOpen.value = false
@@ -344,7 +344,7 @@ const historyControls = [
 
         <label class="pg-field">
           <span>Тип узла</span>
-          <select v-model="draft.kind">
+          <select v-model="draft.type">
             <option value="workstation">workstation</option>
             <option value="vps">vps</option>
             <option value="router">router</option>

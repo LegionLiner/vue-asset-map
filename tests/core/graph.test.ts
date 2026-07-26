@@ -16,7 +16,7 @@ import { entities, links } from '../../fixtures/infra'
 
 const e = (id: string, extra: Partial<AssetEntity> = {}): AssetEntity => ({
   id,
-  kind: 'host',
+  type: 'host',
   label: id,
   ...extra,
 })

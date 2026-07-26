@@ -6,9 +6,9 @@ import AssetEdge from '../components/edges/AssetEdge.vue'
 /**
  * Internal `node.type` values the map hands to VueFlow.
  *
- * An entity's `kind` is not used as `node.type` directly: VueFlow logs a warning
- * for an unknown type, and `kind` is an open string union coming from consumer
- * data. A `kind` reaches `type` only when a component is actually registered
+ * An entity's `type` is not used as `node.type` directly: VueFlow logs a warning
+ * for an unknown type, and `type` is an open string union coming from consumer
+ * data. A `type` reaches `type` only when a component is actually registered
  * under it.
  */
 export const NODE_TYPE_BASE = 'vam-node'
@@ -48,13 +48,13 @@ export function buildEdgeTypes(custom?: Record<string, Component>): Record<strin
   return types
 }
 
-/** `node.type` for an entity: its own `kind` when registered, else the base node. */
-export function nodeTypeFor(kind: string, types: Readonly<Record<string, Component>>): string {
-  return Object.prototype.hasOwnProperty.call(types, kind) ? kind : NODE_TYPE_BASE
+/** `node.type` for an entity: its own `type` when registered, else the base node. */
+export function nodeTypeFor(type: string, types: Readonly<Record<string, Component>>): string {
+  return Object.prototype.hasOwnProperty.call(types, type) ? type : NODE_TYPE_BASE
 }
 
-/** `edge.type` for a link: its own `kind` when registered, else the base edge. */
-export function edgeTypeFor(kind: string | undefined, types: Readonly<Record<string, Component>>): string {
-  if (kind !== undefined && Object.prototype.hasOwnProperty.call(types, kind)) return kind
+/** `edge.type` for a link: its own `type` when registered, else the base edge. */
+export function edgeTypeFor(type: string | undefined, types: Readonly<Record<string, Component>>): string {
+  if (type !== undefined && Object.prototype.hasOwnProperty.call(types, type)) return type
   return EDGE_TYPE_BASE
 }

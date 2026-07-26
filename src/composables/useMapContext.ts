@@ -35,7 +35,7 @@ export interface MapContext {
   slot: (name: string) => Slot | undefined
 
   statusColorOf: (status: string | undefined) => string | undefined
-  iconFor: (kind: string) => Component | undefined
+  iconFor: (type: string) => Component | undefined
   groupById: (groupId: string) => CollapsedGroup | undefined
   entityById: (id: EntityId) => AssetEntity<unknown> | undefined
 

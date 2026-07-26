@@ -7,7 +7,7 @@ import type { AssetEdgeData } from '../../composables/useFlowElements'
 /**
  * The default map edge.
  *
- * Style (solid, dashed) comes from a class derived from `link.kind` rather than
+ * Style (solid, dashed) comes from a class derived from `link.type` rather than
  * an inline `stroke`: colors live in theme tokens, and an edge has to recolor
  * itself when the theme switches.
  */
@@ -56,7 +56,7 @@ const infected = computed(() => map.isEdgeInfected(props.id))
 
 const classes = computed(() => [
   'vam-edge',
-  `vam-edge--kind-${link.value?.kind ?? 'default'}`,
+  `vam-edge--type-${link.value?.type ?? 'default'}`,
   {
     'vam-edge--highlighted': highlighted.value,
     'vam-edge--dimmed': dimmed.value,
@@ -103,12 +103,12 @@ const labelText = computed(() => {
     opacity var(--vam-transition);
 }
 
-.vam-edge--kind-dashed {
+.vam-edge--type-dashed {
   stroke: var(--vam-edge-active);
   stroke-dasharray: 6 4;
 }
 
-.vam-edge--kind-dotted {
+.vam-edge--type-dotted {
   stroke-dasharray: 2 3;
 }
 

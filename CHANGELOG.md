@@ -42,7 +42,7 @@ First public release.
 ### Added
 
 - Asset map on Vue Flow with switching between projections of one graph
-- Group collapse for sets of same-kind nodes, with edge aggregation and expand on click
+- Group collapse for sets of same-type nodes, with edge aggregation and expand on click
 - Subtree collapse from a button on the node itself
 - Search by name, IPv4 wildcard and CIDR
 - Facet filters with consumer-defined groups

@@ -5,7 +5,7 @@ import { useMapContext } from '../../composables/useMapContext'
 import type { AssetNodeData } from '../../composables/useFlowElements'
 
 /**
- * A collapsed group of same-kind nodes.
+ * A collapsed group of same-type nodes.
  *
  * The same circle and plate as an ordinary node, but the icon is replaced by the
  * member count: collapsing must not look like data going missing, so the count

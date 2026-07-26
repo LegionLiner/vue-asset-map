@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { AssetMap } from 'vue-asset-map'
 import { dagreLayout } from 'vue-asset-map/layout-dagre'
+import { useSiteTheme } from '../theme/useSiteTheme'
 import { entities, links, views, statusColors, kindIcons } from './fixture'
+
+const theme = useSiteTheme()
 </script>
 
 <template>
@@ -11,11 +14,12 @@ import { entities, links, views, statusColors, kindIcons } from './fixture'
     :entities="entities"
     :links="links"
     :views="views"
+    :theme="theme"
     :theme-config="{ statusColors, kindIcons }"
     :layout="{ engine: dagreLayout, options: { rankdir: 'TB', ranksep: 70, nodesep: 32 } }"
     auto-fit-view
   >
-    <!-- Replaces the contents of the circle for one kind only; every other
+    <!-- Replaces the contents of the circle for one type only; every other
          node keeps the default rendering. -->
     <template #node-workstation="{ entity, simplified }">
       <span class="ws-badge" :title="entity?.label">

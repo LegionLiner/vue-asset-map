@@ -1,6 +1,6 @@
 # Search and filters
 
-Search and filter groups narrow one set together: an entity matches when it passes the text query **and** the kind
+Search and filter groups narrow one set together: an entity matches when it passes the text query **and** the type
 group **and** the status group **and** every consumer-defined group **and** the custom predicate.
 
 <LiveDemo :source="searchSource">

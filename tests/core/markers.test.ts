@@ -127,9 +127,9 @@ describe('topAnchors', () => {
   it('изолированные узлы в опорные не попадают', () => {
     const lonely = buildGraph(
       [
-        { id: 'a', kind: 'host', label: 'A' },
-        { id: 'b', kind: 'host', label: 'B' },
-        { id: 'alone', kind: 'host', label: 'Alone' },
+        { id: 'a', type: 'host', label: 'A' },
+        { id: 'b', type: 'host', label: 'B' },
+        { id: 'alone', type: 'host', label: 'Alone' },
       ] satisfies AssetEntity[],
       [{ id: 'ab', source: 'a', target: 'b', layers: ['physical'] }] satisfies AssetLink[],
     )
@@ -153,9 +153,9 @@ describe('topAnchors', () => {
     // Звезда с двумя равными лучами: у `b` и `c` по одной связи.
     const equal = buildGraph(
       [
-        { id: 'hub', kind: 'host', label: 'Hub' },
-        { id: 'b', kind: 'host', label: 'B' },
-        { id: 'c', kind: 'host', label: 'C' },
+        { id: 'hub', type: 'host', label: 'Hub' },
+        { id: 'b', type: 'host', label: 'B' },
+        { id: 'c', type: 'host', label: 'C' },
       ] satisfies AssetEntity[],
       [
         { id: 'hb', source: 'hub', target: 'b', layers: ['physical'] },

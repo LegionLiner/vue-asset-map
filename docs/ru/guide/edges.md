@@ -1,6 +1,6 @@
 # Связи
 
-Ребро — это кривая Безье между центрами двух узлов, стиль которой задаёт класс, выведенный из `link.kind`. Цвета живут
+Ребро — это кривая Безье между центрами двух узлов, стиль которой задаёт класс, выведенный из `link.type`. Цвета живут
 в токенах темы, а не в инлайновом `stroke`, поэтому при переключении темы ребро перекрашивается само.
 
 ## Типы и направление
@@ -8,11 +8,11 @@
 ```ts
 const links: AssetLink[] = [
   { id: 'l1', source: 'internet', target: 'router', layers: ['physical'] },
-  { id: 'l2', source: 'cloudflare', target: 'nginx', layers: ['physical'], kind: 'dashed', directed: true },
+  { id: 'l2', source: 'cloudflare', target: 'nginx', layers: ['physical'], type: 'dashed', directed: true },
 ]
 ```
 
-`kind` попадает в класс `vam-edge--kind-{kind}`, который вы стилизуете из своего CSS. `directed` добавляет стрелку и
+`type` попадает в класс `vam-edge--type-{type}`, который вы стилизуете из своего CSS. `directed` добавляет стрелку и
 ограничивает обходы, считающиеся по направлению, — см. [Обходы графа](./traversal).
 
 <LiveDemo :source="edgeKindSource" source-label="Показать исходник">
@@ -50,7 +50,7 @@ if (isAggregatedLink(link)) {
 
 ## Свой компонент ребра
 
-Зарегистрируйте компонент под `kind` — так же, как с узлами:
+Зарегистрируйте компонент под `type` — так же, как с узлами:
 
 ```vue
 <!-- TunnelEdge.vue -->

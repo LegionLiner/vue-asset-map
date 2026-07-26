@@ -8,7 +8,7 @@ or normalised in place.
 ```ts
 interface AssetEntity<M = unknown> {
   id: EntityId
-  kind: string
+  type: string
   label: string
   sublabels?: string[]
   status?: string
@@ -22,7 +22,7 @@ interface AssetEntity<M = unknown> {
 | Field       | Purpose                                                                                                                |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `id`        | Unique across the dataset. Everything else refers to an entity by it.                                                  |
-| `kind`      | Selects the icon and the render component. An open string union — any value is valid.                                  |
+| `type`      | Selects the icon and the render component. An open string union — any value is valid.                                  |
 | `label`     | The name on the plate under the circle.                                                                                |
 | `sublabels` | Extra lines under the label: IP, FQDN, domain. The first is drawn in the muted color, the second in the overlay color. |
 | `status`    | Mapped to a color through `themeConfig.statusColors`. The package ships no status names.                               |
@@ -42,7 +42,7 @@ interface AssetMeta {
 }
 
 const entities: AssetEntity<AssetMeta>[] = [
-  { id: 'ws-1', kind: 'workstation', label: 'Workstation', meta: { owner: 'Dmitry', severity: 'low' } },
+  { id: 'ws-1', type: 'workstation', label: 'Workstation', meta: { owner: 'Dmitry', severity: 'low' } },
 ]
 ```
 
@@ -54,7 +54,7 @@ interface AssetLink<M = unknown> {
   source: EntityId
   target: EntityId
   layers: string[]
-  kind?: string
+  type?: string
   label?: string
   directed?: boolean
   meta?: M
@@ -64,7 +64,7 @@ interface AssetLink<M = unknown> {
 | Field      | Purpose                                                                                       |
 | ---------- | --------------------------------------------------------------------------------------------- |
 | `layers`   | Which projections the link belongs to. See [Views](./views).                                  |
-| `kind`     | Selects the edge style through a CSS class, and a custom edge component if one is registered. |
+| `type`     | Selects the edge style through a CSS class, and a custom edge component if one is registered. |
 | `directed` | Draws an arrow, and constrains direction-aware traversals such as `blastRadius`.              |
 
 Parallel links between the same pair are kept: two links with different ids are two edges, and the count survives into
@@ -83,7 +83,7 @@ aggregation when a group collapses.
 | `parentId` equal to the entity's own id | Treated as a root.                                        |
 
 That matters because asset data usually arrives from inventory systems, where a dangling reference is ordinary, and the
-map needs to stay usable with that kind of data:
+map needs to stay usable with that type of data:
 
 ```ts
 import { buildGraph } from 'vue-asset-map/core'

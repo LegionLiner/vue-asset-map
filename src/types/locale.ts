@@ -13,7 +13,7 @@ export interface LocaleMessages {
   'view.switch': string
 
   'filter.label': string
-  'filter.kinds': string
+  'filter.types': string
   'filter.statuses': string
   'filter.reset': string
   'filter.empty': string
@@ -23,7 +23,7 @@ export interface LocaleMessages {
 
   'details.title': string
   'details.close': string
-  'details.kind': string
+  'details.type': string
   'details.status': string
   'details.id': string
   'details.addresses': string

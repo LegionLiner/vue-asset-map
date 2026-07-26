@@ -23,7 +23,7 @@ const state = (partial: Partial<FilterState> = {}): FilterState => ({
 
 const e = (id: string, extra: Partial<AssetEntity> = {}): AssetEntity => ({
   id,
-  kind: 'host',
+  type: 'host',
   label: id,
   ...extra,
 })
@@ -43,7 +43,7 @@ describe('isFilterActive', () => {
 
   it('любой заполненный критерий делает состояние активным', () => {
     expect(isFilterActive(state({ query: 'a' }))).toBe(true)
-    expect(isFilterActive(state({ kinds: ['vps'] }))).toBe(true)
+    expect(isFilterActive(state({ types: ['vps'] }))).toBe(true)
     expect(isFilterActive(state({ statuses: ['online'] }))).toBe(true)
     expect(isFilterActive(state({ predicate: () => true }))).toBe(true)
   })
@@ -152,7 +152,7 @@ describe('applyFilters: поиск', () => {
 
 describe('applyFilters: фасеты', () => {
   it('фильтр по типу', () => {
-    const result = applyFilters(graph, state({ kinds: ['router'] }), { neighborDepth: 0 })
+    const result = applyFilters(graph, state({ types: ['router'] }), { neighborDepth: 0 })
     expect(result.matchedIds).toEqual(new Set(['keenetic-1', 'keenetic-2']))
   })
 
@@ -164,7 +164,7 @@ describe('applyFilters: фасеты', () => {
   it('критерии соединяются по И', () => {
     const result = applyFilters(
       graph,
-      state({ query: 'proxmox', kinds: ['hypervisor'], statuses: ['degraded'] }),
+      state({ query: 'proxmox', types: ['hypervisor'], statuses: ['degraded'] }),
       { neighborDepth: 0 },
     )
     expect([...result.matchedIds]).toEqual(['pve-gpu'])
@@ -173,12 +173,12 @@ describe('applyFilters: фасеты', () => {
   it('predicate участвует в конъюнкции', () => {
     const result = applyFilters(
       graph,
-      state({ kinds: ['vps'], predicate: (entity) => entity.meta !== undefined }),
+      state({ types: ['vps'], predicate: (entity) => entity.meta !== undefined }),
       { neighborDepth: 0, searchFields: (entity) => [entity.label] },
     )
     expect(result.matchedIds.size).toBe(4)
 
-    const none = applyFilters(graph, state({ kinds: ['vps'], predicate: () => false }), {
+    const none = applyFilters(graph, state({ types: ['vps'], predicate: () => false }), {
       neighborDepth: 0,
     })
     expect(none.matchedIds.size).toBe(0)
@@ -285,9 +285,9 @@ describe('facetCounts', () => {
   it('считает типы и статусы', () => {
     const facets = facetCounts(graph)
 
-    expect(facets.kinds.get('workstation')).toBe(5)
-    expect(facets.kinds.get('container')).toBe(14)
-    expect(facets.kinds.get('cloud')).toBe(2)
+    expect(facets.types.get('workstation')).toBe(5)
+    expect(facets.types.get('container')).toBe(14)
+    expect(facets.types.get('cloud')).toBe(2)
     expect(facets.statuses.get('offline')).toBe(2)
     expect(facets.statuses.get('degraded')).toBe(2)
   })
@@ -295,8 +295,8 @@ describe('facetCounts', () => {
   it('сужается вместе с restrictTo', () => {
     const facets = facetCounts(graph, new Set(['keenetic-1', 'keenetic-2', 'ws-vlad']))
 
-    expect(facets.kinds.get('router')).toBe(2)
-    expect(facets.kinds.get('container')).toBeUndefined()
+    expect(facets.types.get('router')).toBe(2)
+    expect(facets.types.get('container')).toBeUndefined()
     expect(facets.statuses.get('offline')).toBe(1)
   })
 
@@ -305,6 +305,6 @@ describe('facetCounts', () => {
     const facets = facetCounts(noStatus)
 
     expect(facets.statuses.size).toBe(1)
-    expect(facets.kinds.get('host')).toBe(2)
+    expect(facets.types.get('host')).toBe(2)
   })
 })

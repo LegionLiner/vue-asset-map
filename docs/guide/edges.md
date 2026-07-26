@@ -1,6 +1,6 @@
 # Edges
 
-An edge is a bezier curve between two node centres, styled by a class derived from `link.kind`. Colors live in theme
+An edge is a bezier curve between two node centres, styled by a class derived from `link.type`. Colors live in theme
 tokens rather than in an inline `stroke`, so an edge recolors itself when the theme switches.
 
 ## Kinds and direction
@@ -8,11 +8,11 @@ tokens rather than in an inline `stroke`, so an edge recolors itself when the th
 ```ts
 const links: AssetLink[] = [
   { id: 'l1', source: 'internet', target: 'router', layers: ['physical'] },
-  { id: 'l2', source: 'cloudflare', target: 'nginx', layers: ['physical'], kind: 'dashed', directed: true },
+  { id: 'l2', source: 'cloudflare', target: 'nginx', layers: ['physical'], type: 'dashed', directed: true },
 ]
 ```
 
-`kind` lands in the class `vam-edge--kind-{kind}`, which you can style from your own CSS. `directed` adds an arrow head
+`type` lands in the class `vam-edge--type-{type}`, which you can style from your own CSS. `directed` adds an arrow head
 and constrains direction-aware traversals — see [Traversal](./traversal).
 
 <LiveDemo :source="edgeKindSource">
@@ -50,7 +50,7 @@ if (isAggregatedLink(link)) {
 
 ## A custom edge component
 
-Register a component under a `kind`, the same way as with nodes:
+Register a component under a `type`, the same way as with nodes:
 
 ```vue
 <!-- TunnelEdge.vue -->

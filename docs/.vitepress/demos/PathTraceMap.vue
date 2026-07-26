@@ -2,8 +2,10 @@
 import { onMounted, ref, useTemplateRef } from 'vue'
 import { AssetMap } from 'vue-asset-map'
 import type { AssetMapExposed } from 'vue-asset-map'
+import { useSiteTheme } from '../theme/useSiteTheme'
 import { entities, links, views, statusColors, kindIcons } from './fixture'
 
+const theme = useSiteTheme()
 const map = useTemplateRef<AssetMapExposed>('map')
 const selection = ref<string[]>(['ws-artjom', 'ws-vlad'])
 const traced = ref<string[]>([])
@@ -35,6 +37,7 @@ onMounted(trace)
     :entities="entities"
     :links="links"
     :views="views"
+    :theme="theme"
     :theme-config="{ statusColors, kindIcons }"
     :layout="{ engine: 'radial', options: { rootId: 'vps-tailscale' } }"
     auto-fit-view

@@ -3,9 +3,9 @@
 A node is a circle with an icon, with a fixed-size plate under it carrying the label and up to two sublabels. Root
 entities are drawn at 60 px, children at 36 px. That is the only visual cue for depth, not a field in your data.
 
-## Icons by kind
+## Icons by type
 
-The package knows no kinds, so it ships no icons. Map them yourself:
+The package knows no types, so it ships no icons. Map them yourself:
 
 ```vue
 <script setup lang="ts">
@@ -22,7 +22,7 @@ const kindIcons = { cloud: CloudIcon, router: RouterIcon }
 ```
 
 Draw icons with `currentColor` for strokes and fills. An icon with a baked-in color ignores both a theme switch and
-your own token overrides. A kind with no icon falls back to the first two characters of the kind name.
+your own token overrides. A type with no icon falls back to the first two characters of the type name.
 
 ## Status dot
 
@@ -40,7 +40,7 @@ Both a token reference and a literal color work. Referencing a token means the d
 
 ## Replacing the contents of a circle
 
-The `#node-{kind}` slot replaces what is inside the circle for one kind, leaving the plate, the status dot and the
+The `#node-{type}` slot replaces what is inside the circle for one type, leaving the plate, the status dot and the
 collapse button in place:
 
 ```vue
@@ -60,7 +60,7 @@ rendered for every node on screen.
 
 ## Replacing the whole node
 
-For full control, register a component under a kind. It receives `id` and `data` from Vue Flow and reads everything
+For full control, register a component under a type. It receives `id` and `data` from Vue Flow and reads everything
 else from the map context:
 
 ```vue
@@ -110,7 +110,7 @@ The state is a set of ids and can be controlled:
 ## Badges
 
 ```ts
-{ id: 'ws-1', kind: 'workstation', label: 'Workstation', badges: [{ id: 'cve', color: '#cb5555', tooltip: '3 CVEs' }] }
+{ id: 'ws-1', type: 'workstation', label: 'Workstation', badges: [{ id: 'cve', color: '#cb5555', tooltip: '3 CVEs' }] }
 ```
 
 Badges render under the plate. `#node-badge` replaces their rendering:

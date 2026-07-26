@@ -73,7 +73,7 @@ const viewId = defineModel<string | undefined>('view', { default: undefined })
 const selection = defineModel<EntityId[]>('selection', { default: () => [] })
 const expanded = defineModel<Set<string>>('expanded', { default: () => new Set<string>() })
 const filters = defineModel<FilterState>('filters', {
-  default: (): FilterState => ({ query: '', kinds: [], statuses: [] }),
+  default: (): FilterState => ({ query: '', types: [], statuses: [] }),
 })
 const viewport = defineModel<Viewport>('viewport', { default: () => ({ x: 0, y: 0, zoom: 1 }) })
 /** Entities with an open details window; the last one is on top. */
@@ -672,7 +672,7 @@ const context: MapContext = {
   // widening to `Record` is required.
   slot: (name) => (slots as Record<string, Slot | undefined>)[name],
   statusColorOf: (status) => (status ? props.themeConfig?.statusColors?.[status] : undefined),
-  iconFor: (kind) => props.themeConfig?.kindIcons?.[kind],
+  iconFor: (type) => props.themeConfig?.kindIcons?.[type],
   groupById: (groupId) => collapseState.groupById.value.get(groupId),
   entityById: (id) => graph.value.entities.get(id),
   markersFor: markerState.markersFor,

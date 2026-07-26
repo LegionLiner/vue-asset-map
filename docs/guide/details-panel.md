@@ -1,6 +1,6 @@
 # Details panel
 
-Clicking a node opens a draggable window. The package fills it minimally — label, kind, tabs and a flat list of `meta`
+Clicking a node opens a draggable window. The package fills it minimally — label, type, tabs and a flat list of `meta`
 fields — because it knows neither your field names nor which of them matter. Real content goes in the `#details` slot.
 
 <LiveDemo :source="detailsSource">

@@ -1,6 +1,6 @@
 # Collapse
 
-Collapsing folds siblings of one kind into a single group node and re-routes their edges onto it. Fourteen containers
+Collapsing folds siblings of one type into a single group node and re-routes their edges onto it. Fourteen containers
 on one hypervisor, for instance, turn into a single node with a count instead of fourteen separate circles.
 
 ```ts
@@ -11,7 +11,7 @@ interface CollapseRule {
 }
 ```
 
-By default children are bucketed by `kind` and a bucket collapses once it holds more than ten of them.
+By default children are bucketed by `type` and a bucket collapses once it holds more than ten of them.
 
 ```vue
 <AssetMap :entities="entities" :links="links" :collapse="{ threshold: 4 }" />
@@ -49,8 +49,8 @@ The rest of the invariants:
 ```ts
 const collapse = {
   threshold: 6,
-  // Group by subnet instead of kind, and never fold critical assets away.
-  groupBy: (entity) => (entity.meta?.severity === 'critical' ? null : (entity.meta?.subnet ?? entity.kind)),
+  // Group by subnet instead of type, and never fold critical assets away.
+  groupBy: (entity) => (entity.meta?.severity === 'critical' ? null : (entity.meta?.subnet ?? entity.type)),
 }
 ```
 

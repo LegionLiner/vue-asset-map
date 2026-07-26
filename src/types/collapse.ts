@@ -13,7 +13,7 @@ export interface CollapseRule {
    * Bucket key within one parent; children sharing a key end up in one group.
    * Return `null` to keep an entity out of any group.
    *
-   * @default entity kind
+   * @default entity type
    */
   groupBy?: (entity: AssetEntity) => string | null
   /** Overrides the threshold decision entirely. */

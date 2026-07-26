@@ -31,7 +31,7 @@ the ones that were internal to it are counted rather than drawn. Click to expand
 
 ## Custom node component
 
-`#node-workstation` replaces the contents of the circle for one kind only; every other node keeps the default
+`#node-workstation` replaces the contents of the circle for one type only; every other node keeps the default
 rendering.
 
 <LiveDemo :source="customNodeSource">
@@ -81,9 +81,9 @@ Try `10.38.24.0/24`, `10.38.24.*` or a plain word in the search field, and open 
   <SearchMap />
 </LiveDemo>
 
-## Edge kinds and labels
+## Edge types and labels
 
-`kind` selects the edge style, `directed` adds an arrow, and `#edge-label` replaces the caption.
+`type` selects the edge style, `directed` adds an arrow, and `#edge-label` replaces the caption.
 
 <LiveDemo :source="edgeKindSource">
   <EdgeKindMap />

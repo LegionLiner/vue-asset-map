@@ -22,8 +22,8 @@
 | `entities`                  | `AssetEntity<E>[]`                | —                      | Узлы карты.                                          |
 | `links`                     | `AssetLink<L>[]`                  | —                      | Связи карты.                                         |
 | `views`                     | `AssetView[]`                     | —                      | Представления.                                       |
-| `nodeTypes`                 | `Record<string, Component>`       | —                      | Компоненты узлов по `kind`, поверх встроенных.       |
-| `edgeTypes`                 | `Record<string, Component>`       | —                      | Компоненты рёбер по `kind`.                          |
+| `nodeTypes`                 | `Record<string, Component>`       | —                      | Компоненты узлов по `type`, поверх встроенных.       |
+| `edgeTypes`                 | `Record<string, Component>`       | —                      | Компоненты рёбер по `type`.                          |
 | `layout`                    | `AssetMapLayoutSpec`              | `{ engine: 'manual' }` | Алгоритм раскладки по имени или объектом плюс опции. |
 | `collapse`                  | `CollapseRule \| false`           | `{ threshold: 10 }`    | Правило свёртки групп; `false` выключает свёртку.    |
 | `filterOptions`             | `FilterOptions`                   | —                      | Поля поиска, глубина соседей, группы фильтров.       |
@@ -87,7 +87,7 @@
 | `details`                       | `DetailsSlotProps<E>`       |
 | `details-header`                | `DetailsHeaderSlotProps<E>` |
 | `edge-label`                    | `EdgeLabelSlotProps<L>`     |
-| `node-{kind}`, `node-badge`     | `NodeSlotProps<E>`          |
+| `node-{type}`, `node-badge`     | `NodeSlotProps<E>`          |
 
 #### Императивный API — `AssetMapExposed<E, L>`
 
@@ -219,7 +219,7 @@
 
 ### Реестр
 
-`buildNodeTypes(custom?)`, `buildEdgeTypes(custom?)`, `nodeTypeFor(kind, types)`, `edgeTypeFor(kind, types)`,
+`buildNodeTypes(custom?)`, `buildEdgeTypes(custom?)`, `nodeTypeFor(type, types)`, `edgeTypeFor(type, types)`,
 `NODE_TYPE_BASE`, `NODE_TYPE_GROUP`, `EDGE_TYPE_BASE`.
 
 ### Локаль

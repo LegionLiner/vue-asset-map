@@ -12,7 +12,7 @@ export interface AssetLink<M = unknown> {
   /** Layers this link belongs to; view projection filters on them. */
   layers: string[]
   /** Selects the edge style, e.g. `'solid'` or `'dashed'`. Open string union. */
-  kind?: string
+  type?: string
   label?: string
   directed?: boolean
   meta?: M

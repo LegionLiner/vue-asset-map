@@ -26,9 +26,9 @@ export interface AssetEntity<M = unknown> {
   id: EntityId
   /**
    * Selects the icon and the render component. An open string union: any value
-   * is valid, unknown kinds fall back to the default node.
+   * is valid, unknown types fall back to the default node.
    */
-  kind: string
+  type: string
   label: string
   /** Extra lines under the label: IP, domain, FQDN. */
   sublabels?: string[]

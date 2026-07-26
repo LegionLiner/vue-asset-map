@@ -11,7 +11,7 @@ interface CollapseRule {
 }
 ```
 
-По умолчанию дети группируются по `kind`, и ведро сворачивается в группу, когда в нём больше десяти.
+По умолчанию дети группируются по `type`, и ведро сворачивается в группу, когда в нём больше десяти.
 
 ```vue
 <AssetMap :entities="entities" :links="links" :collapse="{ threshold: 4 }" />
@@ -50,7 +50,7 @@ interface CollapseRule {
 const collapse = {
   threshold: 6,
   // Группируем по подсети вместо типа и никогда не прячем критичные активы.
-  groupBy: (entity) => (entity.meta?.severity === 'critical' ? null : (entity.meta?.subnet ?? entity.kind)),
+  groupBy: (entity) => (entity.meta?.severity === 'critical' ? null : (entity.meta?.subnet ?? entity.type)),
 }
 ```
 

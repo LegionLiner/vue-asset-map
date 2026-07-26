@@ -4,7 +4,7 @@ import type { AssetEntity } from '../../src/types/entity'
 import type { AssetLink } from '../../src/types/link'
 import { entities, links } from '../../fixtures/infra'
 
-const e = (id: string): AssetEntity => ({ id, kind: 'host', label: id })
+const e = (id: string): AssetEntity => ({ id, type: 'host', label: id })
 
 const l = (id: string, source: string, target: string, extra: Partial<AssetLink> = {}): AssetLink => ({
   id,

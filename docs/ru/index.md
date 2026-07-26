@@ -5,6 +5,10 @@ hero:
   name: vue-asset-map
   text: Карта инфраструктурных активов для Vue 3
   tagline: Компонент для сущностей, связей и представлений одного графа, с поиском, фильтрами и трассировкой пути.
+  image:
+    light: /hero-light.png
+    dark: /hero-dark.png
+    alt: vue-asset-map
   actions:
     - theme: brand
       text: Начать

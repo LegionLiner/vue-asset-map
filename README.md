@@ -15,7 +15,7 @@ Interactive infrastructure asset map for Vue 3, built on Vue Flow.
 
 - **Projections of one graph.** Entities and links are declared once; each view keeps the links whose `layers` name it,
   so the same data renders as a physical topology or as a VPN overlay without a second dataset.
-- **Group collapse.** Siblings of one kind fold into a single node once they pass a threshold; their edges are
+- **Group collapse.** Siblings of one type fold into a single node once they pass a threshold; their edges are
   re-routed onto the group and parallel ones aggregate with a count. A click expands the group back.
 - **Subtree collapse.** A button on a node hides its descendants and re-homes their edges onto the node itself.
 - **Search by name, IPv4 wildcard and CIDR.** `10.38.24.*` and `10.38.24.0/24` match addresses inside any label or
@@ -62,10 +62,10 @@ import { AssetMap } from 'vue-asset-map'
 import type { AssetEntity, AssetLink, AssetView } from 'vue-asset-map'
 
 const entities: AssetEntity[] = [
-  { id: 'internet', kind: 'cloud', label: 'Internet' },
-  { id: 'router', kind: 'router', label: 'Office router', parentId: 'internet', sublabels: ['10.0.0.1'] },
-  { id: 'vpn', kind: 'vps', label: 'VPN coordinator', parentId: 'internet', status: 'online' },
-  { id: 'laptop', kind: 'host', label: 'Laptop', parentId: 'router', sublabels: ['10.0.0.14'] },
+  { id: 'internet', type: 'cloud', label: 'Internet' },
+  { id: 'router', type: 'router', label: 'Office router', parentId: 'internet', sublabels: ['10.0.0.1'] },
+  { id: 'vpn', type: 'vps', label: 'VPN coordinator', parentId: 'internet', status: 'online' },
+  { id: 'laptop', type: 'host', label: 'Laptop', parentId: 'router', sublabels: ['10.0.0.14'] },
 ]
 
 const links: AssetLink[] = [
@@ -136,7 +136,7 @@ Two-way bindings: `view`, `selection`, `expanded`, `filters`, `viewport`, `openD
 | Slot                             | Props                            | Purpose                                   |
 | -------------------------------- | -------------------------------- | ----------------------------------------- |
 | `details`                        | `{ entity, close, tab }`         | Body of a details window.                 |
-| `node-{kind}`                    | `{ entity, nodeId, simplified }` | Replaces the contents of a node circle.   |
+| `node-{type}`                    | `{ entity, nodeId, simplified }` | Replaces the contents of a node circle.   |
 | `toolbar-left` / `toolbar-right` | —                                | Your own controls in the map header.      |
 | `windows`                        | —                                | Custom floating windows above the canvas. |
 | `edge-label`                     | `{ link, aggregated, count }`    | Replaces an edge label.                   |
