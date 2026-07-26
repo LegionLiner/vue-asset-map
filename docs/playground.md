@@ -8,9 +8,7 @@ aside: false
 # Playground
 
 Every example elsewhere in these docs is deliberately small — one feature at a time, so the code stays readable. This
-page is the opposite: the repository's own development playground, the app that `pnpm dev` serves, running here
-unchanged. It is the same `playground/App.vue` file, imported rather than copied, so it cannot drift from what the
-maintainers actually work against.
+page is the opposite: the repository's own development playground, the app that `pnpm dev` serves.
 
 Its interface is in Russian, because that is what it is: an internal playground rather than a polished demo.
 
