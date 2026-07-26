@@ -39,7 +39,7 @@ const base = '/vue-asset-map/'
 // with each page's base-relative URL, so it has to include the base path
 // itself — otherwise every sitemap entry would drop the `/vue-asset-map/` prefix.
 const hostname = 'https://legionliner.github.io/vue-asset-map/'
-const ogImage = `${hostname}hero-light.png`
+const ogImage = `${hostname}hero-light.webp`
 
 export default defineConfig({
   base,

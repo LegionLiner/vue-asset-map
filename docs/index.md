@@ -6,7 +6,7 @@ hero:
   text: Infrastructure asset map for Vue 3
   tagline: A component for entities, links and views of one graph, with search, filters and path tracing.
   image:
-    light: /hero-light.png
+    light: /hero-light.webp
     dark: /hero-dark.png
     alt: vue-asset-map
   actions:
