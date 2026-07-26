@@ -30,3 +30,57 @@
     max-height: 380px;
   }
 }
+
+/*
+ * The /playground page, set by `pageClass` in its frontmatter.
+ *
+ * A playground in the default 688px prose column is unusable — the map needs
+ * the width more than the text does — so the doc container gives up its cap on
+ * this page alone. The prose above the app keeps a readable measure of its own.
+ */
+.playground-page .VPDoc:not(.has-sidebar) .container {
+  max-width: 1400px;
+}
+
+.playground-page .VPDoc .content {
+  max-width: 100%;
+}
+
+.playground-page .vp-doc > div > p,
+.playground-page .vp-doc > div > ul,
+.playground-page .vp-doc > div > h1,
+.playground-page .vp-doc > div > h2 {
+  max-width: 720px;
+}
+
+/*
+ * The app is `height: 100%` of whatever box it is given, and it carries its own
+ * toolbar above the canvas — so it needs a taller frame than the API demos.
+ */
+.playground-frame {
+  height: 76vh;
+  min-height: 560px;
+  margin: 24px 0;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/*
+ * Placeholder until the app mounts. `ClientOnly` renders nothing before that and
+ * offers no fallback slot of its own, so the frame stands in for one: `:empty`
+ * holds while its only child is the component's comment placeholder, and stops
+ * matching the moment the app is in there. The text comes from the page, since
+ * the two locales word it differently.
+ */
+.playground-frame:empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--vp-c-bg-soft);
+}
+
+.playground-frame:empty::before {
+  content: attr(data-loading);
+  color: var(--vp-c-text-2);
+}

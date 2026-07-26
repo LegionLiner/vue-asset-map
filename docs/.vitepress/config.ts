@@ -124,6 +124,13 @@ export default defineConfig({
           find: /^vue-asset-map$/,
           replacement: fileURLToPath(new URL('../../src/index.ts', import.meta.url)),
         },
+        {
+          // The /playground page runs the repository's own playground app, and
+          // that app reads the shared fixture through this alias. Mirrors
+          // playground/vite.config.ts so the same file resolves in both.
+          find: /^@fixtures\//,
+          replacement: `${fileURLToPath(new URL('../../fixtures', import.meta.url))}/`,
+        },
       ],
     },
   },
@@ -139,6 +146,7 @@ export default defineConfig({
           { text: 'Guide', link: '/guide/getting-started' },
           { text: 'API', link: '/api/' },
           { text: 'Examples', link: '/examples/' },
+          { text: 'Playground', link: '/playground' },
         ],
         sidebar: {
           '/guide/': [{ text: 'Guide', items: guide('') }],
@@ -169,6 +177,7 @@ export default defineConfig({
           { text: 'Руководство', link: '/ru/guide/getting-started' },
           { text: 'API', link: '/ru/api/' },
           { text: 'Примеры', link: '/ru/examples/' },
+          { text: 'Плейграунд', link: '/ru/playground' },
         ],
         sidebar: {
           '/ru/guide/': [{ text: 'Руководство', items: guideRu }],

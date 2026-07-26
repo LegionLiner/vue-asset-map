@@ -1,24 +1,12 @@
-* {
-  box-sizing: border-box;
-}
-
-html,
-body,
-#app {
-  height: 100%;
-  margin: 0;
-}
-
-body {
-  font-family:
-    'Nunito Sans',
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
-}
-
+/*
+ * Component styles of the playground app.
+ *
+ * Every rule is scoped to a `.pg-*` class, so this file is safe to load
+ * anywhere. That is deliberate: the docs site renders the same `App.vue` on its
+ * /playground page and imports exactly this stylesheet, so the embedded example
+ * looks like the real thing without a second copy to keep in sync. Page-level
+ * rules that would not survive that trip live in `reset.css`.
+ */
 .pg-shell {
   display: flex;
   flex-direction: column;
