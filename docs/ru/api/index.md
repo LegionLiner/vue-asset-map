@@ -6,63 +6,66 @@
 | ---------------------------- | ----------------------------------------------------- |
 | `vue-asset-map`              | Компоненты, composables, типы и всё содержимое ядра.  |
 | `vue-asset-map/core`         | Функции по графу без Vue и без Vue Flow.              |
-| `vue-asset-map/layout-dagre` | Движок раскладки dagre, за опциональной зависимостью. |
+| `vue-asset-map/layout-dagre` | Алгоритм раскладки dagre, за опциональной зависимостью. |
 | `vue-asset-map/style.css`    | Токены, светлая и тёмная темы, правила компонентов.   |
 
 ## Компонент
 
 ### `<AssetMap>`
 
-Карта. Дженерик по типам полезной нагрузки `entity.meta` и `link.meta`: `AssetMap<E, L>`.
+Карта. Обобщён по типам пользовательских данных `entity.meta` и `link.meta`: `AssetMap<E, L>`.
 
 #### Props
 
-| Prop                        | Тип                               | По умолчанию           | Что делает                                                    |
-| --------------------------- | --------------------------------- | ---------------------- | ------------------------------------------------------------- |
-| `entities`                  | `AssetEntity<E>[]`                | —                      | Узлы. Карта их только читает.                                 |
-| `links`                     | `AssetLink<L>[]`                  | —                      | Связи. Карта их только читает.                                |
-| `views`                     | `AssetView[]`                     | —                      | Проекции. Без них рисуется всё.                               |
-| `nodeTypes`                 | `Record<string, Component>`       | —                      | Компоненты узлов по `kind`, поверх встроенных.                |
-| `edgeTypes`                 | `Record<string, Component>`       | —                      | Компоненты рёбер по `kind`.                                   |
-| `layout`                    | `AssetMapLayoutSpec`              | `{ engine: 'manual' }` | Движок по имени или объектом плюс его опции.                  |
-| `collapse`                  | `CollapseRule \| false`           | `{ threshold: 10 }`    | `false` выключает свёртку групп.                              |
-| `filterOptions`             | `FilterOptions`                   | —                      | Поля поиска, глубина соседей, группы фильтров.                |
-| `theme`                     | `ThemeMode`                       | `'light'`              | `'light'`, `'dark'` или `'auto'`.                             |
-| `themeConfig`               | `ThemeConfig`                     | —                      | `statusColors` и `kindIcons`.                                 |
-| `locale`                    | `string \| PartialLocaleMessages` | `'ru'`                 | Код локали или словарь переопределений.                       |
-| `showToolbar`               | `boolean`                         | `true`                 | Рисовать встроенные контролы.                                 |
-| `showDetailsPanel`          | `boolean`                         | `true`                 | Открывать окна подробностей по клику.                         |
-| `showMinimap`               | `boolean`                         | `false`                | Рисовать обзорную карту.                                      |
-| `maxDetailsWindows`         | `number`                          | `2`                    | `0` полностью выключает окна.                                 |
-| `neighborHighlightDepth`    | `number`                          | `1`                    | Шаги выделения, остающиеся яркими. `0` выключает.             |
-| `infected`                  | `EntityId[]`                      | —                      | Источники заражения; распространение считается `blastRadius`. |
-| `infectionOptions`          | `InfectionOptions`                | —                      | `direction`, `maxDepth`, `layers` распространения.            |
-| `markers`                   | `NodeMarkerDef[]`                 | —                      | Кружки принадлежности под подписями.                          |
-| `markerHoverDelay`          | `number`                          | `500`                  | Задержка в мс перед подсветкой по наведению.                  |
-| `onlyRenderVisibleElements` | `boolean`                         | `true`                 | Монтировать только то, что во вьюпорте.                       |
-| `lodThreshold`              | `number`                          | `0.5`                  | Масштаб, ниже которого узлы рисуются упрощённо.               |
-| `searchDebounce`            | `number`                          | `200`                  | Задержка в мс перед применением запроса.                      |
-| `loading`                   | `boolean`                         | `false`                | Показать индикатор загрузки.                                  |
-| `autoFitView`               | `boolean`                         | `false`                | Подгонять полотно под содержимое после каждой раскладки.      |
+| Prop                        | Тип                               | По умолчанию           | Что делает                                          |
+| --------------------------- | --------------------------------- | ---------------------- | ---------------------------------------------------- |
+| `entities`                  | `AssetEntity<E>[]`                | —                      | Узлы карты.                                          |
+| `links`                     | `AssetLink<L>[]`                  | —                      | Связи карты.                                         |
+| `views`                     | `AssetView[]`                     | —                      | Представления.                                       |
+| `nodeTypes`                 | `Record<string, Component>`       | —                      | Компоненты узлов по `kind`, поверх встроенных.       |
+| `edgeTypes`                 | `Record<string, Component>`       | —                      | Компоненты рёбер по `kind`.                          |
+| `layout`                    | `AssetMapLayoutSpec`              | `{ engine: 'manual' }` | Алгоритм раскладки по имени или объектом плюс опции. |
+| `collapse`                  | `CollapseRule \| false`           | `{ threshold: 10 }`    | Правило свёртки групп; `false` выключает свёртку.    |
+| `filterOptions`             | `FilterOptions`                   | —                      | Поля поиска, глубина соседей, группы фильтров.       |
+| `theme`                     | `ThemeMode`                       | `'light'`              | Режим темы: `'light'`, `'dark'` или `'auto'`.        |
+| `themeConfig`               | `ThemeConfig`                     | —                      | `statusColors` и `kindIcons`.                        |
+| `locale`                    | `string \| PartialLocaleMessages` | `'ru'`                 | Код локали или словарь переопределений.              |
+| `showToolbar`               | `boolean`                         | `true`                 | Видимость встроенных контролов.                      |
+| `showDetailsPanel`          | `boolean`                         | `true`                 | Открытие окон подробностей по клику.                 |
+| `showMinimap`               | `boolean`                         | `false`                | Видимость обзорной карты.                            |
+| `maxDetailsWindows`         | `number`                          | `2`                    | Лимит открытых окон; `0` выключает окна.             |
+| `neighborHighlightDepth`    | `number`                          | `1`                    | Шаги выделения, остающиеся яркими; `0` выключает.    |
+| `infected`                  | `EntityId[]`                      | —                      | Источники заражения для `blastRadius`.               |
+| `infectionOptions`          | `InfectionOptions`                | —                      | `direction`, `maxDepth`, `layers` распространения.   |
+| `markers`                   | `NodeMarkerDef[]`                 | —                      | Кружки принадлежности под подписями.                 |
+| `markerHoverDelay`          | `number`                          | `500`                  | Задержка в мс перед подсветкой по наведению.         |
+| `onlyRenderVisibleElements` | `boolean`                         | `true`                 | Монтирование только элементов в области просмотра.   |
+| `lodThreshold`              | `number`                          | `0.5`                  | Масштаб, ниже которого узлы рисуются упрощённо.      |
+| `searchDebounce`            | `number`                          | `200`                  | Задержка в мс перед применением запроса.             |
+| `loading`                   | `boolean`                         | `false`                | Индикатор загрузки.                                  |
+| `autoFitView`               | `boolean`                         | `false`                | Автоподгонка холста под содержимое после раскладки.  |
+
+`entities` и `links` компонент только читает: он не добавляет, не переставляет и не нормализует поля во входных
+массивах. Без `views` рисуются все сущности и связи.
 
 #### Двусторонние привязки
 
 | Модель             | Тип                     | Что хранит                                   |
 | ------------------ | ----------------------- | -------------------------------------------- |
-| `view`             | `string \| undefined`   | Id активного вида.                           |
+| `view`             | `string \| undefined`   | Id активного представления.                  |
 | `selection`        | `EntityId[]`            | Выделенные id в порядке выбора.              |
 | `expanded`         | `Set<string>`           | Id групп, раскрытых руками.                  |
-| `filters`          | `FilterState`           | Запрос, фасеты, выбор по группам.            |
+| `filters`          | `FilterState`           | Запрос, группы фильтров, выбор по группам.   |
 | `viewport`         | `Viewport`              | Сдвиг в пикселях плюс масштаб.               |
 | `openDetails`      | `EntityId[]`            | Сущности с открытым окном; последняя сверху. |
 | `collapsedNodes`   | `Set<EntityId>`         | Узлы со свёрнутым поддеревом.                |
 | `openFilterGroups` | `string[] \| undefined` | Раскрытые списки фильтров.                   |
 
-Каждая работает и без `v-model` — тогда состоянием владеет компонент.
+Каждая привязка работает и без `v-model`. Тогда состоянием владеет компонент.
 
 #### События
 
-| Событие                                            | Полезная нагрузка                                         |
+| Событие                                            | Данные события                                            |
 | -------------------------------------------------- | --------------------------------------------------------- |
 | `node-click`, `node-dblclick`, `node-context-menu` | `NodeEventPayload`                                        |
 | `edge-click`                                       | `{ id: string; event: MouseEvent }`                       |
@@ -70,7 +73,7 @@
 | `expand`, `collapse`                               | `{ groupId: string; group: CollapsedGroup \| undefined }` |
 | `node-expand`, `node-collapse`                     | `{ id: EntityId; entity: AssetEntity<E> \| undefined }`   |
 | `selection-change`                                 | `EntityId[]`                                              |
-| `layout-start`                                     | `string` — имя движка                                     |
+| `layout-start`                                     | `string` — имя алгоритма                                  |
 | `layout-done`                                      | `{ engine: string; positions: number }`                   |
 | `error`                                            | `unknown`                                                 |
 
@@ -102,10 +105,10 @@
 | Компонент                                   | Зачем                                                            |
 | ------------------------------------------- | ---------------------------------------------------------------- |
 | `MapWindow`                                 | Каркас плавающего окна: шапка, перетаскивание, сжатие, закрытие. |
-| `DetailsPanel`                              | Дефолтное окно подробностей.                                     |
+| `DetailsPanel`                              | Окно подробностей по умолчанию.                                  |
 | `DetailsSection`                            | Секция панели: заголовок плюс содержимое.                        |
-| `BaseNode`, `GroupNode`                     | Дефолтный узел и групповой узел.                                 |
-| `AssetEdge`                                 | Дефолтное ребро.                                                 |
+| `BaseNode`, `GroupNode`                     | Узел и групповой узел по умолчанию.                              |
+| `AssetEdge`                                 | Ребро по умолчанию.                                              |
 | `MiniMap`                                   | Обзорная карта.                                                  |
 | `SearchInput`, `ViewSwitcher`, `FilterMenu` | Контролы тулбара; работают и вне карты.                          |
 
@@ -212,7 +215,7 @@
 
 `manualLayout`, `radialLayout`, `builtinLayoutEngines`, `resolveLayoutEngine(engine, extra?)`,
 `applyPinned(positions, nodes)`, `throwIfAborted(signal, engineName)`, `isLayoutAborted(error)`,
-`LayoutAbortedError`. Движок dagre — это `dagreLayout` из `vue-asset-map/layout-dagre`.
+`LayoutAbortedError`. Алгоритм dagre экспортируется как `dagreLayout` из `vue-asset-map/layout-dagre`.
 
 ### Реестр
 
