@@ -108,6 +108,41 @@ map turned on.
   <LargeGraphMap />
 </LiveDemo>
 
+## Everything replaceable, replaced
+
+The other examples change one thing at a time. This one keeps the graph, the projections, the layout, the search and
+the traversals — and replaces every pixel above them.
+
+Nothing here reaches into the package: each piece is a documented prop or slot.
+
+- **Shapes instead of circles.** A `nodeTypes` component draws a pill, a diamond, a square, a hexagon, a squircle and
+  an octagon, one per kind. Shape had to replace the circle outright, so this is a component rather than a
+  `#node-{type}` slot — a slot swaps what is _inside_ the circle and leaves the circle. Shape carries the type, so the
+  map stays readable in monochrome.
+- **Right-angled cabling.** An `edgeTypes` component swaps the bezier for a smooth-step run and puts its own chip on
+  the line. Colour and dash still come from `linkTypes`, read through `useMapContext()`.
+- **Its own chrome.** `showToolbar` is off; the bar above the map is ordinary page markup driving
+  `v-model:filters`, `v-model:view` and the exposed `fitView` / `relayout`. The filter chips repeat the node shapes,
+  so a filter shows which shape it selects rather than only naming it.
+- **Its own window.** `showDetailsHeading` is off, `detailsTitle` is a function, and `#details-title`,
+  `#details-tabs` and `#details` supply the rest. Only the title bar survives from the package.
+- **Its own form.** `#details-edit` renders the consumer's controls; the package contributes the draft, the save and
+  the cancel, and nothing else.
+- **Its own menu and modal.** `showContextMenu` stays off and the page handles `node-context-menu` itself, then
+  confirms with a dialog of its own. The package ships both — this shows neither is compulsory.
+- **Its own everything else.** Theme tokens are overridden as plain custom properties on `.vam-root`; three locale
+  strings are renamed; the legend is a `MapWindow` in the `#windows` slot.
+
+Right-click a node for the custom menu, press Edit for the custom form, and drag from the dots on a shape's sides to
+draw a cable.
+
+<LiveDemo :source="fullyCustomSource" height="640px">
+  <FullyCustomMap />
+</LiveDemo>
+
+The node and edge components live beside it, in
+[`demos/custom/`](https://github.com/LegionLiner/vue-asset-map/tree/main/docs/.vitepress/demos/custom).
+
 <script setup>
 import basicSource from '../.vitepress/demos/BasicMap.vue?raw'
 import projectionsSource from '../.vitepress/demos/ProjectionsMap.vue?raw'
@@ -121,4 +156,5 @@ import searchSource from '../.vitepress/demos/SearchMap.vue?raw'
 import edgeKindSource from '../.vitepress/demos/EdgeKindMap.vue?raw'
 import layoutSource from '../.vitepress/demos/LayoutMap.vue?raw'
 import largeSource from '../.vitepress/demos/LargeGraphMap.vue?raw'
+import fullyCustomSource from '../.vitepress/demos/FullyCustomMap.vue?raw'
 </script>

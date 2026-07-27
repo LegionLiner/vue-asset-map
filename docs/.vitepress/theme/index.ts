@@ -27,6 +27,7 @@ import MarkersMap from '../demos/MarkersMap.vue'
 import SearchMap from '../demos/SearchMap.vue'
 import LayoutMap from '../demos/LayoutMap.vue'
 import EdgeKindMap from '../demos/EdgeKindMap.vue'
+import FullyCustomMap from '../demos/FullyCustomMap.vue'
 
 // Registered globally so every markdown page can use them without a script block.
 export default {
@@ -46,5 +47,6 @@ export default {
     app.component('SearchMap', SearchMap)
     app.component('LayoutMap', LayoutMap)
     app.component('EdgeKindMap', EdgeKindMap)
+    app.component('FullyCustomMap', FullyCustomMap)
   },
 } satisfies Theme

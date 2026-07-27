@@ -108,6 +108,41 @@
   <LargeGraphMap />
 </LiveDemo>
 
+## Всё заменяемое — заменено
+
+Остальные примеры меняют что-то одно. Этот оставляет граф, проекции, раскладку, поиск и обходы — и заменяет каждый
+пиксель над ними.
+
+Ничего из этого не лезет во внутренности пакета: каждая часть — документированный проп или слот.
+
+- **Фигуры вместо кругов.** Компонент из `nodeTypes` рисует пилюлю, ромб, квадрат, шестиугольник, скруглённый квадрат
+  и восьмиугольник — по одной на вид. Фигура должна была заменить круг целиком, поэтому это компонент, а не слот
+  `#node-{type}`: слот подменяет то, что _внутри_ круга, и оставляет сам круг. Тип несёт фигура, поэтому карта
+  читается и без цвета.
+- **Прямоугольная разводка.** Компонент из `edgeTypes` меняет кривую Безье на ступенчатую линию и ставит на неё свою
+  плашку. Цвет и штрих по-прежнему приходят из `linkTypes` через `useMapContext()`.
+- **Свой интерфейс.** `showToolbar` выключен; панель над картой — обычная разметка страницы, управляющая
+  `v-model:filters`, `v-model:view` и методами `fitView` / `relayout`. Чипсы фильтров повторяют фигуры узлов, поэтому
+  фильтр показывает, какую фигуру выбирает, а не только называет её.
+- **Своё окно.** `showDetailsHeading` выключен, `detailsTitle` — функция, остальное дают `#details-title`,
+  `#details-tabs` и `#details`. От пакета остаётся одна шапка.
+- **Своя форма.** `#details-edit` рисует контролы потребителя; пакет даёт черновик, сохранение и отмену — и больше
+  ничего.
+- **Свои меню и модалка.** `showContextMenu` выключен, страница сама обрабатывает `node-context-menu` и подтверждает
+  удаление собственным диалогом. Пакет везёт и то и другое — здесь видно, что ни то, ни другое не обязательно.
+- **И всё остальное тоже своё.** Токены темы переопределены как обычные CSS-переменные на `.vam-root`, три строки
+  локали переименованы, а легенда — это `MapWindow` в слоте `#windows`.
+
+Правый клик по узлу открывает своё меню, кнопка правки — свою форму, а перетаскивание от точек по краям фигуры рисует
+кабель.
+
+<LiveDemo :source="fullyCustomSource" source-label="Показать исходник" height="640px">
+  <FullyCustomMap />
+</LiveDemo>
+
+Компоненты узла и связи лежат рядом, в
+[`demos/custom/`](https://github.com/LegionLiner/vue-asset-map/tree/main/docs/.vitepress/demos/custom).
+
 <script setup>
 import basicSource from '../../.vitepress/demos/BasicMap.vue?raw'
 import projectionsSource from '../../.vitepress/demos/ProjectionsMap.vue?raw'
@@ -121,4 +156,5 @@ import searchSource from '../../.vitepress/demos/SearchMap.vue?raw'
 import edgeKindSource from '../../.vitepress/demos/EdgeKindMap.vue?raw'
 import layoutSource from '../../.vitepress/demos/LayoutMap.vue?raw'
 import largeSource from '../../.vitepress/demos/LargeGraphMap.vue?raw'
+import fullyCustomSource from '../../.vitepress/demos/FullyCustomMap.vue?raw'
 </script>
