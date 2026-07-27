@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { AssetMap, DetailsSection } from 'vue-asset-map'
 import { useSiteTheme } from '../theme/useSiteTheme'
+import { useSiteLocale } from '../theme/useSiteLocale'
 import type { AssetMeta } from './fixture'
 import { entities, links, views, statusColors, kindIcons } from './fixture'
 
@@ -11,6 +12,7 @@ import { entities, links, views, statusColors, kindIcons } from './fixture'
 const openDetails = ref(['ws-artjom'])
 const selection = ref(['ws-artjom'])
 const theme = useSiteTheme()
+const locale = useSiteLocale()
 
 // Field labels are the consumer's business: the package never guesses what
 // lives in `meta`.
@@ -51,6 +53,7 @@ function rows(meta: AssetMeta | undefined) {
     :links="links"
     :views="views"
     :theme="theme"
+    :locale="locale"
     :theme-config="{ statusColors, kindIcons }"
     :layout="{ engine: 'radial', options: { rootId: 'internet' } }"
     auto-fit-view

@@ -322,9 +322,14 @@ export interface AssetMapProps<E = unknown, L = unknown> {
   loading?: boolean
 
   /**
-   * Fit the canvas to its content whenever the visible nodes finish laying
-   * out — on mount, and again after a view switch, a group collapse/expand or
-   * a layout engine change reshapes what's on screen.
+   * Fit the canvas to its content when the map first lays out, and again when
+   * the view switches.
+   *
+   * Deliberately **not** on every reshape. Collapsing a group, unfolding a
+   * subtree or narrowing a filter all change the visible set, and refitting on
+   * those moves the viewport while someone is working one corner of the graph —
+   * the map jumps and they lose their place. A view switch is different: it is a
+   * different graph, and the old viewport describes a layout that is gone.
    *
    * Off by default: an application that manages its own `viewport` (a saved
    * position, a deliberate `focus` on load) should not have that overridden.

@@ -118,8 +118,14 @@ record the application has just been told to drop would show something that is a
 
 ## Editing
 
-`editable` plus a field schema puts an **Edit** button under the window body. The first press turns the body into a
-form; the second saves and turns it back.
+`editable` puts an **Edit** button under the window body. The first press turns the body into a form; the second saves
+and turns it back.
+
+Declaring no schema is fine: the map offers the two fields whose meaning it actually knows — `label`, and `status` as a
+select over whatever you named in `themeConfig.statusColors` (free text if you named none). Links get the same courtesy,
+so `editable` on its own makes both kinds of record editable rather than one of them silently not.
+
+Anything in `meta` needs a schema, because the package can guess neither the names nor which of them matter.
 
 The schema is data because editing is the one thing the package cannot do on your vocabulary: it knows an entity has a
 `label` and a `meta`, but not that `meta.speed` is measured in megabits, nor which of your twenty fields are worth

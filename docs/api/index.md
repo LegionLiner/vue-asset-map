@@ -59,7 +59,7 @@ The map. Generic over the payload types of `entity.meta` and `link.meta`: `Asset
 | `lodThreshold`              | `number`                          | `0.5`                  | Zoom below which nodes render simplified.             |
 | `searchDebounce`            | `number`                          | `200`                  | Delay in ms before a typed query applies.             |
 | `loading`                   | `boolean`                         | `false`                | Loading indicator.                                    |
-| `autoFitView`               | `boolean`                         | `false`                | Auto-fit of the canvas to its content after layout.   |
+| `autoFitView`               | `boolean`                         | `false`                | Fit the canvas on first layout and on a view switch.  |
 
 `entities` and `links` are read-only for the map: it never adds, reorders or normalises fields in the input arrays.
 Without `views`, everything is drawn.

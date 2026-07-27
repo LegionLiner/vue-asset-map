@@ -2,9 +2,11 @@
 import { AssetMap } from 'vue-asset-map'
 import { dagreLayout } from 'vue-asset-map/layout-dagre'
 import { useSiteTheme } from '../theme/useSiteTheme'
+import { useSiteLocale } from '../theme/useSiteLocale'
 import { entities, links, views, statusColors, kindIcons } from './fixture'
 
 const theme = useSiteTheme()
+const locale = useSiteLocale()
 </script>
 
 <template>
@@ -15,6 +17,7 @@ const theme = useSiteTheme()
     :links="links"
     :views="views"
     :theme="theme"
+    :locale="locale"
     :theme-config="{ statusColors, kindIcons }"
     :layout="{ engine: dagreLayout, options: { rankdir: 'TB', ranksep: 70, nodesep: 32 } }"
     auto-fit-view

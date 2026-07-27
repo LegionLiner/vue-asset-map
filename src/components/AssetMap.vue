@@ -277,8 +277,35 @@ const {
  */
 const nodesReady = useNodesInitialized()
 
+/**
+ * Whether the next "nodes are measured" signal should refit the canvas.
+ *
+ * `nodesReady` cannot tell the difference between the map appearing and someone
+ * unfolding one node's children — both change the visible set. Fitting on the
+ * second is what made the whole map jump every time a subtree was expanded, and
+ * a viewport that moves on its own while you are working one corner of the graph
+ * loses your place. So the intent is recorded here by whatever caused it, and
+ * anything not on this list leaves the viewport where the user put it.
+ */
+const fitRequested = ref(props.autoFitView)
+
 watch(nodesReady, (ready) => {
-  if (ready && props.autoFitView) void fitView()
+  if (!ready || !fitRequested.value) return
+  fitRequested.value = false
+  void fitView()
+})
+
+/**
+ * A view switch is a different graph, so it does earn a refit — the previous
+ * viewport describes a layout that is no longer on screen.
+ *
+ * It also drops the selection: a node selected in one view need not exist in the
+ * next, and a selection you cannot see still dims everything around it.
+ */
+watch(view, () => {
+  if (props.autoFitView) fitRequested.value = true
+  selectionState.clear()
+  clearHighlight()
 })
 
 /** Overview nodes: the visible ones, with positions already computed. */
@@ -827,8 +854,10 @@ function onConfirmDelete(): void {
  * consumer wiring them together.
  */
 const resolvedLinkFields = computed<FieldDef[]>(() => {
-  if (props.linkFields) return props.linkFields
+  // `editable` gates first: declaring fields describes a form, it does not ask
+  // for one. Without it there is no edit button, however many fields are named.
   if (!props.editable) return []
+  if (props.linkFields) return props.linkFields
 
   return [
     {
@@ -842,7 +871,37 @@ const resolvedLinkFields = computed<FieldDef[]>(() => {
   ]
 })
 
-const entityFields = computed<FieldDef[]>(() => (props.editable ? (props.entityFields ?? []) : []))
+/**
+ * Entity fields offered when the consumer declares none.
+ *
+ * The same courtesy links get: `editable` on its own is enough to put a working
+ * Edit button on both windows, instead of one kind of record being editable out
+ * of the box and the other silently not.
+ *
+ * Only the two fields the package actually knows the meaning of. `status` is a
+ * select over the statuses the consumer already named in
+ * `themeConfig.statusColors`, and falls back to free text when they named none —
+ * offering an empty dropdown would be worse than offering a box to type in.
+ * Anything in `meta` needs `entityFields`, since the package cannot guess either
+ * the names or which of them matter.
+ */
+const entityFields = computed<FieldDef[]>(() => {
+  if (!props.editable) return []
+  if (props.entityFields) return props.entityFields
+
+  const statuses = Object.keys(props.themeConfig?.statusColors ?? {})
+
+  return [
+    { key: 'label', label: t.value('details.title') },
+    {
+      key: 'status',
+      label: t.value('details.status'),
+      ...(statuses.length > 0
+        ? { type: 'select' as const, options: statuses.map((status) => ({ value: status })) }
+        : {}),
+    },
+  ]
+})
 
 function onEntitySave(entity: AssetEntity<E>): void {
   emit('entity-update', { id: entity.id, entity })

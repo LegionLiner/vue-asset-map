@@ -3,9 +3,11 @@ import { ref } from 'vue'
 import { AssetMap } from 'vue-asset-map'
 import { connectionMarkers } from 'vue-asset-map/core'
 import { useSiteTheme } from '../theme/useSiteTheme'
+import { useSiteLocale } from '../theme/useSiteLocale'
 import { entities, links, views, statusColors, kindIcons } from './fixture'
 
 const theme = useSiteTheme()
+const locale = useSiteLocale()
 
 // One marker per hub; a node carries the dot of every hub it is connected to,
 // so a workstation wired to a router and joined to the VPN gets two. Markers
@@ -30,6 +32,7 @@ const view = ref('physical')
     :markers="markers"
     :marker-hover-delay="300"
     :theme="theme"
+    :locale="locale"
     :theme-config="{ statusColors, kindIcons }"
     :layout="{ engine: 'radial', options: { rootId: view === 'physical' ? 'internet' : 'vps-tailscale' } }"
     auto-fit-view

@@ -3,9 +3,11 @@ import { computed, ref } from 'vue'
 import { AssetMap } from 'vue-asset-map'
 import { dagreLayout } from 'vue-asset-map/layout-dagre'
 import { useSiteTheme } from '../theme/useSiteTheme'
+import { useSiteLocale } from '../theme/useSiteLocale'
 import { entities, links, views, statusColors, kindIcons } from './fixture'
 
 const theme = useSiteTheme()
+const locale = useSiteLocale()
 const ENGINES = ['radial', 'manual', 'dagre'] as const
 const engineIndex = ref(0)
 const engineName = computed(() => ENGINES[engineIndex.value % ENGINES.length])
@@ -38,6 +40,7 @@ function nextEngine(): void {
     :views="views"
     :layout="layout"
     :theme="theme"
+    :locale="locale"
     :theme-config="{ statusColors, kindIcons }"
     auto-fit-view
   >

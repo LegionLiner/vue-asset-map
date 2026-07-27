@@ -2,6 +2,7 @@
 import { shallowRef } from 'vue'
 import { AssetMap } from 'vue-asset-map'
 import { useSiteTheme } from '../theme/useSiteTheme'
+import { useSiteLocale } from '../theme/useSiteLocale'
 import { generateLargeGraph } from './fixture'
 
 // 1000 nodes and roughly 1400 links, generated deterministically so the demo
@@ -10,6 +11,7 @@ import { generateLargeGraph } from './fixture'
 // this size.
 const large = shallowRef(generateLargeGraph(1000, 1400))
 const theme = useSiteTheme()
+const locale = useSiteLocale()
 </script>
 
 <template>
@@ -18,6 +20,7 @@ const theme = useSiteTheme()
     :entities="large.entities"
     :links="large.links"
     :theme="theme"
+    :locale="locale"
     :collapse="{ threshold: 12 }"
     :layout="{ engine: 'manual', options: { columns: 32 } }"
     :only-render-visible-elements="true"

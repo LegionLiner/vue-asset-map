@@ -2,9 +2,11 @@
 import { ref } from 'vue'
 import { AssetMap } from 'vue-asset-map'
 import { useSiteTheme } from '../theme/useSiteTheme'
+import { useSiteLocale } from '../theme/useSiteLocale'
 import { entities, links, views, statusColors, kindIcons } from './fixture'
 
 const theme = useSiteTheme()
+const locale = useSiteLocale()
 const selection = ref<string[]>(['ws-artjom', 'ws-vlad'])
 const traced = ref<string[]>([])
 
@@ -32,6 +34,7 @@ function clear(): void {
     :links="links"
     :views="views"
     :theme="theme"
+    :locale="locale"
     :theme-config="{ statusColors, kindIcons }"
     :layout="{ engine: 'radial', options: { rootId: 'vps-tailscale' } }"
     auto-path

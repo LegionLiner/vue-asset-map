@@ -265,6 +265,43 @@ describe('удаление через подтверждение', () => {
   })
 })
 
+describe('смена представления', () => {
+  it('сбрасывает выделение', async () => {
+    // Узел, выделенный в одном виде, в другом может не существовать вовсе, а
+    // невидимое выделение всё равно гасит всё вокруг себя.
+    const wrapper = await mountMap({ view: 'physical' })
+
+    await wrapper.find('[aria-label^="Tailscale VPS"]').trigger('click')
+    await nextTick()
+    expect(wrapper.emitted('selection-change')?.at(-1)?.[0]).toEqual(['vps-tailscale'])
+
+    await wrapper.setProps({ view: 'logical' })
+    await flushPromises()
+    await nextTick()
+
+    expect(wrapper.emitted('selection-change')?.at(-1)?.[0]).toEqual([])
+    expect(wrapper.findAll('.vam-node--selected')).toHaveLength(0)
+
+    wrapper.unmount()
+  })
+
+  it('снимает и подсветку пути: маршрут мог идти по связям другого вида', async () => {
+    const wrapper = await mountMap({ view: 'logical' })
+    const api = wrapper.vm as unknown as { highlightPath: (from: string, to: string) => string[] }
+
+    api.highlightPath('ws-artjom', 'ws-sergey')
+    await nextTick()
+    expect(wrapper.findAll('.vam-node--highlighted').length).toBeGreaterThan(1)
+
+    await wrapper.setProps({ view: 'physical' })
+    await flushPromises()
+    await nextTick()
+
+    expect(wrapper.findAll('.vam-node--highlighted')).toHaveLength(0)
+    wrapper.unmount()
+  })
+})
+
 describe('рисование связи между сущностями', () => {
   /**
    * Тянуть за ручку узла в jsdom нечем: VueFlow строит соединение на pointer-
@@ -408,13 +445,71 @@ describe('редактирование', () => {
     wrapper.unmount()
   })
 
-  it('без полей кнопки тоже нет: редактировать нечего', async () => {
+  it('одного editable хватает: сущность правится без объявленной схемы', async () => {
+    // Та же любезность, что и у связей: иначе одна запись правилась бы из
+    // коробки, а другая молча нет.
     const wrapper = await mountMap({ editable: true })
 
     await wrapper.find('[aria-label^="Tailscale VPS"]').trigger('click')
     await nextTick()
 
-    expect(wrapper.find('.vam-details .vam-window__actions').exists()).toBe(false)
+    const panel = wrapper.find('.vam-details')
+    expect(panel.find('.vam-window__actions').exists()).toBe(true)
+
+    await panel.find('.vam-window__action--primary').trigger('click')
+    await nextTick()
+
+    // Название и состояние — те два поля, значение которых пакет знает сам.
+    const labels = panel.findAll('.vam-fields__key').map((key) => key.text())
+    expect(labels).toHaveLength(2)
+
+    // Состояние — выбор по статусам, которые потребитель уже назвал в
+    // `themeConfig.statusColors`.
+    const select = panel.find('select.vam-fields__input')
+    expect(select.exists()).toBe(true)
+    expect(select.findAll('option').map((option) => option.text())).toEqual([
+      '—',
+      'online',
+      'offline',
+      'degraded',
+    ])
+
+    wrapper.unmount()
+  })
+
+  it('без statusColors состояние правится текстом, а не пустым списком', async () => {
+    const wrapper = mount(AssetMap, {
+      props: { entities, links, views, onlyRenderVisibleElements: false, searchDebounce: 0, editable: true },
+      attachTo: document.body,
+    })
+    await flushPromises()
+    await nextTick()
+    await flushPromises()
+
+    await wrapper.find('[aria-label^="Tailscale VPS"]').trigger('click')
+    await nextTick()
+
+    const panel = wrapper.find('.vam-details')
+    await panel.find('.vam-window__action--primary').trigger('click')
+    await nextTick()
+
+    expect(panel.find('select.vam-fields__input').exists()).toBe(false)
+    expect(panel.findAll('input.vam-fields__input')).toHaveLength(2)
+
+    wrapper.unmount()
+  })
+
+  it('объявленная схема отменяет умолчание', async () => {
+    const wrapper = await mountMap({ editable: true, entityFields })
+
+    await wrapper.find('[aria-label^="Tailscale VPS"]').trigger('click')
+    await nextTick()
+
+    const panel = wrapper.find('.vam-details')
+    await panel.find('.vam-window__action--primary').trigger('click')
+    await nextTick()
+
+    expect(panel.findAll('.vam-fields__key').map((key) => key.text())).toEqual(['Название', 'Владелец'])
     wrapper.unmount()
   })
 

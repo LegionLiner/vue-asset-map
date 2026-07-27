@@ -3,9 +3,11 @@ import { ref } from 'vue'
 import { AssetMap, emptyFilterState } from 'vue-asset-map'
 import type { FilterState } from 'vue-asset-map'
 import { useSiteTheme } from '../theme/useSiteTheme'
+import { useSiteLocale } from '../theme/useSiteLocale'
 import { entities, links, views, filterGroups, statusColors, kindIcons } from './fixture'
 
 const theme = useSiteTheme()
+const locale = useSiteLocale()
 const filters = ref<FilterState>(emptyFilterState())
 const openFilterGroups = ref<string[]>(['subnet'])
 
@@ -26,6 +28,7 @@ function preset(query: string): void {
     :views="views"
     :filter-options="{ groups: filterGroups, neighborDepth: 1 }"
     :theme="theme"
+    :locale="locale"
     :theme-config="{ statusColors, kindIcons }"
     :layout="{ engine: 'radial', options: { rootId: 'internet' } }"
     auto-fit-view

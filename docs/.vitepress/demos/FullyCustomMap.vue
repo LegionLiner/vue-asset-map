@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from 'vue'
-import { AssetMap, MapWindow } from 'vue-asset-map'
+import { AssetMap, MapWindow, en, ru } from 'vue-asset-map'
 import type { AssetMapExposed, FieldDef, FilterState, LinkTypeDef } from 'vue-asset-map'
 import { useSiteTheme } from '../theme/useSiteTheme'
+import { useSiteLocale } from '../theme/useSiteLocale'
 import ShapeNode from './custom/ShapeNode.vue'
 import WiredEdge from './custom/WiredEdge.vue'
 import type { DemoEntity, DemoLink } from './fixture'
@@ -16,6 +17,7 @@ import { entities as fixtureEntities, links as fixtureLinks, views } from './fix
  * into the package's internals — each piece is a documented prop or slot.
  */
 const theme = useSiteTheme()
+const siteLang = useSiteLocale()
 const map = useTemplateRef<AssetMapExposed>('map')
 
 const entities = ref<DemoEntity[]>([...fixtureEntities])
@@ -160,11 +162,21 @@ function onLinkDelete({ id }: { id: string }): void {
 }
 
 /* ------------------------------------------------ 5. Wording, our own too -- */
-const locale = {
-  'details.close': 'Dismiss',
-  'link.title': 'Cable',
-  'edit.save': 'Apply',
+/**
+ * A handful of renamed strings, over the language of the page.
+ *
+ * Spreading `en` or `ru` matters: a partial dictionary merges over the package's
+ * **default** locale, which is `ru`. Passing only the three overrides would
+ * leave everything else Russian on the English side of the site.
+ */
+const OVERRIDES = {
+  en: { 'details.close': 'Dismiss', 'link.title': 'Cable', 'edit.save': 'Apply' },
+  ru: { 'details.close': 'Убрать', 'link.title': 'Кабель', 'edit.save': 'Применить' },
 }
+
+const locale = computed(() =>
+  siteLang.value === 'ru' ? { ...ru, ...OVERRIDES.ru } : { ...en, ...OVERRIDES.en },
+)
 
 const tabs = [
   { id: 'facts', label: 'Facts' },
@@ -234,13 +246,13 @@ function labelOf(id: string): string {
         :links="links"
         :views="views"
         :theme="theme"
+        :locale="locale"
         :node-types="nodeTypes"
         :edge-types="edgeTypes"
         :link-types="linkTypes"
         :entity-fields="entityFields"
         :details-tabs="tabs"
         :details-title="(entity) => entity.type.toUpperCase()"
-        :locale="locale"
         :show-toolbar="false"
         :show-details-heading="false"
         :collapse="false"

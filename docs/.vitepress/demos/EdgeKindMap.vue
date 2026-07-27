@@ -3,9 +3,11 @@ import { AssetMap } from 'vue-asset-map'
 import type { AssetLink } from 'vue-asset-map'
 import { dagreLayout } from 'vue-asset-map/layout-dagre'
 import { useSiteTheme } from '../theme/useSiteTheme'
+import { useSiteLocale } from '../theme/useSiteLocale'
 import { entities, links, views, statusColors, kindIcons } from './fixture'
 
 const theme = useSiteTheme()
+const locale = useSiteLocale()
 
 // `type` selects the edge style through a CSS class; `directed` adds an arrow.
 // Nothing here is hardcoded in the package — both come from the data. A
@@ -24,6 +26,7 @@ const styled: AssetLink[] = links.map((link) =>
     :links="styled"
     :views="views"
     :theme="theme"
+    :locale="locale"
     :theme-config="{ statusColors, kindIcons }"
     :layout="{ engine: dagreLayout, options: { rankdir: 'LR', ranksep: 110 } }"
     auto-fit-view

@@ -3,6 +3,24 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.0.6
+
+### Changed
+
+- Switching views now clears the selection and any traced path. A node selected in one view need not exist in the next,
+  and a selection you cannot see still dims everything around it.
+
+### Fixed
+
+- **`autoFitView` refitted the canvas every time the visible set changed**, so unfolding one node's children jumped the
+  whole map and lost your place. It now fits when the map appears and when the view switches — a different graph, whose
+  old viewport describes a layout that is gone — and leaves the viewport alone for collapse, expand and filtering.
+- **An entity window had no Edit button unless `entityFields` was declared**, while a link window got one from
+  `editable` alone. Entities now get the same default: `label`, plus `status` as a select over whatever the consumer
+  named in `themeConfig.statusColors` (free text when they named none). Declaring `entityFields` still overrides it.
+- Declaring `entityFields` or `linkFields` without `editable` used to show the Edit button anyway. Declaring fields
+  describes a form; it does not ask for one.
+
 ## 1.0.5
 
 ### Added

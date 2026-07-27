@@ -5,9 +5,11 @@ import type { AssetView } from 'vue-asset-map'
 import { projectGraph, buildGraph, resolveView } from 'vue-asset-map/core'
 import { dagreLayout } from 'vue-asset-map/layout-dagre'
 import { useSiteTheme } from '../theme/useSiteTheme'
+import { useSiteLocale } from '../theme/useSiteLocale'
 import { entities, links, views as sourceViews, statusColors, kindIcons } from './fixture'
 
 const theme = useSiteTheme()
+const locale = useSiteLocale()
 
 // A view can carry its own layout (see the "Views" guide page): copied here so
 // each projection is not just a filtered subset of the same picture but visibly
@@ -37,6 +39,7 @@ const visible = computed(() => {
     :links="links"
     :views="views"
     :theme="theme"
+    :locale="locale"
     :theme-config="{ statusColors, kindIcons }"
     auto-fit-view
   >

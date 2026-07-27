@@ -64,8 +64,9 @@ Scope it to one map by adding a class of your own:
 | Canvas    | `--vam-canvas-dot`, `--vam-canvas-dot-size`, `--vam-canvas-grid`                                                                                                                                             |
 | Motion    | `--vam-transition`, `--vam-dimmed-opacity`                                                                                                                                                                   |
 
-The label plate has a fixed width on purpose: sublabels appear and disappear as views change, and a breathing size
-would jolt the whole layout.
+The label plate is sized by its contents up to `--vam-node-label-max-width`, so a short name gets a short plate and a
+long one is clipped rather than allowed to push its neighbours around. Layout reserves the ceiling for every node
+whatever its text, so plates cannot collide when a view swaps the labels underneath them.
 
 ## Status colors
 
@@ -100,6 +101,36 @@ Every class is prefixed `vam-`, and there are no global selectors. The ones you 
 
 State classes follow the same pattern: `.vam-node--selected`, `.vam-node--matched`, `.vam-node--dimmed`,
 `.vam-node--highlighted`, `.vam-node--simplified`, `.vam-node--infected`.
+
+## Wording
+
+**The built-in locale is Russian.** Every string ships in English too, but the map does not pick it up on its own — a
+map with no `locale` renders its filters, its search and its legend in Russian.
+
+```vue
+<AssetMap :entities="entities" :links="links" locale="en" />
+```
+
+A **partial** dictionary merges over the default, which is still `ru`. So this leaves everything but one string in
+Russian:
+
+```vue
+<!-- Not what it looks like: the other ~90 strings stay Russian. -->
+<AssetMap :locale="{ 'search.label': 'Find' }" :entities="entities" :links="links" />
+```
+
+For an English base with overrides on top, spread the exported dictionary:
+
+```vue
+<script setup lang="ts">
+import { en } from 'vue-asset-map'
+
+const locale = { ...en, 'search.label': 'Find' }
+</script>
+```
+
+Both `en` and `ru` are exported, and `LocaleMessages` types the full key set, so a missing key is a compile error
+rather than a stray Russian word in production.
 
 <script setup>
 import darkSource from '../.vitepress/demos/DarkThemeMap.vue?raw'
