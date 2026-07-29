@@ -1,6 +1,6 @@
 {
   "name": "vue-asset-map",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Interactive infrastructure asset map for Vue 3, built on Vue Flow",
   "keywords": [
     "vue",
