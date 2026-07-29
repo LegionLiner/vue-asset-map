@@ -3,6 +3,23 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.0.7
+
+### Added
+
+- `v-model:positions`: where nodes were moved by hand, keyed by entity id — the arrangement someone made, and the one
+  thing worth persisting. Bind it, store what comes out, hand it back next time and the map opens as they left it. It
+  holds only the deliberate moves, so a saved layout survives the data changing: an entity added later is laid out by
+  the engine rather than landing wherever an old file remembered. A plain object because it is meant to be serialised —
+  `JSON.stringify` turns a `Map` into `{}`.
+- `node-move` event, fired per node once a drag finishes, with the entity alongside the id. Saving one moved asset is a
+  different request from saving the whole layout, and this saves diffing two objects to find out which one moved.
+- `getPositions()`: every visible node's position, engine output included — a snapshot for an export, as opposed to
+  the arrangement. Keyed by node id, so a folded group reports under its own id. The result is a copy.
+- `resetPositions()`: forgets every hand-placed position and hands the map back to the engine.
+- `useLayout` takes an optional `manual` ref, so hand-placed positions can be owned by the caller instead of dying with
+  the composable.
+
 ## 1.0.6
 
 ### Changed

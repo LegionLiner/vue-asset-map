@@ -68,6 +68,64 @@ The first two are handed to the engine as `pinned`, so the engine leaves them al
 corrected afterwards. Dagre cannot fix nodes in place, so its output has the pinned positions re-applied over it —
 from outside, behaviour matches every other engine.
 
+## Saving the arrangement
+
+Dragged positions leave through `v-model:positions`, an ordinary object keyed by entity id. Bind it, store what comes
+out, hand it back on the next mount, and the map opens exactly as someone left it.
+
+```vue
+<script setup lang="ts">
+import { ref, watch } from 'vue'
+
+const positions = ref(JSON.parse(localStorage.getItem('layout') ?? '{}'))
+watch(positions, (next) => localStorage.setItem('layout', JSON.stringify(next)), { deep: true })
+</script>
+
+<template>
+  <AssetMap v-model:positions="positions" :entities="entities" :links="links" />
+</template>
+```
+
+It holds **only the deliberate moves**, not every node's coordinates, and that is what makes a saved arrangement
+survive the data changing. An entity added next week is laid out by the engine instead of landing wherever an old file
+happened to remember; one that disappears leaves a harmless unused key behind.
+
+A plain object rather than a `Map`, because this is the thing that gets serialised — `JSON.stringify` turns a `Map`
+into `{}`.
+
+The map never writes to storage itself. Where the layout lives — `localStorage`, a user profile, a URL — is the
+application's decision, exactly as with every other piece of state the map hands out.
+
+### Per-node saving
+
+`node-move` fires once per node as a drag finishes, with the entity alongside the id:
+
+```vue
+<AssetMap
+  :entities="entities"
+  :links="links"
+  @node-move="({ id, position }) => api.patchAsset(id, position)"
+/>
+```
+
+Saving one moved asset is a different request from saving the whole layout, and this saves diffing two objects to work
+out which one moved.
+
+### The full picture
+
+`getPositions()` returns **every** visible node's position, engine output included — a snapshot for an export or a
+thumbnail, as opposed to the arrangement someone chose:
+
+```ts
+const map = useTemplateRef<AssetMapExposed>('map')
+const snapshot = map.value?.getPositions()
+```
+
+It is keyed by node id, so a folded group reports under the group's own id: its members are not on screen and have no
+position to report. The result is a copy, safe to keep and edit.
+
+`resetPositions()` forgets every hand-placed position and hands the map back to the engine.
+
 ## Writing an engine
 
 ```ts

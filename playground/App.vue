@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref, useTemplateRef } from 'vue'
+import { computed, reactive, ref, useTemplateRef, watch } from 'vue'
 import { MapWindow, AssetMap, type FilterState, type AssetMapExposed, type ThemeMode } from 'vue-asset-map'
 import {
   entities as fixtureEntities,
@@ -34,6 +34,34 @@ const expanded = ref(new Set<string>())
 const collapsedNodes = ref(new Set<string>())
 const filters = ref<FilterState>({ query: '', types: [], statuses: [] })
 const openDetails = ref<string[]>([])
+
+/*
+ * Расположение, расставленное руками, живёт в localStorage.
+ *
+ * Карта сама никуда не пишет: она отдаёт позиции через `v-model:positions`, а
+ * хранить их — дело приложения. Здесь это браузер, в реальном продукте был бы
+ * профиль пользователя на сервере.
+ */
+const POSITIONS_KEY = 'vam-playground-positions'
+
+function loadPositions(): Record<string, { x: number; y: number }> {
+  try {
+    return JSON.parse(localStorage.getItem(POSITIONS_KEY) ?? '{}')
+  } catch {
+    // Испорченная запись не должна мешать карте открыться.
+    return {}
+  }
+}
+
+const positions = ref(loadPositions())
+
+watch(positions, (next) => localStorage.setItem(POSITIONS_KEY, JSON.stringify(next)), { deep: true })
+
+const movedCount = computed(() => Object.keys(positions.value).length)
+
+function resetPositions(): void {
+  map.value?.resetPositions()
+}
 
 const infectedSource = 'vps-tailscale'
 const infectionOn = ref(false)
@@ -262,6 +290,9 @@ const historyControls = [
       <button type="button" :disabled="!lastPath" @click="clearPath">Сбросить путь</button>
       <button type="button" @click="map?.fitView()">Вся карта</button>
       <button type="button" @click="map?.relayout()">Перестроить</button>
+      <button type="button" :disabled="movedCount === 0" @click="resetPositions">
+        Сбросить расстановку{{ movedCount ? ` (${movedCount})` : '' }}
+      </button>
 
       <span class="pg-bar__hint">
         <template v-if="lastPath">Путь: {{ lastPath.join(' → ') }}</template>
@@ -281,6 +312,7 @@ const historyControls = [
       v-model:filters="filters"
       v-model:open-filter-groups="openFilterGroups"
       v-model:open-details="openDetails"
+      v-model:positions="positions"
       class="pg-map"
       :entities="entities"
       :links="links"

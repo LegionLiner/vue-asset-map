@@ -23,6 +23,15 @@ export interface UseLayoutParams<E, L> {
   view: ComputedRef<AssetView | undefined>
   /** Extra engines registered by the consumer, addressable by name. */
   engines?: Ref<Readonly<Record<string, LayoutEngine>> | undefined>
+  /**
+   * Positions the user moved by hand, owned by the caller so they can outlive
+   * the component.
+   *
+   * A plain object rather than a `Map`: this is the thing an application saves,
+   * and `JSON.stringify` turns a `Map` into `{}`. Omitted, the composable keeps
+   * its own and the moves are forgotten on unmount.
+   */
+  manual?: Ref<Record<EntityId, XY>>
   sizeOf: (nodeId: string) => NodeSize
   onStart?: (engineName: string) => void
   onDone?: (engineName: string, positionCount: number) => void
@@ -41,6 +50,13 @@ export interface UseLayoutReturn {
   clearManualPositions: () => void
   /** Final position of a node, priorities applied. */
   positionOf: (id: string) => XY | undefined
+  /**
+   * Every node's current position, priorities applied.
+   *
+   * The whole picture, engine output included — what a snapshot needs, as
+   * opposed to `manual`, which is only what someone moved on purpose.
+   */
+  snapshot: (ids: Iterable<string>) => Record<EntityId, XY>
 }
 
 /**
@@ -61,7 +77,9 @@ export function useLayout<E, L>(params: UseLayoutParams<E, L>): UseLayoutReturn 
   const { graph, collapsed, spec, view, engines, sizeOf, onStart, onDone, onError } = params
 
   const positions = shallowRef<ReadonlyMap<EntityId, XY>>(new Map())
-  const manual = shallowRef<ReadonlyMap<EntityId, XY>>(new Map())
+  // Falls back to a ref of its own, so the composable still works standalone —
+  // the moves are simply forgotten when it goes away.
+  const manual = params.manual ?? ref<Record<EntityId, XY>>({})
   const running = ref(false)
 
   let controller: AbortController | undefined
@@ -84,7 +102,7 @@ export function useLayout<E, L>(params: UseLayoutParams<E, L>): UseLayoutReturn 
   const engineName = computed(() => engine.value.name)
 
   const pinnedOf = (id: string): XY | undefined =>
-    manual.value.get(id) ?? graph.value.entities.get(id)?.position
+    manual.value[id] ?? graph.value.entities.get(id)?.position
 
   function buildLayoutGraph(): LayoutGraph {
     const nodes: LayoutNode[] = collapsed.value.nodeIds.map((id) => {
@@ -137,21 +155,32 @@ export function useLayout<E, L>(params: UseLayoutParams<E, L>): UseLayoutReturn 
   // sufficient "the graph changed" signal on its own.
   watch([collapsed, engine, activeSpec], () => void relayout(), { immediate: true })
 
+  // Always a new object: `manual` may be a `v-model` the consumer owns, where
+  // editing in place would raise no update and would mutate their state.
   const setManualPosition = (id: EntityId, position: XY): void => {
-    const next = new Map(manual.value)
-    next.set(id, { x: position.x, y: position.y })
-    manual.value = next
+    manual.value = { ...manual.value, [id]: { x: position.x, y: position.y } }
   }
 
   const clearManualPositions = (): void => {
-    if (manual.value.size === 0) return
-    manual.value = new Map()
+    if (Object.keys(manual.value).length === 0) return
+    manual.value = {}
   }
 
   // Same priority order as the one handed to the engine, so a node does not
   // jump between "before" and "after" the result is applied.
   const positionOf = (id: string): XY | undefined =>
-    manual.value.get(id) ?? graph.value.entities.get(id)?.position ?? positions.value.get(id)
+    manual.value[id] ?? graph.value.entities.get(id)?.position ?? positions.value.get(id)
+
+  const snapshot = (ids: Iterable<string>): Record<EntityId, XY> => {
+    const result: Record<EntityId, XY> = {}
+    for (const id of ids) {
+      const position = positionOf(id)
+      // Copied, not handed out by reference: a caller storing the snapshot must
+      // not end up holding the map's own coordinates.
+      if (position) result[id] = { x: position.x, y: position.y }
+    }
+    return result
+  }
 
   onScopeDispose(() => controller?.abort())
 
@@ -163,5 +192,6 @@ export function useLayout<E, L>(params: UseLayoutParams<E, L>): UseLayoutReturn 
     setManualPosition,
     clearManualPositions,
     positionOf,
+    snapshot,
   }
 }

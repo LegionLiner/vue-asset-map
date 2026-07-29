@@ -75,6 +75,7 @@ Without `views`, everything is drawn.
 | `viewport`         | `Viewport`              | Pan in px plus zoom.                              |
 | `openDetails`      | `EntityId[]`            | Entities with an open window; the last is on top. |
 | `openLinks`        | `string[]`              | Links with an open window; the last is on top.    |
+| `positions`        | `Record<EntityId, XY>`  | Where nodes were moved by hand. Persist this.     |
 | `collapsedNodes`   | `Set<EntityId>`         | Nodes whose subtree is folded.                    |
 | `openFilterGroups` | `string[] \| undefined` | Expanded filter lists.                            |
 
@@ -96,6 +97,7 @@ Each works without a `v-model`; the component then owns that state.
 | `entity-delete`                                    | `{ id: EntityId; entity: AssetEntity<E> \| undefined }`      |
 | `link-delete`                                      | `{ id: string; link: AssetLink<L> \| undefined }`            |
 | `link-create`                                      | `{ link: AssetLink<L>; source: EntityId; target: EntityId }` |
+| `node-move`                                        | `{ id: EntityId; entity?: AssetEntity<E>; position: XY }`    |
 | `layout-start`                                     | `string` — engine name                                       |
 | `layout-done`                                      | `{ engine: string; positions: number }`                      |
 | `error`                                            | `unknown`                                                    |
@@ -131,6 +133,8 @@ needs it: `badge` for `node-badge`, `sublabels` for `node-label`, `status` and `
 | `highlightPath`  | `(from, to, options?: PathOptions) => EntityId[]`         |
 | `clearHighlight` | `() => void`                                              |
 | `getGraph`       | `() => AssetGraph<E, L>`                                  |
+| `getPositions`   | `() => Record<EntityId, XY>` — every visible node         |
+| `resetPositions` | `() => void` — forget the hand-placed ones                |
 
 ### Other components
 

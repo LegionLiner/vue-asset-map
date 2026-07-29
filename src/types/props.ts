@@ -348,6 +348,14 @@ export interface AssetMapModels {
   expanded?: Set<string>
   filters?: FilterState
   viewport?: Viewport
+  /**
+   * Where the user moved nodes by hand, keyed by entity id.
+   *
+   * The layout someone arranged, and the one thing worth persisting: a plain
+   * object so it serialises, and only the deliberate moves so it survives the
+   * data changing underneath it.
+   */
+  positions?: Record<EntityId, XY>
 }
 
 /**
@@ -532,4 +540,17 @@ export interface AssetMapExposed<E = unknown, L = unknown> {
   highlightPath: (from: EntityId, to: EntityId, options?: PathOptions) => EntityId[]
   clearHighlight: () => void
   getGraph: () => AssetGraph<E, L>
+  /**
+   * Every node's current position, engine output included.
+   *
+   * A snapshot of the whole picture. To persist and restore a layout, bind
+   * `v-model:positions` instead — it holds only the deliberate moves, which is
+   * what keeps a saved arrangement valid after the data changes.
+   *
+   * Keyed by node id: a folded group reports under the group's own id, since
+   * its members are not on screen and have no position of their own.
+   */
+  getPositions: () => Record<EntityId, XY>
+  /** Forgets every hand-placed position, handing the map back to the engine. */
+  resetPositions: () => void
 }

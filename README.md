@@ -36,6 +36,9 @@ Interactive infrastructure asset map for Vue 3, built on Vue Flow.
 - **Editing, without owning the data.** An edit button turns a details window into a form, right-click menus delete
   behind the package's own confirmation, and links are drawn by dragging between nodes. The map never writes to
   `entities` or `links` — it reports through events and the application decides.
+- **A layout you can save.** Dragged positions leave through `v-model:positions` — a plain, serialisable object of
+  only the deliberate moves, so a stored arrangement survives the data changing under it. `getPositions()` snapshots
+  every node when you want the whole picture.
 - **Pluggable layouts.** `manual` and `radial` are built in, `dagre` ships behind a subpath. Any object with
   `run(graph, options, signal)` can be passed instead.
 - **Framework-free core.** `vue-asset-map/core` imports neither Vue nor Vue Flow, so projections, filtering and blast
@@ -137,8 +140,8 @@ The ones reached for most often; the full list is in the
 | `locale`            | `string \| PartialLocaleMessages` | `ru`           | Locale code, or a dictionary of overrides.                |
 | `autoFitView`       | `boolean`                         | `false`        | Fit the canvas to its content after every layout.         |
 
-Two-way bindings: `view`, `selection`, `expanded`, `filters`, `viewport`, `openDetails`, `collapsedNodes`,
-`openFilterGroups`. Each works without a `v-model` too — the component then owns that state itself.
+Two-way bindings: `view`, `selection`, `expanded`, `filters`, `viewport`, `positions`, `openDetails`, `openLinks`,
+`collapsedNodes`, `openFilterGroups`. Each works without a `v-model` too — the component then owns that state itself.
 
 ## Events
 

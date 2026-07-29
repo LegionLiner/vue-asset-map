@@ -102,6 +102,15 @@ const emit = defineEmits<{
    * regardless, so the kind and speed can be filled in straight away.
    */
   'link-create': [payload: { link: AssetLink<L>; source: EntityId; target: EntityId }]
+
+  /**
+   * A node was dragged to a new place, once the drag finished.
+   *
+   * Fires per node, so persisting one moved asset does not mean diffing the
+   * whole layout to work out which one it was. The full picture stays available
+   * through `v-model:positions`.
+   */
+  'node-move': [payload: { id: EntityId; entity: AssetEntity<E> | undefined; position: XY }]
   'layout-start': [engine: string]
   'layout-done': [payload: { engine: string; positions: number }]
   error: [error: unknown]
@@ -128,6 +137,22 @@ const openLinks = defineModel<string[]>('openLinks', { default: () => [] })
 const collapsedNodes = defineModel<Set<EntityId>>('collapsedNodes', {
   default: () => new Set<EntityId>(),
 })
+/**
+ * Where the user has moved nodes by hand.
+ *
+ * The layout someone arranged, and the thing to persist: bind it, store what
+ * comes out, hand it back on the next mount and the map opens as they left it.
+ *
+ * Only the deliberate moves are in here, not every node's coordinates. That is
+ * what makes it survive the data changing — an entity added later is laid out
+ * by the engine instead of landing at whatever the file happened to remember,
+ * and one that disappears leaves a harmless stale key rather than a hole. For
+ * the whole picture, engine output included, call `getPositions()`.
+ *
+ * A plain object because it is meant to be serialised; a `Map` would
+ * `JSON.stringify` to `{}`.
+ */
+const positions = defineModel<Record<EntityId, XY>>('positions', { default: () => ({}) })
 
 defineSlots<AssetMapSlots<E, L>>()
 
@@ -218,6 +243,7 @@ const layoutState = useLayout({
   spec: computed(() => props.layout),
   view,
   sizeOf,
+  manual: positions,
   onStart: (engine) => emit('layout-start', engine),
   onDone: (engine, positions) => emit('layout-done', { engine, positions }),
   onError: (error) => emit('error', error),
@@ -504,7 +530,12 @@ function onPaneClick(event: MouseEvent): void {
 /** A dragged position outranks everything; a relayout will not reset it. */
 function onNodeDragStop(event: NodeDragEvent): void {
   for (const node of event.nodes) {
-    layoutState.setManualPosition(node.id, { x: node.position.x, y: node.position.y })
+    const position = { x: node.position.x, y: node.position.y }
+    layoutState.setManualPosition(node.id, position)
+    // Reported per node as well as through `v-model:positions`: saving one
+    // moved asset is a different request from saving the whole layout, and an
+    // application should not have to diff two objects to find out which.
+    emit('node-move', { id: node.id, entity: graph.value.entities.get(node.id), position })
   }
 }
 
@@ -1177,6 +1208,25 @@ async function focus(id: EntityId, options?: FocusOptions): Promise<void> {
   })
 }
 
+/**
+ * Every node's position right now, engine output included.
+ *
+ * The whole picture, for an export or a thumbnail — as opposed to
+ * `v-model:positions`, which holds only what someone moved on purpose and is
+ * the thing to persist and hand back.
+ *
+ * Keyed by node id, which for a folded group is the group's id rather than any
+ * of its members': those are not on screen and have no position to report.
+ */
+function getPositions(): Record<EntityId, XY> {
+  return layoutState.snapshot(collapseState.collapsed.value.nodeIds)
+}
+
+/** Forgets every hand-placed position, handing the map back to the engine. */
+function resetPositions(): void {
+  layoutState.clearManualPositions()
+}
+
 defineExpose({
   fitView,
   focus,
@@ -1184,6 +1234,8 @@ defineExpose({
   highlightPath,
   clearHighlight,
   getGraph: (): AssetGraph<E, L> => graph.value,
+  getPositions,
+  resetPositions,
 } satisfies AssetMapExposed<E, L>)
 </script>
 

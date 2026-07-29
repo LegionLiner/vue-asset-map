@@ -66,17 +66,18 @@
 
 #### Двусторонние привязки
 
-| Модель             | Тип                     | Что хранит                                   |
-| ------------------ | ----------------------- | -------------------------------------------- |
-| `view`             | `string \| undefined`   | Id активного представления.                  |
-| `selection`        | `EntityId[]`            | Выделенные id в порядке выбора.              |
-| `expanded`         | `Set<string>`           | Id групп, раскрытых руками.                  |
-| `filters`          | `FilterState`           | Запрос, группы фильтров, выбор по группам.   |
-| `viewport`         | `Viewport`              | Сдвиг в пикселях плюс масштаб.               |
-| `openDetails`      | `EntityId[]`            | Сущности с открытым окном; последняя сверху. |
-| `openLinks`        | `string[]`              | Связи с открытым окном; последняя сверху.    |
-| `collapsedNodes`   | `Set<EntityId>`         | Узлы со свёрнутым поддеревом.                |
-| `openFilterGroups` | `string[] \| undefined` | Раскрытые списки фильтров.                   |
+| Модель             | Тип                     | Что хранит                                     |
+| ------------------ | ----------------------- | ---------------------------------------------- |
+| `view`             | `string \| undefined`   | Id активного представления.                    |
+| `selection`        | `EntityId[]`            | Выделенные id в порядке выбора.                |
+| `expanded`         | `Set<string>`           | Id групп, раскрытых руками.                    |
+| `filters`          | `FilterState`           | Запрос, группы фильтров, выбор по группам.     |
+| `viewport`         | `Viewport`              | Сдвиг в пикселях плюс масштаб.                 |
+| `openDetails`      | `EntityId[]`            | Сущности с открытым окном; последняя сверху.   |
+| `openLinks`        | `string[]`              | Связи с открытым окном; последняя сверху.      |
+| `positions`        | `Record<EntityId, XY>`  | Куда узлы передвинули руками. Это и сохраняют. |
+| `collapsedNodes`   | `Set<EntityId>`         | Узлы со свёрнутым поддеревом.                  |
+| `openFilterGroups` | `string[] \| undefined` | Раскрытые списки фильтров.                     |
 
 Каждая привязка работает и без `v-model`. Тогда состоянием владеет компонент.
 
@@ -96,6 +97,7 @@
 | `entity-delete`                                    | `{ id: EntityId; entity: AssetEntity<E> \| undefined }`      |
 | `link-delete`                                      | `{ id: string; link: AssetLink<L> \| undefined }`            |
 | `link-create`                                      | `{ link: AssetLink<L>; source: EntityId; target: EntityId }` |
+| `node-move`                                        | `{ id: EntityId; entity?: AssetEntity<E>; position: XY }`    |
 | `layout-start`                                     | `string` — имя алгоритма                                     |
 | `layout-done`                                      | `{ engine: string; positions: number }`                      |
 | `error`                                            | `unknown`                                                    |
@@ -131,6 +133,8 @@
 | `highlightPath`  | `(from, to, options?: PathOptions) => EntityId[]`         |
 | `clearHighlight` | `() => void`                                              |
 | `getGraph`       | `() => AssetGraph<E, L>`                                  |
+| `getPositions`   | `() => Record<EntityId, XY>` — все видимые узлы           |
+| `resetPositions` | `() => void` — забыть расставленное руками                |
 
 ### Остальные компоненты
 
