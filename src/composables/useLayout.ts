@@ -101,8 +101,7 @@ export function useLayout<E, L>(params: UseLayoutParams<E, L>): UseLayoutReturn 
 
   const engineName = computed(() => engine.value.name)
 
-  const pinnedOf = (id: string): XY | undefined =>
-    manual.value[id] ?? graph.value.entities.get(id)?.position
+  const pinnedOf = (id: string): XY | undefined => manual.value[id] ?? graph.value.entities.get(id)?.position
 
   function buildLayoutGraph(): LayoutGraph {
     const nodes: LayoutNode[] = collapsed.value.nodeIds.map((id) => {
