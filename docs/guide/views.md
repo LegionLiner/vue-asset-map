@@ -52,6 +52,10 @@ The built-in switcher appears in the toolbar as soon as there are two views or m
 falls back to the first view rather than rendering an empty map, so a value persisted from an older configuration
 cannot blank the screen.
 
+Switching clears the **selection** and any traced path. A node selected in one view need not exist in the next, and a
+selection you cannot see still dims everything around it. With `autoFitView` on, the canvas refits too — a different
+view is a different graph, and the old viewport describes a layout that is gone.
+
 <LiveDemo :source="projectionsSource">
   <ProjectionsMap />
 </LiveDemo>

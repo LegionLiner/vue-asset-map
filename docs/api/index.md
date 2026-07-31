@@ -160,6 +160,10 @@ needs it: `badge` for `node-badge`, `sublabels` for `node-label`, `status` and `
 `AssetEntity<M>`, `AssetLink<M>`, `AssetView`, `ProjectionResult`, `EntityId`, `XY`, `Badge`, `AssetGraph<E, L>`,
 `GraphIssue`, `GraphIssueCode`.
 
+An `AssetLink` may also name `sourceHandle` and `targetHandle`. They matter only for a node component that draws
+more than one handle — ports on a switch, slots in a rack, objects inside a block — where the line joins a specific
+pair rather than the two nodes as wholes. Omitted, a line lands on the node's first handle of the right type.
+
 ### Collapsing
 
 `CollapseRule`, `CollapsedGroup`, `CollapsedLink<L>`, `CollapseResult<L>`, `AggregatedLink<L>`, `CollapseOptions`.

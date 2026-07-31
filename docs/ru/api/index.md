@@ -160,6 +160,10 @@
 `AssetEntity<M>`, `AssetLink<M>`, `AssetView`, `ProjectionResult`, `EntityId`, `XY`, `Badge`, `AssetGraph<E, L>`,
 `GraphIssue`, `GraphIssueCode`.
 
+У `AssetLink` могут быть ещё `sourceHandle` и `targetHandle`. Они нужны только компоненту узла, который рисует
+больше одной ручки — порты коммутатора, слоты в стойке, объекты внутри блока, — когда линия соединяет конкретную пару,
+а не два узла целиком. Без них линия садится на первую ручку подходящего типа.
+
 ### Свёртка
 
 `CollapseRule`, `CollapsedGroup`, `CollapsedLink<L>`, `CollapseResult<L>`, `AggregatedLink<L>`, `CollapseOptions`.

@@ -166,6 +166,13 @@ instead of failing deep inside a render.
 Interactions go through the context (`onNodeClick`, `onNodeDoubleClick`, `onNodeContextMenu`) rather than through Vue
 Flow events. That keeps behaviour identical whether or not Vue Flow's own selection is enabled.
 
+## Drawing links from a node
+
+With `editable`, hovering a node reveals four grab points, one per side of its circle, and dragging from one to another
+node draws a link. They are hidden at rest — four dots on every node would be four pieces of chrome per node on a map
+built to hold hundreds — and a custom node draws its own, since `nodeTypes` replaces this component entirely. See
+[Connections and editing](./editing#drawing-a-new-link).
+
 ## Collapsing a subtree
 
 A node with descendants gets a button in its top-right corner. Pressing it hides the whole subtree and re-homes the

@@ -963,8 +963,13 @@ const pendingLinkId = shallowRef<string | undefined>(undefined)
  * it was drawn in — a new link that immediately disappears because it belongs to
  * no layer is the obvious trap here.
  */
-function onConnect(connection: { source?: string | null; target?: string | null }): void {
-  const { source, target } = connection
+function onConnect(connection: {
+  source?: string | null
+  target?: string | null
+  sourceHandle?: string | null
+  targetHandle?: string | null
+}): void {
+  const { source, target, sourceHandle, targetHandle } = connection
   if (!source || !target || source === target) return
 
   const id = `vam-link-${source}-${target}-${Date.now()}`
@@ -973,7 +978,21 @@ function onConnect(connection: { source?: string | null; target?: string | null 
     source,
     target,
     layers: view.value ? [view.value.id] : [],
+    // Carried through when the node draws more than one handle: which two were
+    // joined is the whole content of the gesture, and it cannot be recovered
+    // from the pair of node ids afterwards.
+    ...(sourceHandle ? { sourceHandle } : {}),
+    ...(targetHandle ? { targetHandle } : {}),
   } as AssetLink<L>
+
+  // With no window to fill in — details switched off, or the cap set to zero —
+  // the link is reported as drawn and that is the whole gesture. Holding it
+  // pending would mean waiting for a save that can never be asked for, and the
+  // drag would vanish without a word.
+  if (!props.showDetailsPanel || maxDetailWindows.value === 0) {
+    emit('link-create', { link, source, target })
+    return
+  }
 
   pendingLink.value = link
   pendingLinkId.value = id
@@ -1348,7 +1367,7 @@ defineExpose({
           :offset="{ x: (detailWindows.length + index) * -24, y: (detailWindows.length + index) * 24 }"
           :style="{ zIndex: 20 + detailWindows.length + index }"
           :fields="resolvedLinkFields"
-          :start-editing="link.id === pendingLinkId"
+          :is-new="link.id === pendingLinkId"
           @close="closeLink(link.id)"
           @save="onLinkSave($event as AssetLink<L>)"
         />

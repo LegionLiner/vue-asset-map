@@ -24,10 +24,16 @@ const props = withDefaults(
     offset?: XY
     /** Fields offered when editing. No fields means no edit button. */
     fields?: readonly FieldDef[]
-    /** Open straight into edit mode — how a freshly drawn link arrives. */
-    startEditing?: boolean
+    /**
+     * The link does not exist yet — this is a line someone just drew.
+     *
+     * Opens straight into edit mode, and makes the first save unconditional:
+     * there is nothing to compare a draft against, and a new link saved without
+     * typing anything is still a link the user asked for.
+     */
+    isNew?: boolean
   }>(),
-  { startEditing: false },
+  { isNew: false },
 )
 
 const emit = defineEmits<{
@@ -37,7 +43,7 @@ const emit = defineEmits<{
 
 const map = useMapContext()
 
-const editing = ref(props.startEditing)
+const editing = ref(props.isNew)
 /** Draft values, by field key. Empty until something is actually typed. */
 const draft = ref<Record<string, unknown>>({})
 
@@ -112,9 +118,10 @@ function save(): void {
   editing.value = false
   draft.value = {}
 
-  // Unchanged means unchanged: an application listening for `link-update` should
-  // not be handed a write because someone opened the form and closed it again.
-  if (next !== props.link) emit('save', next)
+  // Unchanged means unchanged — except for a link that does not exist yet,
+  // where saving is what brings it into being and there is nothing to compare
+  // it against.
+  if (props.isNew || next !== props.link) emit('save', next)
 }
 
 // A link that changes underneath an open window (renamed, retyped from

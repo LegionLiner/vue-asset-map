@@ -419,6 +419,62 @@ describe('рисование связи между сущностями', () => 
     wrapper.unmount()
   })
 
+  it('id ручек доезжают до ребра', async () => {
+    // Узел, рисующий больше одной ручки — порты, слоты, строки карточки, —
+    // соединяет не блок с блоком, а конкретную пару. Без этого линия висела бы
+    // на узле целиком, и какая именно пара соединена, восстановить было бы не из
+    // чего.
+    const wrapper = await mountMap({ editable: true, view: 'physical' })
+
+    wrapper.findComponent(VueFlow).vm.$emit('connect', {
+      source: 'vps-tailscale',
+      target: 'keenetic-1',
+      sourceHandle: 'out:a',
+      targetHandle: 'in:b',
+    })
+    await flushPromises()
+    await nextTick()
+
+    const panel = wrapper.find('.vam-link-details')
+    await panel.find('.vam-window__action--primary').trigger('click')
+    await flushPromises()
+    await nextTick()
+
+    const created = wrapper.emitted('link-create')?.at(-1)?.[0] as {
+      link: { sourceHandle?: string; targetHandle?: string }
+    }
+    expect(created.link.sourceHandle).toBe('out:a')
+    expect(created.link.targetHandle).toBe('in:b')
+
+    wrapper.unmount()
+  })
+
+  it('без окна подробностей связь сообщается сразу', async () => {
+    // Заполнять нечего, значит и ждать сохранения неоткуда: иначе жест молча
+    // пропадал бы, а `editable` вместе с выключенными окнами был бы мёртвой
+    // комбинацией.
+    const wrapper = await mountMap({ editable: true, showDetailsPanel: false, view: 'physical' })
+
+    wrapper.findComponent(VueFlow).vm.$emit('connect', {
+      source: 'vps-tailscale',
+      target: 'keenetic-1',
+      sourceHandle: 'out:a',
+      targetHandle: 'in:b',
+    })
+    await flushPromises()
+    await nextTick()
+
+    expect(wrapper.findAll('.vam-link-details')).toHaveLength(0)
+    const created = wrapper.emitted('link-create')?.at(-1)?.[0] as {
+      source: string
+      link: { sourceHandle?: string }
+    }
+    expect(created.source).toBe('vps-tailscale')
+    expect(created.link.sourceHandle).toBe('out:a')
+
+    wrapper.unmount()
+  })
+
   it('петля на себя связью не считается', async () => {
     const wrapper = await mountMap({ editable: true })
 

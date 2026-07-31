@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, useTemplateRef, watch } from 'vue'
 import { MapWindow, AssetMap, type FilterState, type AssetMapExposed, type ThemeMode } from 'vue-asset-map'
+import LayersMap from './layers/LayersMap.vue'
 import {
   entities as fixtureEntities,
   filterGroups,
@@ -26,6 +27,15 @@ import {
 } from './icons'
 
 const map = useTemplateRef<AssetMapExposed>('map')
+
+/**
+ * Плейграунд показывает два варианта карты.
+ *
+ * Первый — круги, подписи, окна: всё, что пакет умеет из коробки. Второй —
+ * слои с объектами внутри и связями между объектами: другая модель узла на том
+ * же самом пакете.
+ */
+const variant = ref<'classic' | 'layers'>('classic')
 
 const theme = ref<ThemeMode>('light')
 const viewId = ref(views[0]?.id)
@@ -252,58 +262,78 @@ const historyControls = [
     <div class="pg-bar">
       <span class="pg-bar__title">vue-asset-map · плейграунд</span>
 
+      <span class="pg-variant">
+        <button
+          type="button"
+          :class="{ 'pg-bar__button--on': variant === 'classic' }"
+          @click="variant = 'classic'"
+        >
+          Вариант 1
+        </button>
+        <button
+          type="button"
+          :class="{ 'pg-bar__button--on': variant === 'layers' }"
+          @click="variant = 'layers'"
+        >
+          Вариант 2
+        </button>
+      </span>
+
       <button type="button" @click="theme = theme === 'dark' ? 'light' : 'dark'">
         Тема: {{ theme === 'dark' ? 'тёмная' : 'светлая' }}
       </button>
 
-      <span class="pg-infection">
-        <button
-          type="button"
-          :class="{ 'pg-bar__button--on': infectionOn }"
-          @click="infectionOn = !infectionOn"
-        >
-          Заражение: {{ infectionOn ? 'вкл' : 'выкл' }}
+      <template v-if="variant === 'classic'">
+        <span class="pg-infection">
+          <button
+            type="button"
+            :class="{ 'pg-bar__button--on': infectionOn }"
+            @click="infectionOn = !infectionOn"
+          >
+            Заражение: {{ infectionOn ? 'вкл' : 'выкл' }}
+          </button>
+
+          <template v-if="infectionOn">
+            <button
+              type="button"
+              :disabled="infectionDepth <= 0"
+              aria-label="Уменьшить радиус захвата"
+              @click="infectionDepth -= 1"
+            >
+              −
+            </button>
+            <span class="pg-infection__depth">шаг {{ infectionDepth }}</span>
+            <button
+              type="button"
+              :disabled="infectionDepth >= 5"
+              aria-label="Увеличить радиус захвата"
+              @click="infectionDepth += 1"
+            >
+              +
+            </button>
+            <span class="pg-infection__count" :title="capturedLabels">захвачено: {{ capturedIds.size }}</span>
+          </template>
+        </span>
+
+        <button type="button" :disabled="!lastPath" @click="clearPath">Сбросить путь</button>
+        <button type="button" @click="map?.fitView()">Вся карта</button>
+        <button type="button" @click="map?.relayout()">Перестроить</button>
+        <button type="button" :disabled="movedCount === 0" @click="resetPositions">
+          Сбросить расстановку{{ movedCount ? ` (${movedCount})` : '' }}
         </button>
 
-        <template v-if="infectionOn">
-          <button
-            type="button"
-            :disabled="infectionDepth <= 0"
-            aria-label="Уменьшить радиус захвата"
-            @click="infectionDepth -= 1"
-          >
-            −
-          </button>
-          <span class="pg-infection__depth">шаг {{ infectionDepth }}</span>
-          <button
-            type="button"
-            :disabled="infectionDepth >= 5"
-            aria-label="Увеличить радиус захвата"
-            @click="infectionDepth += 1"
-          >
-            +
-          </button>
-          <span class="pg-infection__count" :title="capturedLabels">захвачено: {{ capturedIds.size }}</span>
-        </template>
-      </span>
-
-      <button type="button" :disabled="!lastPath" @click="clearPath">Сбросить путь</button>
-      <button type="button" @click="map?.fitView()">Вся карта</button>
-      <button type="button" @click="map?.relayout()">Перестроить</button>
-      <button type="button" :disabled="movedCount === 0" @click="resetPositions">
-        Сбросить расстановку{{ movedCount ? ` (${movedCount})` : '' }}
-      </button>
-
-      <span class="pg-bar__hint">
-        <template v-if="lastPath">Путь: {{ lastPath.join(' → ') }}</template>
-        <template v-else-if="canTracePath">Между выбранными узлами пути нет</template>
-        <template v-else>
-          Shift+клик — путь · правый клик — меню · тяните от узла к узлу, чтобы связать
-        </template>
-      </span>
+        <span class="pg-bar__hint">
+          <template v-if="lastPath">Путь: {{ lastPath.join(' → ') }}</template>
+          <template v-else-if="canTracePath">Между выбранными узлами пути нет</template>
+          <template v-else>
+            Shift+клик — путь · правый клик — меню · тяните от узла к узлу, чтобы связать
+          </template>
+        </span>
+      </template>
     </div>
 
     <AssetMap
+      v-if="variant === 'classic'"
       ref="map"
       v-model:view="viewId"
       v-model:selection="selection"
@@ -416,7 +446,15 @@ const historyControls = [
       </template>
     </AssetMap>
 
-    <div v-if="addOpen" class="pg-modal" role="dialog" aria-modal="true" aria-label="Добавить актив">
+    <LayersMap v-else :theme="theme" />
+
+    <div
+      v-if="addOpen && variant === 'classic'"
+      class="pg-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Добавить актив"
+    >
       <div class="pg-modal__box">
         <div class="pg-modal__head">
           <strong>Добавить актив</strong>

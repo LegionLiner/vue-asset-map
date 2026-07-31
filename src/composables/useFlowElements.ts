@@ -151,6 +151,11 @@ export function useFlowElements<E, L>(params: UseFlowElementsParams<E, L>): UseF
         edge.markerEnd = MarkerType.ArrowClosed
       }
 
+      // Only set when the link names one: passing `undefined` would still count
+      // as naming a handle to VueFlow, and it would resolve to nothing.
+      if (link.sourceHandle !== undefined) edge.sourceHandle = link.sourceHandle
+      if (link.targetHandle !== undefined) edge.targetHandle = link.targetHandle
+
       return edge
     })
   })

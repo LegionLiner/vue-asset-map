@@ -3,6 +3,23 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.0.8
+
+### Added
+
+- `link.sourceHandle` / `link.targetHandle`: which handle on each end a line attaches to. Only meaningful for a node
+  component that draws more than one — ports on a switch, slots in a rack, objects inside a block — where the pair being
+  joined is the whole content of the gesture and cannot be recovered from the two node ids afterwards. Carried through
+  to Vue Flow, and set on the candidate that `link-create` reports.
+
+### Fixed
+
+- Drawing a link with `showDetailsPanel: false` (or `maxDetailsWindows: 0`) did nothing at all and reported nothing: the
+  candidate waited for a save from a window that could never open. It is reported as drawn straight away now, so
+  `editable` with windows switched off is a usable combination rather than a dead one.
+- Saving a freshly drawn link without typing into its form discarded it. "Unchanged means unchanged" is right for
+  editing a record that exists; for one that does not, saving is what brings it into being.
+
 ## 1.0.7
 
 ### Added

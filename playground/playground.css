@@ -308,3 +308,9 @@
   color: var(--vam-accent);
   font-size: 11px;
 }
+
+/* Переключатель вариантов карты, слева в панели. */
+.pg-variant {
+  display: inline-flex;
+  gap: 2px;
+}

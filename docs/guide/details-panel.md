@@ -98,6 +98,12 @@ All of it together leaves the title bar and nothing else of the default design:
 The bar itself stays: it carries the dragging, collapsing and closing that make the thing a window. To build a window
 whose bar is yours too, use `MapWindow` in the `#windows` slot — see below.
 
+## Connections have a window too
+
+Clicking an edge opens one, driven by `v-model:openLinks` and filled through `#link-details`. It shares this window
+chrome, the same cap and the same corner. And with `editable`, both windows grow an **Edit** button that turns the body
+into a form. Both are on [Connections and editing](./editing).
+
 ## Several windows at once
 
 `maxDetailsWindows` caps how many stay open; the default is `2`, and `0` disables windows entirely without removing

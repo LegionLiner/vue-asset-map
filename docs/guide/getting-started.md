@@ -99,8 +99,15 @@ The demo above runs on a larger fixture and adds icons and a layout engine, cove
 
 - [Data model](./data-model) — what an entity and a link may carry.
 - [Views](./views) — views, layers and isolated nodes.
-- [Nodes](./nodes) — icons, custom node components and slots.
+- [Nodes](./nodes) — icons, shapes, and taking the default node apart.
+- [Edges](./edges) — kinds, labels, custom edge components and per-handle endpoints.
+- [Collapse](./collapse) — folding groups and subtrees.
 - [Search and filters](./search) — IP search and consumer-defined filter groups.
+- [Details panel](./details-panel) — the window, its tabs, and windows of your own.
+- [Connections and editing](./editing) — connection kinds, the legend, right-click menus, editing and drawing links.
+- [Layouts](./layouts) — engines, position priority and saving the arrangement.
+- [Theming](./theming) — tokens, dark mode and wording.
+- [Traversal](./traversal) — neighbours, paths and the infection overlay.
 
 <script setup>
 import basicSource from '../.vitepress/demos/BasicMap.vue?raw'

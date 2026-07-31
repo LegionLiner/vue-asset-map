@@ -1,7 +1,8 @@
 # Edges
 
-An edge is a bezier curve between two node centres, styled by a class derived from `link.type`. Colors live in theme
-tokens rather than in an inline `stroke`, so an edge recolors itself when the theme switches.
+An edge is a bezier curve between two node centres. By default it is styled by a class derived from `link.type`, with
+colors in theme tokens rather than an inline `stroke`, so it recolors itself when the theme switches. Declaring
+[connection kinds](./editing#connection-kinds) replaces that with a colour and dash of your own.
 
 ## Kinds and direction
 
@@ -15,9 +16,41 @@ const links: AssetLink[] = [
 `type` lands in the class `vam-edge--type-{type}`, which you can style from your own CSS. `directed` adds an arrow head
 and constrains direction-aware traversals — see [Traversal](./traversal).
 
+For a colour, a dash and a human name per kind — plus a legend, and a type select when a link is edited — declare
+`linkTypes` instead of styling the classes by hand. One declaration drives all three, so they cannot disagree. See
+[Connections and editing](./editing#connection-kinds).
+
 <LiveDemo :source="edgeKindSource">
   <EdgeKindMap />
 </LiveDemo>
+
+## Clicking an edge
+
+A click opens a window describing the connection: what it joins, its kind, its layers and its `meta`. The open set is
+`v-model:openLinks`, and `#link-details` replaces the body. An **aggregated** edge opens nothing — it stands for
+several links at once and has no single record to show — though the click still reports through `edge-click`.
+
+Right-click puts a menu on the edge when `showContextMenu` is on, with a delete item while `editable`. All of it is on
+[Connections and editing](./editing).
+
+The line itself is 1px, which is not a click target, so every edge also carries an invisible 16px path along the same
+route. That is what takes the pointer; without it a click would land on the canvas nine times in ten.
+
+## Attaching to a specific handle
+
+A node that draws more than one handle — ports on a switch, slots in a rack, objects inside a block — can have lines
+that join a _specific pair_ rather than the two nodes as wholes:
+
+```ts
+{ id: 'l1', source: 'switch-a', target: 'switch-b', layers: ['physical'],
+  sourceHandle: 'port-3', targetHandle: 'port-1' }
+```
+
+The ids are the `id` props of the `<Handle>` components inside your node. Omitted, a line lands on the node's first
+handle of the right type, which is what every single-handle node wants — so nothing changes unless you ask for it.
+
+When a link is drawn by dragging, the handles the user actually connected arrive on the candidate that `link-create`
+reports. That is the only moment the information exists: two node ids cannot say which pair was joined.
 
 ## Labels
 

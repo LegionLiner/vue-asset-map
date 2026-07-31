@@ -194,11 +194,16 @@ layout placed at the origin ends up in the top-left corner rather than centred.
 <AssetMap :entities="entities" :links="links" auto-fit-view />
 ```
 
-`autoFitView` fits the canvas to its content once the first layout settles. It fits again after anything reshapes the
-layout: a view switch, a group collapse or expand, a layout engine change.
+`autoFitView` fits the canvas to its content once the first layout settles, and again when the **view** switches.
+
+It deliberately does **not** fit on every reshape. Collapsing a group, unfolding a subtree or narrowing a filter all
+change the visible set, and refitting on those would move the viewport while someone is working one corner of the
+graph — the map jumps and they lose their place. A view switch is different: it is a different graph, and the previous
+viewport describes a layout that is gone.
 
 The fit is timed by Vue Flow's own node-measurement signal rather than a fixed delay. So it fires exactly once
-dimensions are known, and never centres on a graph that has not finished laying out yet.
+dimensions are known, and never centres on a graph that has not finished laying out yet. The imperative `fitView()` is
+unaffected by any of this and always fits.
 
 It defaults to `false`. An application that manages its own viewport — restoring a saved position or calling `focus`
 on a node after load — should not have that logic overridden on every relayout. For a one-off fit instead of a

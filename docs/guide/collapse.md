@@ -96,6 +96,10 @@ The button on a node hides its **descendants** while the node itself stays on th
 **siblings** behind a synthetic node. They compose: a subtree hidden by the button is resolved before any grouping
 decision, so its descendants neither group nor reach the node list.
 
+The subtree state is `v-model:collapsedNodes`, a set of ids, so it can be restored or driven from elsewhere. Hiding
+the button with `showNodeToggle: false` leaves that binding as the only way in, which is exactly what a design without
+the button wants.
+
 <script setup>
 import collapsedSource from '../.vitepress/demos/CollapsedGroupMap.vue?raw'
 </script>

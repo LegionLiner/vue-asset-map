@@ -57,15 +57,20 @@ interface AssetLink<M = unknown> {
   type?: string
   label?: string
   directed?: boolean
+  sourceHandle?: string
+  targetHandle?: string
   meta?: M
 }
 ```
 
-| Field      | Purpose                                                                                       |
-| ---------- | --------------------------------------------------------------------------------------------- |
-| `layers`   | Which projections the link belongs to. See [Views](./views).                                  |
-| `type`     | Selects the edge style through a CSS class, and a custom edge component if one is registered. |
-| `directed` | Draws an arrow, and constrains direction-aware traversals such as `blastRadius`.              |
+| Field                           | Purpose                                                                                                                                      |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `layers`                        | Which projections the link belongs to. See [Views](./views).                                                                                 |
+| `type`                          | Selects the edge style through a CSS class, and a custom edge component if one is registered.                                                |
+| `directed`                      | Draws an arrow, and constrains direction-aware traversals such as `blastRadius`.                                                             |
+| `label`                         | Drawn on the line. Aggregated edges fall back to a count instead.                                                                            |
+| `sourceHandle` / `targetHandle` | Which handle on each end the line attaches to. Only for nodes that draw more than one — see [Edges](./edges#attaching-to-a-specific-handle). |
+| `meta`                          | Your own payload, the same way as on an entity.                                                                                              |
 
 Parallel links between the same pair are kept: two links with different ids are two edges, and the count survives into
 aggregation when a group collapses.
