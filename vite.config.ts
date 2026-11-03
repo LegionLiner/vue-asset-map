@@ -21,6 +21,7 @@ export default defineConfig({
         index: 'src/index.ts',
         'core/index': 'src/core/index.ts',
         'layout/dagre': 'src/layout/dagre.ts',
+        'layout/worker': 'src/layout/worker.ts',
       },
       formats: ['es'],
     },

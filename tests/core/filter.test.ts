@@ -308,3 +308,85 @@ describe('facetCounts', () => {
     expect(facets.types.get('host')).toBe(2)
   })
 })
+
+describe('applyFilters: подготовленный поиск', () => {
+  const addressed = [
+    e('a', { sublabels: ['10.38.24.5', 'gw 10.38.25.1'] }),
+    e('b', { label: 'Core-Switch', sublabels: ['10.40.0.7'] }),
+    e('c', { sublabels: ['no address here'] }),
+    e('d', { sublabels: ['10.38.24.70'] }),
+  ]
+  const addressedGraph = buildGraph(addressed, [])
+  const matched = (query: string) =>
+    [...applyFilters(addressedGraph, state({ query }), { neighborDepth: 0 }).matchedIds].sort()
+
+  it.each([
+    '10.38.24.0/24',
+    '10.38.0.0/16',
+    '10.38.24.*',
+    '10.38.24.7*',
+    'switch',
+    'CORE',
+    '10.40',
+    'nothing',
+  ])('запрос %s даёт тот же ответ, что и matchesQuery', (query) => {
+    const expected = addressed
+      .filter((entity) => matchesQuery(defaultSearchFields(entity), query))
+      .map((entity) => entity.id)
+      .sort()
+    expect(matched(query)).toEqual(expected)
+  })
+
+  it('совпадение не склеивается из двух соседних полей', () => {
+    const graphOfOne = buildGraph([e('x', { label: 'ab', sublabels: ['cd'] })], [])
+    const hits = applyFilters(graphOfOne, state({ query: 'bc' }), { neighborDepth: 0 }).matchedIds
+    expect(hits.size).toBe(0)
+  })
+
+  it('изменённая сущность — новый объект, и поиск видит новые поля', () => {
+    const before = e('x', { sublabels: ['10.1.1.1'] })
+    expect(applyFilters(buildGraph([before], []), state({ query: '10.1.1.0/24' })).matchedIds.has('x')).toBe(
+      true,
+    )
+
+    const after = { ...before, sublabels: ['10.2.2.2'] }
+    expect(applyFilters(buildGraph([after], []), state({ query: '10.1.1.0/24' })).matchedIds.has('x')).toBe(
+      false,
+    )
+  })
+
+  it('свои searchFields получают свои записи, а не чужие из кэша', () => {
+    const entity = e('x', { label: 'visible', sublabels: ['10.9.9.9'] })
+    const onlyLabel = (item: AssetEntity) => [item.label]
+    const graphOfOne = buildGraph([entity], [])
+
+    expect(applyFilters(graphOfOne, state({ query: '10.9.9.0/24' })).matchedIds.has('x')).toBe(true)
+    expect(
+      applyFilters(graphOfOne, state({ query: '10.9.9.0/24' }), { searchFields: onlyLabel }).matchedIds.has(
+        'x',
+      ),
+    ).toBe(false)
+  })
+
+  it('CIDR по 100 тысячам: повторный запрос не разбирает адреса заново', () => {
+    // Замер: 262 мс на каждое нажатие — адреса разбирались заново каждый раз.
+    const many: AssetEntity[] = []
+    for (let index = 0; index < 100_000; index += 1) {
+      many.push(
+        e(`n${index}`, { sublabels: [`10.${(index >> 16) & 255}.${(index >> 8) & 255}.${index & 255}`] }),
+      )
+    }
+    const big = buildGraph(many, [])
+    applyFilters(big, state({ query: '10.0.0.0/24' }), { neighborDepth: 0, keepPathToRoot: false })
+
+    const started = performance.now()
+    const result = applyFilters(big, state({ query: '10.0.1.0/24' }), {
+      neighborDepth: 0,
+      keepPathToRoot: false,
+    })
+    const elapsed = performance.now() - started
+
+    expect(result.matchedIds.size).toBe(256)
+    expect(elapsed).toBeLessThan(100)
+  })
+})

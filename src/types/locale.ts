@@ -45,6 +45,8 @@ export interface LocaleMessages {
   'group.collapse': string
   'group.members': string
   'group.internalLinks': string
+  /** Caption of a "more" node holding the rest of an expanded group. */
+  'group.more': string
 
   'link.aggregated': string
   'link.direction': string

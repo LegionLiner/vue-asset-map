@@ -16,8 +16,11 @@ export * from './core/index'
 export {
   applyPinned,
   builtinLayoutEngines,
+  createWorkerLayout,
   isLayoutAborted,
+  isLayoutLimit,
   LayoutAbortedError,
+  LayoutLimitError,
   manualLayout,
   radialLayout,
   resolveLayoutEngine,
@@ -27,6 +30,7 @@ export type {
   LayoutEngine,
   LayoutGraph,
   LayoutNode,
+  LayoutWorker,
   ManualLayoutOptions,
   RadialLayoutOptions,
 } from './layout/index'
@@ -73,6 +77,8 @@ export { useFilters } from './composables/useFilters'
 export { useCollapse } from './composables/useCollapse'
 export { useLayout } from './composables/useLayout'
 export { useFlowElements } from './composables/useFlowElements'
+export { useVirtualization } from './composables/useVirtualization'
+export type { VisibleSet } from './composables/useVirtualization'
 export { useSelection } from './composables/useSelection'
 export { resolveTheme } from './composables/useTheme'
 export { useNodeMarkers } from './composables/useNodeMarkers'

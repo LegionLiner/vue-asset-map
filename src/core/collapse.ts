@@ -56,6 +56,40 @@ export function groupIdFor(parentId: EntityId | null, bucket: string): string {
 
 const defaultGroupBy = (entity: AssetEntity): string | null => entity.type
 
+const DEFAULT_PAGE_SIZE = 200
+
+/** Separates a group id from the offset of one of its "more" nodes. */
+const PAGE_MARKER = '@more:'
+
+/**
+ * Id of the node holding what is left of an expanded group from `offset` on.
+ *
+ * Paging state lives in the same `expandedIds` set as everything else: opening
+ * the "more" node adds this id to it, which reveals the next page. So paging
+ * needs no model of its own and survives through `v-model:expanded` like the
+ * rest of the expansion state.
+ */
+export function pageIdFor(groupId: string, offset: number): string {
+  return `${groupId}${PAGE_MARKER}${offset}`
+}
+
+/** Whether an expanded-set entry is a "more" node of `groupId`. */
+export function isPageIdOf(id: string, groupId: string): boolean {
+  return id.startsWith(`${groupId}${PAGE_MARKER}`)
+}
+
+/** How many members of an expanded group are on the map, following opened "more" nodes. */
+function revealedCount(
+  groupId: string,
+  total: number,
+  pageSize: number,
+  expandedIds: ReadonlySet<string> | undefined,
+): number {
+  let shown = pageSize
+  while (shown < total && expandedIds?.has(pageIdFor(groupId, shown)) === true) shown += pageSize
+  return Math.min(shown, total)
+}
+
 /**
  * Folds oversized sets of same-type siblings into single group nodes and
  * re-routes their edges. Runs before layout: positions are computed on the
@@ -71,6 +105,9 @@ const defaultGroupBy = (entity: AssetEntity): string | null => entity.type
  *    groups never nest inside other groups.
  *  - `expandedIds` is checked before the rule, so expanding by hand always beats
  *    both `shouldCollapse` and the threshold.
+ *  - An expanded group larger than `pageSize` shows one page of members; the
+ *    rest stays folded in a "more" group (`remainderOf` set) until it, too, is
+ *    expanded.
  *  - Member edges move onto the group node. Parallel edges collapse into an
  *    `AggregatedLink` only when at least one end is a group, so genuine link
  *    multiplicity between ordinary nodes stays visible.
@@ -158,6 +195,7 @@ function decideGroups<E, L>(
 ): CollapsedGroup[] {
   const threshold = rule.threshold ?? DEFAULT_THRESHOLD
   const groupBy = rule.groupBy ?? defaultGroupBy
+  const pageSize = rule.pageSize ?? DEFAULT_PAGE_SIZE
 
   // Keyed by effective visible parent; the `null` key holds the top level.
   const childrenByParent = new Map<EntityId | null, AssetEntity<E>[]>()
@@ -197,14 +235,16 @@ function decideGroups<E, L>(
 
     for (const [bucket, members] of buckets) {
       const groupId = groupIdFor(parentId, bucket)
-      const collapsed =
-        // A group of one hides a node behind a node and saves nothing. This
-        // floor outranks `shouldCollapse`.
-        members.length >= 2 &&
-        !expandedIds?.has(groupId) &&
-        (rule.shouldCollapse ? rule.shouldCollapse(parentId, members) : members.length > threshold)
+      const expanded = expandedIds?.has(groupId) === true
+      // A group of one hides a node behind a node and saves nothing. This
+      // floor outranks `shouldCollapse`.
+      const foldable = members.length >= 2
+      // The rule is only asked when its answer matters: for a folded group, and
+      // for an expanded one large enough that paging could apply to it.
+      const ruleSaysCollapse = (): boolean =>
+        rule.shouldCollapse ? rule.shouldCollapse(parentId, members) : members.length > threshold
 
-      if (collapsed) {
+      if (foldable && !expanded && ruleSaysCollapse()) {
         groups.push({
           id: groupId,
           parentId,
@@ -215,6 +255,29 @@ function decideGroups<E, L>(
         // Member subtrees go inside the group wholesale, so stop descending.
         continue
       }
+
+      // Expanded by hand: reveal it a page at a time. Unfolding a group of
+      // 12 500 used to put all of them on the map at once; now the rest waits
+      // behind a "more" node that takes the next page each time it is opened.
+      const shown =
+        expanded && foldable && pageSize > 0 && members.length > pageSize && ruleSaysCollapse()
+          ? revealedCount(groupId, members.length, pageSize, expandedIds)
+          : members.length
+
+      if (members.length - shown >= 2) {
+        groups.push({
+          id: pageIdFor(groupId, shown),
+          parentId,
+          bucket,
+          memberIds: members.slice(shown).map((member) => member.id),
+          internalLinkCount: 0,
+          remainderOf: groupId,
+          offset: shown,
+        })
+        for (const member of members.slice(0, shown)) queue.push(member.id)
+        continue
+      }
+
       for (const member of members) queue.push(member.id)
     }
 

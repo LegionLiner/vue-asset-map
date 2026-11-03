@@ -1,13 +1,14 @@
 # API reference
 
-Everything the package exports. Three entry points:
+Everything the package exports. Five entry points:
 
-| Import                       | Contents                                                     |
-| ---------------------------- | ------------------------------------------------------------ |
-| `vue-asset-map`              | Components, composables, types and everything from the core. |
-| `vue-asset-map/core`         | Graph functions with no Vue and no Vue Flow.                 |
-| `vue-asset-map/layout-dagre` | The dagre layout engine, behind an optional dependency.      |
-| `vue-asset-map/style.css`    | Tokens, light and dark themes, component rules.              |
+| Import                        | Contents                                                     |
+| ----------------------------- | ------------------------------------------------------------ |
+| `vue-asset-map`               | Components, composables, types and everything from the core. |
+| `vue-asset-map/core`          | Graph functions with no Vue and no Vue Flow.                 |
+| `vue-asset-map/layout-dagre`  | The dagre layout engine, behind an optional dependency.      |
+| `vue-asset-map/layout-worker` | Running a layout engine in a Web Worker; free of Vue.        |
+| `vue-asset-map/style.css`     | Tokens, light and dark themes, component rules.              |
 
 ## Component
 
@@ -55,8 +56,10 @@ The map. Generic over the payload types of `entity.meta` and `link.meta`: `Asset
 | `pathOptions`               | `PathOptions`                     | —                      | `maxDepth`, `layers` of a path search.                |
 | `markers`                   | `NodeMarkerDef[]`                 | —                      | Membership dots under the labels.                     |
 | `markerHoverDelay`          | `number`                          | `500`                  | Delay in ms before a hovered dot highlights.          |
-| `onlyRenderVisibleElements` | `boolean`                         | `true`                 | Mounting of only what is in the viewport.             |
+| `virtualize`                | `boolean                          | number`                | `300`                                                 | Cull to the viewport past this many nodes. |
+| `onlyRenderVisibleElements` | `boolean`                         | `true`                 | Vue Flow's own culling, while not virtualized.        |
 | `lodThreshold`              | `number`                          | `0.5`                  | Zoom below which nodes render simplified.             |
+| `lodCanvas`                 | `boolean`                         | `true`                 | Dots on a canvas below `lodThreshold` when culling.   |
 | `searchDebounce`            | `number`                          | `200`                  | Delay in ms before a typed query applies.             |
 | `loading`                   | `boolean`                         | `false`                | Loading indicator.                                    |
 | `autoFitView`               | `boolean`                         | `false`                | Fit the canvas on first layout and on a view switch.  |
@@ -135,6 +138,7 @@ needs it: `badge` for `node-badge`, `sublabels` for `node-label`, `status` and `
 | `getGraph`       | `() => AssetGraph<E, L>`                                  |
 | `getPositions`   | `() => Record<EntityId, XY>` — every visible node         |
 | `resetPositions` | `() => void` — forget the hand-placed ones                |
+| `updateEntity`   | `(entity) => boolean` — replace one record in place       |
 
 ### Other components
 
@@ -442,7 +446,9 @@ the **same object** when nothing actually changed, which is how an untouched for
 
 `manualLayout`, `radialLayout`, `builtinLayoutEngines`, `resolveLayoutEngine(engine, extra?)`,
 `applyPinned(positions, nodes)`, `throwIfAborted(signal, engineName)`, `isLayoutAborted(error)`,
-`LayoutAbortedError`. The dagre engine is `dagreLayout` from `vue-asset-map/layout-dagre`.
+`LayoutAbortedError`, `isLayoutLimit(error)`, `LayoutLimitError`, `createWorkerLayout(name, createWorker)`. The dagre
+engine is `dagreLayout` from `vue-asset-map/layout-dagre`; `exposeLayoutEngine(engines)`, for the worker side, is on
+`vue-asset-map/layout-worker`.
 
 ### Registry
 

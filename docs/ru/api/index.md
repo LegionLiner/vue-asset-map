@@ -1,13 +1,14 @@
 # Справочник API
 
-Всё, что экспортирует пакет. Точек входа четыре:
+Всё, что экспортирует пакет. Точек входа пять:
 
-| Импорт                       | Что внутри                                              |
-| ---------------------------- | ------------------------------------------------------- |
-| `vue-asset-map`              | Компоненты, composables, типы и всё содержимое ядра.    |
-| `vue-asset-map/core`         | Функции по графу без Vue и без Vue Flow.                |
-| `vue-asset-map/layout-dagre` | Алгоритм раскладки dagre, за опциональной зависимостью. |
-| `vue-asset-map/style.css`    | Токены, светлая и тёмная темы, правила компонентов.     |
+| Импорт                        | Что внутри                                              |
+| ----------------------------- | ------------------------------------------------------- |
+| `vue-asset-map`               | Компоненты, composables, типы и всё содержимое ядра.    |
+| `vue-asset-map/core`          | Функции по графу без Vue и без Vue Flow.                |
+| `vue-asset-map/layout-dagre`  | Алгоритм раскладки dagre, за опциональной зависимостью. |
+| `vue-asset-map/layout-worker` | Запуск раскладки в Web Worker; без Vue.                 |
+| `vue-asset-map/style.css`     | Токены, светлая и тёмная темы, правила компонентов.     |
 
 ## Компонент
 
@@ -55,8 +56,10 @@
 | `pathOptions`               | `PathOptions`                     | —                      | `maxDepth`, `layers` поиска пути.                    |
 | `markers`                   | `NodeMarkerDef[]`                 | —                      | Кружки принадлежности под подписями.                 |
 | `markerHoverDelay`          | `number`                          | `500`                  | Задержка в мс перед подсветкой по наведению.         |
-| `onlyRenderVisibleElements` | `boolean`                         | `true`                 | Монтирование только элементов в области просмотра.   |
+| `virtualize`                | `boolean                          | number`                | `300`                                                | Отсечение невидимого начиная с N узлов. |
+| `onlyRenderVisibleElements` | `boolean`                         | `true`                 | Отсечение самого Vue Flow, пока нет `virtualize`.    |
 | `lodThreshold`              | `number`                          | `0.5`                  | Масштаб, ниже которого узлы рисуются упрощённо.      |
+| `lodCanvas`                 | `boolean`                         | `true`                 | Точки на canvas ниже `lodThreshold` при отсечении.   |
 | `searchDebounce`            | `number`                          | `200`                  | Задержка в мс перед применением запроса.             |
 | `loading`                   | `boolean`                         | `false`                | Индикатор загрузки.                                  |
 | `autoFitView`               | `boolean`                         | `false`                | Подгонка холста при появлении и при смене вида.      |
@@ -135,6 +138,7 @@
 | `getGraph`       | `() => AssetGraph<E, L>`                                  |
 | `getPositions`   | `() => Record<EntityId, XY>` — все видимые узлы           |
 | `resetPositions` | `() => void` — забыть расставленное руками                |
+| `updateEntity`   | `(entity) => boolean` — заменить одну запись              |
 
 ### Остальные компоненты
 
@@ -445,7 +449,9 @@ Flow, поэтому поведение одинаково независимо 
 
 `manualLayout`, `radialLayout`, `builtinLayoutEngines`, `resolveLayoutEngine(engine, extra?)`,
 `applyPinned(positions, nodes)`, `throwIfAborted(signal, engineName)`, `isLayoutAborted(error)`,
-`LayoutAbortedError`. Алгоритм dagre экспортируется как `dagreLayout` из `vue-asset-map/layout-dagre`.
+`LayoutAbortedError`, `isLayoutLimit(error)`, `LayoutLimitError`, `createWorkerLayout(name, createWorker)`. Алгоритм
+dagre экспортируется как `dagreLayout` из `vue-asset-map/layout-dagre`; `exposeLayoutEngine(engines)` для стороны
+воркера — из `vue-asset-map/layout-worker`.
 
 ### Реестр
 

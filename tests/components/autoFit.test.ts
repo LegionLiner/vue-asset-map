@@ -15,6 +15,7 @@ import type * as VueFlowCore from '@vue-flow/core'
  * компонент, а не то, умеет ли jsdom считать размеры.
  */
 const fitView = vi.fn(() => Promise.resolve())
+const fitBounds = vi.fn(() => Promise.resolve(true))
 const nodesReady = ref(false)
 
 type VueFlowModule = typeof VueFlowCore
@@ -27,12 +28,13 @@ vi.mock('@vue-flow/core', async (importOriginal) => {
     useVueFlow: (...args: unknown[]) => ({
       ...(actual.useVueFlow as (...a: unknown[]) => object)(...args),
       fitView,
+      fitBounds,
     }),
   }
 })
 
 const AssetMap = (await import('../../src/components/AssetMap.vue')).default
-const { entities, links, statusColors, views } = await import('../../fixtures/infra')
+const { entities, links, statusColors, views, generateLargeGraph } = await import('../../fixtures/infra')
 
 async function settle() {
   await flushPromises()
@@ -68,6 +70,7 @@ async function mountMap(props: Record<string, unknown> = {}) {
 describe('autoFitView', () => {
   beforeEach(() => {
     fitView.mockClear()
+    fitBounds.mockClear()
     nodesReady.value = false
   })
 
@@ -159,6 +162,29 @@ describe('autoFitView', () => {
     await (wrapper.vm as unknown as { fitView: () => Promise<void> }).fitView()
 
     expect(fitView).toHaveBeenCalledTimes(1)
+    wrapper.unmount()
+  })
+
+  it('виртуализированная карта подгоняется по своему индексу, не дожидаясь измерений', async () => {
+    // Монтируется только то, что у экрана, — fitView из VueFlow подогнал бы вид
+    // под этот кусок. Границы берутся из размеров, известных без DOM.
+    const big = generateLargeGraph(600, 600)
+    const wrapper = await mountMap({
+      entities: big.entities,
+      links: big.links,
+      views: undefined,
+      collapse: false,
+      autoFitView: true,
+    })
+
+    expect(fitBounds).toHaveBeenCalledTimes(1)
+    expect(fitView).not.toHaveBeenCalled()
+    const [bounds] = fitBounds.mock.calls[0] as unknown as [{ width: number; height: number }]
+    expect(bounds.width).toBeGreaterThan(1000)
+    expect(bounds.height).toBeGreaterThan(1000)
+
+    await measured()
+    expect(fitBounds).toHaveBeenCalledTimes(1)
     wrapper.unmount()
   })
 })

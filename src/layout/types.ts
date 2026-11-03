@@ -47,3 +47,37 @@ export class LayoutAbortedError extends Error {
 export function isLayoutAborted(error: unknown): error is LayoutAbortedError {
   return error instanceof LayoutAbortedError
 }
+
+/**
+ * Thrown by an engine asked to place more nodes than it is willing to.
+ *
+ * Dagre grows faster than linearly — half a second at 1 000 nodes, 15 s at
+ * 5 000, with the tab frozen throughout — so past a limit it refuses rather than
+ * hang. The map reports the error and falls back to the grid, which places any
+ * number of nodes in linear time: a map that opens as a grid beats one that
+ * does not open.
+ */
+export class LayoutLimitError extends Error {
+  override readonly name = 'LayoutLimitError'
+
+  constructor(
+    readonly engineName: string,
+    readonly nodeCount: number,
+    readonly limit: number,
+  ) {
+    super(`Layout "${engineName}" refused ${nodeCount} nodes, the limit is ${limit}`)
+  }
+}
+
+/**
+ * Type guard for {@link LayoutLimitError}.
+ *
+ * Also matches by name: an error that crossed from a worker arrives as a plain
+ * object rebuilt on this side, not as an instance of this class.
+ */
+export function isLayoutLimit(error: unknown): error is LayoutLimitError {
+  return (
+    error instanceof LayoutLimitError ||
+    (error instanceof Error && error.name === 'LayoutLimitError' && 'limit' in error)
+  )
+}

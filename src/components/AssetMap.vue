@@ -27,7 +27,8 @@ import { useCollapse } from '../composables/useCollapse'
 import { useLayout, type NodeSize } from '../composables/useLayout'
 import { useSelection } from '../composables/useSelection'
 import { useNodeMarkers } from '../composables/useNodeMarkers'
-import { useFlowElements } from '../composables/useFlowElements'
+import { useFlowElements, type AssetEdgeData, type AssetNodeData } from '../composables/useFlowElements'
+import { useVirtualization } from '../composables/useVirtualization'
 import { provideMapContext, type ArrowDirection, type MapContext } from '../composables/useMapContext'
 import DetailsPanel from './panel/DetailsPanel.vue'
 import LinkDetailsPanel from './panel/LinkDetailsPanel.vue'
@@ -38,6 +39,7 @@ import ContextMenu, { type ContextMenuItem } from './ContextMenu.vue'
 import ConfirmDialog from './ConfirmDialog.vue'
 import MapLegend from './MapLegend.vue'
 import MiniMap, { type MiniMapNode } from './MiniMap.vue'
+import LodCanvas from './LodCanvas.vue'
 import { buildEdgeTypes, buildNodeTypes } from '../registry/nodeRegistry'
 import { createTranslator, resolveLocale } from '../locale/index'
 import { blastRadius, findPaths, neighbors } from '../core/traverse'
@@ -55,8 +57,12 @@ const props = withDefaults(defineProps<AssetMapProps<E, L>>(), {
   showContextMenu: false,
   editable: false,
   detailsMode: 'replace',
+  // `boolean | number` reads as a boolean prop to Vue, which would cast an
+  // absent value to `false` and switch culling off for everyone.
+  virtualize: 300,
   onlyRenderVisibleElements: true,
   lodThreshold: 0.5,
+  lodCanvas: true,
   loading: false,
   autoFitView: false,
   autoPath: false,
@@ -163,7 +169,7 @@ const t = computed(() => createTranslator(messages.value))
 
 const theme = resolveTheme(computed(() => props.theme))
 
-const { graph } = useAssetGraph<E, L>(
+const { graph, updateEntity } = useAssetGraph<E, L>(
   computed(() => props.entities),
   computed(() => props.links),
 )
@@ -277,7 +283,7 @@ const edgeTypes = computed(() => buildEdgeTypes(props.edgeTypes))
 /** Declared connection kinds by id, for the edges, the legend and the type select. */
 const linkTypeById = computed(() => new Map((props.linkTypes ?? []).map((type) => [type.id, type])))
 
-const { nodes, edges } = useFlowElements({
+const { nodes, edges, nodeTemplates, edgeTemplates, isVisible, materialize } = useFlowElements({
   graph,
   collapsed: collapseState.collapsed,
   positionOf: layoutState.positionOf,
@@ -290,11 +296,53 @@ const { nodes, edges } = useFlowElements({
 
 const {
   fitView: flowFitView,
+  fitBounds,
   setViewport,
   setCenter,
   viewport: flowViewport,
   dimensions: canvasSize,
 } = useVueFlow()
+
+/** Whether the map culls by itself; see the `virtualize` prop. */
+const virtualized = computed(() => {
+  const setting = props.virtualize
+  if (typeof setting === 'boolean') return setting
+  return layoutState.topology.value.nodeIds.length > setting
+})
+
+const virtualization = useVirtualization({
+  enabled: virtualized,
+  graph,
+  topology: layoutState.topology,
+  layoutPositions: layoutState.positions,
+  manual: positions,
+  positionOf: layoutState.positionOf,
+  sizeOf,
+  viewport: flowViewport,
+  canvas: canvasSize,
+})
+
+/** Zoomed out on a virtualized map: dots on a canvas instead of mounted nodes. */
+const canvasLod = computed(
+  () => virtualized.value && props.lodCanvas && flowViewport.value.zoom < props.lodThreshold,
+)
+
+const NO_ELEMENTS = { nodes: [], edges: [] }
+
+/**
+ * What VueFlow actually receives.
+ *
+ * A small map gets every node, as it always did. A virtualized one gets only
+ * what is near the viewport, finished from templates that do not change on a
+ * pan, a drag or a keystroke — so none of those rebuild the map, and VueFlow's
+ * `setNodes` works on a few hundred nodes instead of all of them.
+ */
+const flowElements = computed(() => {
+  if (!virtualized.value) return { nodes: nodes.value, edges: edges.value }
+  if (canvasLod.value) return NO_ELEMENTS
+  const visible = virtualization.visible.value
+  return materialize(visible.nodeIds, visible.edgeIds)
+})
 
 /**
  * True once every visible node has a measured size — Vue Flow gets this from a
@@ -316,10 +364,28 @@ const nodesReady = useNodesInitialized()
 const fitRequested = ref(props.autoFitView)
 
 watch(nodesReady, (ready) => {
-  if (!ready || !fitRequested.value) return
+  if (!ready || !fitRequested.value || virtualized.value) return
   fitRequested.value = false
   void fitView()
 })
+
+/**
+ * The same request on a virtualized map, which cannot wait for measured nodes:
+ * only what is near the viewport is ever mounted, and on a canvas LOD nothing
+ * is. Sizes are known without the DOM, so it fits as soon as there is a layout
+ * to fit and a canvas to fit it into.
+ */
+watch(
+  [virtualization.version, virtualized, () => canvasSize.value.width, () => canvasSize.value.height],
+  () => {
+    if (!fitRequested.value || !virtualized.value) return
+    if (canvasSize.value.width === 0 || canvasSize.value.height === 0) return
+    if (!virtualization.bounds()) return
+    fitRequested.value = false
+    void fitView()
+  },
+  { flush: 'post' },
+)
 
 /**
  * A view switch is a different graph, so it does earn a refit — the previous
@@ -335,22 +401,25 @@ watch(view, () => {
 })
 
 /** Overview nodes: the visible ones, with positions already computed. */
-const minimapNodes = computed<MiniMapNode[]>(() =>
-  nodes.value
-    .filter((node) => node.hidden !== true)
-    .map((node) => {
-      const size = sizeOf(node.id)
-      return {
-        id: node.id,
-        x: node.position.x,
-        y: node.position.y,
-        width: size.width,
-        height: size.height,
-        matched: filterState.matchedIds.value.has(node.id),
-        selected: selectionState.isSelected(node.id),
-      }
-    }),
-)
+const minimapNodes = computed<MiniMapNode[]>(() => {
+  if (!props.showMinimap) return []
+  const out: MiniMapNode[] = []
+  for (const id of nodeTemplates.value.keys()) {
+    if (!isVisible(id)) continue
+    const position = layoutState.positionOf(id) ?? { x: 0, y: 0 }
+    const size = sizeOf(id)
+    out.push({
+      id,
+      x: position.x,
+      y: position.y,
+      width: size.width,
+      height: size.height,
+      matched: filterState.matchedIds.value.has(id),
+      selected: selectionState.isSelected(id),
+    })
+  }
+  return out
+})
 
 /** A click on the overview centres the canvas on the point it reports. */
 function focusPoint(point: XY): void {
@@ -522,9 +591,35 @@ function onToggleSubtree(id: EntityId): void {
 }
 
 function onPaneClick(event: MouseEvent): void {
+  // On the canvas LOD the dots are paint, not elements, so a click on one
+  // reaches the pane. It is resolved against the index and treated as a click
+  // on that node.
+  const hit = canvasLod.value ? lodHitTest(event) : undefined
+  if (hit !== undefined) {
+    if (collapseState.groupById.value.has(hit)) onGroupToggle(hit)
+    else onNodeClick(hit, event)
+    return
+  }
+
   selectionState.clear()
   clearHighlight()
   emit('pane-click', event)
+}
+
+/** Screen px of slack around a dot, so a node a few pixels across can be hit. */
+const LOD_HIT_TOLERANCE_PX = 6
+
+function lodHitTest(event: MouseEvent): string | undefined {
+  const bounds = canvasElement.value?.getBoundingClientRect()
+  if (!bounds) return undefined
+  const { x, y, zoom } = flowViewport.value
+  const scale = zoom > 0 ? zoom : 1
+  const point = {
+    x: (event.clientX - bounds.left - x) / scale,
+    y: (event.clientY - bounds.top - y) / scale,
+  }
+  const hit = virtualization.hitTest(point, LOD_HIT_TOLERANCE_PX / scale)
+  return hit !== undefined && isVisible(hit) ? hit : undefined
 }
 
 /** A dragged position outranks everything; a relayout will not reset it. */
@@ -583,7 +678,17 @@ function onArrowNavigate(id: string, direction: ArrowDirection): void {
     }
   }
 
-  if (best !== undefined) nodeElements.get(best)?.focus()
+  if (best === undefined) return
+  const element = nodeElements.get(best)
+  if (element) {
+    element.focus()
+    return
+  }
+  // Culled away: bring it on screen first, then focus it once it is mounted.
+  const target = best
+  void focus(target, { select: false, duration: 0 }).then(() =>
+    nextTick(() => nodeElements.get(target)?.focus()),
+  )
 }
 
 function onRootKeydown(event: KeyboardEvent): void {
@@ -1154,6 +1259,140 @@ const dimmedEdgeIds = computed<ReadonlySet<string>>(() => {
   return edges
 })
 
+/* -------------------------------------------------------------- canvas LOD -- */
+
+/** Smallest dot radius on screen, in px: below this a node stops being visible at all. */
+const LOD_MIN_RADIUS_PX = 1.5
+
+/**
+ * Everything the canvas shows, as one value: a change in any of it repaints.
+ *
+ * Read only while the canvas is up, so a DOM-rendered map pays nothing for it.
+ */
+const lodRevision = computed(() => {
+  if (!canvasLod.value) return undefined
+  return [
+    virtualization.version.value,
+    nodeTemplates.value,
+    edgeTemplates.value,
+    filterState.visibleIds.value,
+    filterState.matchedIds.value,
+    selection.value,
+    highlightedNodeIds.value,
+    highlightedEdgeIds.value,
+    dimmedEdgeIds.value,
+    selectionFocusIds.value,
+    markerFocusIds.value,
+    infectedVisualIds.value,
+    theme.value,
+    props.themeConfig,
+    props.linkTypes,
+  ]
+})
+
+/**
+ * Paints the on-screen part of the map as dots and lines.
+ *
+ * The same decisions the DOM nodes make — selected, matched, highlighted,
+ * infected, dimmed, hidden by the filter — read from the same sources, so the
+ * picture does not change meaning when the zoom crosses the threshold. Strokes
+ * and fills are grouped by colour: a canvas draws one path of ten thousand
+ * segments far faster than ten thousand paths.
+ */
+function paintLod(context: CanvasRenderingContext2D, token: (name: string) => string): void {
+  const { nodeIds, edgeIds } = virtualization.onScreen()
+  const zoom = flowViewport.value.zoom > 0 ? flowViewport.value.zoom : 1
+
+  const circleOf = (id: string): number =>
+    graph.value.parentOf.get(id) === null ? NODE_CIRCLE_ROOT : NODE_CIRCLE
+  const centreOf = (id: string): XY | undefined => {
+    const rect = virtualization.rectOf(id)
+    return rect ? { x: rect.x + rect.width / 2, y: rect.y + circleOf(id) / 2 } : undefined
+  }
+
+  const strokes = new Map<string, number[]>()
+  for (const edgeId of edgeIds) {
+    const ends = virtualization.endsOf(edgeId)
+    if (!ends || !isVisible(ends[0]) || !isVisible(ends[1])) continue
+    const from = centreOf(ends[0])
+    const to = centreOf(ends[1])
+    if (!from || !to) continue
+
+    const link = (edgeTemplates.value.get(edgeId)?.data as AssetEdgeData | undefined)?.link
+    const color = highlightedEdgeIds.value.has(edgeId)
+      ? token('--vam-edge-active')
+      : infectedEdgeIds.value.has(edgeId)
+        ? token('--vam-infected-edge')
+        : dimmedEdgeIds.value.has(edgeId)
+          ? token('--vam-edge-dimmed')
+          : (linkTypeById.value.get(link?.type ?? '')?.color ?? token('--vam-edge'))
+
+    let segments = strokes.get(color)
+    if (!segments) {
+      segments = []
+      strokes.set(color, segments)
+    }
+    segments.push(from.x, from.y, to.x, to.y)
+  }
+
+  context.lineWidth = 1 / zoom
+  for (const [color, segments] of strokes) {
+    context.strokeStyle = color
+    context.beginPath()
+    for (let index = 0; index < segments.length; index += 4) {
+      context.moveTo(segments[index] ?? 0, segments[index + 1] ?? 0)
+      context.lineTo(segments[index + 2] ?? 0, segments[index + 3] ?? 0)
+    }
+    context.stroke()
+  }
+
+  const fills = new Map<string, number[]>()
+  for (const id of nodeIds) {
+    if (!isVisible(id)) continue
+    const centre = centreOf(id)
+    if (!centre) continue
+
+    const data = nodeTemplates.value.get(id)?.data as AssetNodeData | undefined
+    const status = data?.variant === 'entity' ? data.entity.status : undefined
+    const color = selectionState.isSelected(id)
+      ? token('--vam-accent')
+      : highlightedNodeIds.value.has(id)
+        ? token('--vam-edge-active')
+        : infectedVisualIds.value.has(id)
+          ? token('--vam-infected-border')
+          : filterState.matchedIds.value.has(id)
+            ? token('--vam-highlight')
+            : data?.variant === 'group'
+              ? token('--vam-fg-subtle')
+              : (props.themeConfig?.statusColors?.[status ?? ''] ?? token('--vam-fg-muted'))
+    // Alpha rides along in the key, so dimmed and lit dots of one colour are
+    // still two batches.
+    const key = `${dimmedNode(id) ? 'd' : 'l'}${color}`
+
+    let dots = fills.get(key)
+    if (!dots) {
+      dots = []
+      fills.set(key, dots)
+    }
+    dots.push(centre.x, centre.y, Math.max(circleOf(id) / 2, LOD_MIN_RADIUS_PX / zoom))
+  }
+
+  for (const [key, dots] of fills) {
+    context.globalAlpha = key.startsWith('d') ? 0.25 : 1
+    context.fillStyle = key.slice(1)
+    context.beginPath()
+    for (let index = 0; index < dots.length; index += 3) {
+      const x = dots[index] ?? 0
+      const y = dots[index + 1] ?? 0
+      const radius = dots[index + 2] ?? 0
+      context.moveTo(x + radius, y)
+      context.arc(x, y, radius, 0, Math.PI * 2)
+    }
+    context.fill()
+  }
+  context.globalAlpha = 1
+}
+
 const context: MapContext = {
   t: (key, params) => t.value(key, params),
   graph,
@@ -1208,10 +1447,24 @@ const context: MapContext = {
 
 provideMapContext(context)
 
-const isEmpty = computed(() => nodes.value.every((node) => node.hidden === true))
+// Over the templates rather than `nodes`: that one positions every node, and
+// would be rebuilt on each drag just to answer "is anything left".
+const isEmpty = computed(() => {
+  for (const id of nodeTemplates.value.keys()) {
+    if (isVisible(id)) return false
+  }
+  return true
+})
 
 async function fitView(): Promise<void> {
-  await flowFitView({ padding: 0.2 })
+  if (!virtualized.value) {
+    await flowFitView({ padding: 0.2 })
+    return
+  }
+  // VueFlow fits what it has mounted, which on a virtualized map is whatever
+  // happens to be on screen — so the extent comes from the index instead.
+  const bounds = virtualization.bounds()
+  if (bounds) await fitBounds(bounds, { padding: 0.2 })
 }
 
 async function focus(id: EntityId, options?: FocusOptions): Promise<void> {
@@ -1255,6 +1508,7 @@ defineExpose({
   getGraph: (): AssetGraph<E, L> => graph.value,
   getPositions,
   resetPositions,
+  updateEntity,
 } satisfies AssetMapExposed<E, L>)
 </script>
 
@@ -1306,11 +1560,11 @@ defineExpose({
         </div>
 
         <VueFlow
-          :nodes="nodes"
-          :edges="edges"
+          :nodes="flowElements.nodes"
+          :edges="flowElements.edges"
           :node-types="nodeTypes"
           :edge-types="edgeTypes"
-          :only-render-visible-elements="onlyRenderVisibleElements"
+          :only-render-visible-elements="!virtualized && onlyRenderVisibleElements"
           :nodes-draggable="true"
           :nodes-connectable="editable"
           :connection-mode="ConnectionMode.Loose"
@@ -1321,6 +1575,14 @@ defineExpose({
           @node-drag-stop="onNodeDragStop"
           @pane-click="onPaneClick"
           @connect="onConnect"
+        />
+
+        <LodCanvas
+          v-if="canvasLod"
+          :viewport="{ x: flowViewport.x, y: flowViewport.y, zoom: flowViewport.zoom }"
+          :size="{ width: canvasSize.width, height: canvasSize.height }"
+          :revision="lodRevision"
+          :paint="paintLod"
         />
 
         <MapLegend v-if="showLegend && linkTypes" :types="linkTypes" />

@@ -2,7 +2,15 @@ import type { EntityId, AssetEntity } from '../types/entity'
 import type { AssetGraph } from '../types/graph'
 import type { FacetCounts, FilterGroupDef, FilterOptions, FilterResult, FilterState } from '../types/filter'
 import { ancestorsOf, matchesLayers, otherEnd } from './graph'
-import { isIPv4Wildcard, matchesCidr, matchesWildcard, parseCidr } from './ip'
+import {
+  cidrContains,
+  isIPv4Wildcard,
+  matchesCidr,
+  matchesWildcard,
+  parseCidr,
+  parseIPv4,
+  wildcardToRegExp,
+} from './ip'
 
 const DEFAULT_NEIGHBOR_DEPTH = 1
 
@@ -84,6 +92,100 @@ export function matchesQuery(fields: readonly string[], query: string): boolean 
 }
 
 /**
+ * What one entity offers to search, prepared once.
+ *
+ * Every keystroke used to lower-case every field and, for an address query,
+ * pull the addresses out of every field again with a regexp — 262 ms per
+ * keystroke on 100k entities. The fields of an entity do not change between
+ * keystrokes, so they are read once and kept alongside it.
+ */
+interface SearchEntry {
+  /**
+   * Every field, lower-cased and joined: one `includes` instead of one per
+   * field. Made on the first text query — someone searching by subnet only
+   * never needs it.
+   */
+  haystack?: string
+  /** Addresses found in the fields, as text and as numbers; read on first address query. */
+  addresses?: { text: string[]; numbers: number[] }
+  fields: readonly string[]
+}
+
+/**
+ * Prepared entries, by the `searchFields` function that produced them and then
+ * by entity.
+ *
+ * Weak on both levels: a new data array releases the old entities, and a new
+ * `searchFields` describes different fields, so its entries cannot be reused.
+ * Entities are read-only by contract — a changed entity is a new object and
+ * misses the cache by itself.
+ */
+const searchCache = new WeakMap<object, WeakMap<AssetEntity, SearchEntry>>()
+
+const IPV4_TEXT_RE = /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g
+
+function searchEntryOf(entity: AssetEntity, searchFields: (entity: AssetEntity) => string[]): SearchEntry {
+  let byEntity = searchCache.get(searchFields)
+  if (!byEntity) {
+    byEntity = new WeakMap()
+    searchCache.set(searchFields, byEntity)
+  }
+
+  const cached = byEntity.get(entity)
+  if (cached) return cached
+
+  const entry: SearchEntry = { fields: searchFields(entity) }
+  byEntity.set(entity, entry)
+  return entry
+}
+
+function haystackOf(entry: SearchEntry): string {
+  // U+0000 between fields: a needle cannot contain it, so a match never
+  // straddles two fields the way it could with a printable separator.
+  entry.haystack ??= entry.fields.join('\u0000').toLowerCase()
+  return entry.haystack
+}
+
+function addressesOf(entry: SearchEntry): { text: string[]; numbers: number[] } {
+  if (entry.addresses) return entry.addresses
+
+  const text: string[] = []
+  const numbers: number[] = []
+  for (const field of entry.fields) {
+    for (const match of field.matchAll(IPV4_TEXT_RE)) {
+      const parsed = parseIPv4(match[0])
+      if (parsed === null) continue
+      text.push(match[0])
+      numbers.push(parsed)
+    }
+  }
+  entry.addresses = { text, numbers }
+  return entry.addresses
+}
+
+/**
+ * A query turned into a test over a prepared entry: the CIDR range parsed, the
+ * wildcard compiled to a regexp, the needle lower-cased — each once per query
+ * rather than once per field of every entity. Same three modes as
+ * {@link matchesQuery}, and the same answers.
+ */
+function compileQuery(query: string): ((entry: SearchEntry) => boolean) | undefined {
+  const trimmed = query.trim()
+  if (trimmed.length === 0) return undefined
+
+  const cidr = parseCidr(trimmed)
+  if (cidr) return (entry) => addressesOf(entry).numbers.some((address) => cidrContains(cidr, address))
+
+  if (isIPv4Wildcard(trimmed)) {
+    const pattern = wildcardToRegExp(trimmed)
+    return (entry) => addressesOf(entry).text.some((address) => pattern.test(address))
+  }
+
+  const needle = trimmed.toLowerCase()
+  return (entry) => haystackOf(entry).includes(needle)
+}
+
+/**
  * Computes the direct hits and the resulting visible set.
  *
  * Criteria combine with AND: an entity matches when it passes the text query,
@@ -119,13 +221,15 @@ export function applyFilters<E, L>(
     return { matchedIds, visibleIds }
   }
 
+  const query = compileQuery(state.query)
+
   for (const entity of graph.entities.values()) {
     if (!inScope(entity.id)) continue
     if (state.types.length > 0 && !state.types.includes(entity.type)) continue
     if (state.statuses.length > 0 && !state.statuses.includes(entity.status ?? '')) continue
     if (state.predicate && !state.predicate(entity)) continue
     if (!matchesGroups(entity, state, options.groups)) continue
-    if (!matchesQuery(searchFields(entity), state.query)) continue
+    if (query && !query(searchEntryOf(entity, searchFields))) continue
     matchedIds.add(entity.id)
   }
 

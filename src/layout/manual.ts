@@ -7,7 +7,7 @@ export interface ManualLayoutOptions {
   /**
    * Nodes per grid row.
    *
-   * @default 8
+   * @default enough for a roughly square grid, never fewer than 8
    */
   columns?: number
   /**
@@ -30,6 +30,19 @@ const DEFAULT_COLUMNS = 8
 const DEFAULT_GAP = 48
 
 /**
+ * Columns that make the grid about as wide as it is tall, in px.
+ *
+ * A fixed eight columns turned 10 000 nodes into a strip 1 250 rows tall: the
+ * whole map fitted to the screen became a line of dots, and every scroll along
+ * it crossed thousands of nodes. Small maps keep the old eight, so a dozen
+ * nodes do not spread into a lonely 4×3 block.
+ */
+function squareColumns(count: number, columnGap: number, rowGap: number): number {
+  if (count === 0 || columnGap <= 0) return DEFAULT_COLUMNS
+  return Math.max(DEFAULT_COLUMNS, Math.ceil(Math.sqrt((count * rowGap) / columnGap)))
+}
+
+/**
  * As-supplied layout: pinned positions are kept untouched, everything else goes
  * into a deterministic grid.
  *
@@ -43,7 +56,6 @@ export const manualLayout: LayoutEngine<ManualLayoutOptions> = {
   async run(graph: LayoutGraph, options?: ManualLayoutOptions, signal?: AbortSignal) {
     await yieldAndCheck(signal, 'manual')
 
-    const columns = Math.max(1, options?.columns ?? DEFAULT_COLUMNS)
     const origin = options?.origin ?? { x: 0, y: 0 }
     const loose = unpinnedNodes(graph.nodes)
 
@@ -52,6 +64,7 @@ export const manualLayout: LayoutEngine<ManualLayoutOptions> = {
     const maxHeight = loose.reduce((max, node) => Math.max(max, node.height), 0)
     const columnGap = options?.columnGap ?? maxWidth + DEFAULT_GAP
     const rowGap = options?.rowGap ?? maxHeight + DEFAULT_GAP
+    const columns = Math.max(1, options?.columns ?? squareColumns(loose.length, columnGap, rowGap))
 
     const positions = new Map<EntityId, XY>()
     loose.forEach((node, index) => {

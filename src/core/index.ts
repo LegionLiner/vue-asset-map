@@ -24,8 +24,11 @@ export {
   selectedGroupCount,
 } from './filter'
 
-export { collapseGraph, groupIdFor, isAggregatedLink } from './collapse'
+export { collapseGraph, groupIdFor, isAggregatedLink, isPageIdOf, pageIdFor } from './collapse'
 export type { CollapseOptions } from './collapse'
+
+export { intersects, SpatialIndex, unionRect } from './spatial'
+export type { Rect, SpatialIndexOptions } from './spatial'
 
 export { blastRadius, findPaths, neighbors } from './traverse'
 

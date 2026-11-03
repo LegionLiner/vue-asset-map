@@ -301,7 +301,27 @@ export interface AssetMapProps<E = unknown, L = unknown> {
   markerHoverDelay?: number
 
   /**
-   * Mount only the nodes and edges inside the viewport.
+   * Mount only what is near the viewport, culled by the map itself.
+   *
+   * Node sizes are known before anything renders, so the map keeps a spatial
+   * index of its own and hands VueFlow only the nodes on screen plus a margin —
+   * and the far ends of edges crossing it. Nothing else is mounted, measured or
+   * walked on a pan, and VueFlow's own `onlyRenderVisibleElements` is switched
+   * off while this is on.
+   *
+   * `true` culls always, `false` never; a number culls once the map has more
+   * nodes than that. Small maps gain nothing from it, so the default leaves them
+   * exactly as they were.
+   *
+   * @default 300
+   */
+  virtualize?: boolean | number
+  /**
+   * VueFlow's own culling, used only while the map is not virtualized.
+   *
+   * It cannot help a large map: a node not measured yet is 0×0 to it and counts
+   * as visible, so the first frame mounts everything anyway. `virtualize`
+   * replaces it once a map is large enough to need culling at all.
    *
    * @default true
    */
@@ -312,6 +332,17 @@ export interface AssetMapProps<E = unknown, L = unknown> {
    * @default 0.5
    */
   lodThreshold?: number
+  /**
+   * Below `lodThreshold` on a virtualized map, draw nodes as dots and links as
+   * lines on a single `<canvas>` instead of mounting a simplified node each.
+   *
+   * Zoomed out, the viewport covers most of a large map and culling has nothing
+   * left to remove. Clicking a dot still selects the node and opens its window;
+   * clicking a group's dot unfolds it.
+   *
+   * @default true
+   */
+  lodCanvas?: boolean
   /**
    * Delay before a typed query is applied, in ms.
    *
@@ -553,4 +584,19 @@ export interface AssetMapExposed<E = unknown, L = unknown> {
   getPositions: () => Record<EntityId, XY>
   /** Forgets every hand-placed position, handing the map back to the engine. */
   resetPositions: () => void
+  /**
+   * Replaces one entity, by id, without a new `entities` array.
+   *
+   * For applications that keep a large dataset outside Vue's reactivity
+   * (`shallowRef`, `markRaw`) and would rather say "this one changed" than hand
+   * the map a fresh array of a hundred thousand records for one edit. Nothing is
+   * laid out again and nothing is remounted; the node and any window showing it
+   * pick up the new record.
+   *
+   * Only for an entity already on the map, with the same `parentId`: adding,
+   * removing and re-parenting change the structure and go through the array.
+   * Pass a new object rather than the old one mutated. The replacement holds
+   * until `entities` changes. Returns whether it was applied.
+   */
+  updateEntity: (entity: AssetEntity<E>) => boolean
 }

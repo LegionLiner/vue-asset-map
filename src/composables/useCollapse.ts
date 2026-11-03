@@ -1,5 +1,5 @@
 import { computed, type ComputedRef, type Ref } from 'vue'
-import { collapseGraph } from '../core/collapse'
+import { collapseGraph, isPageIdOf } from '../core/collapse'
 import type { EntityId } from '../types/entity'
 import type { CollapsedGroup, CollapseResult, CollapseRule } from '../types/collapse'
 import type { AssetGraph } from '../types/graph'
@@ -61,10 +61,14 @@ export function useCollapse<E, L>(
     expanded.value = next
   }
 
+  // Folding a group also forgets how many of its pages were opened: unfolding
+  // it again starts from the first page rather than dumping everything back.
   const collapse = (groupId: string): void => {
     if (!expanded.value.has(groupId)) return
-    const next = new Set(expanded.value)
-    next.delete(groupId)
+    const next = new Set<string>()
+    for (const id of expanded.value) {
+      if (id !== groupId && !isPageIdOf(id, groupId)) next.add(id)
+    }
     expanded.value = next
   }
 

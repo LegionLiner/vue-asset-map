@@ -35,7 +35,13 @@ const memberStatuses = computed(() => {
   return [...counts].map(([status, count]) => ({ status, count, color: map.statusColorOf(status) }))
 })
 
-const label = computed(() => map.t('group.label', { bucket: group.value?.bucket ?? '' }))
+// A "more" node says what it is: the rest of a group that is already open,
+// rather than a second group of the same kind sitting next to its members.
+const label = computed(() =>
+  group.value?.remainderOf !== undefined
+    ? map.t('group.more', { bucket: group.value.bucket, count: memberCount.value })
+    : map.t('group.label', { bucket: group.value?.bucket ?? '' }),
+)
 
 const ariaLabel = computed(
   () => `${label.value}. ${map.t('group.members', { count: memberCount.value })}. ${map.t('group.expand')}`,
@@ -46,6 +52,7 @@ const classes = computed(() => [
   'vam-node--child',
   'vam-group',
   {
+    'vam-group--more': group.value?.remainderOf !== undefined,
     'vam-node--matched': map.isMatched(props.id),
     'vam-node--dimmed': map.isDimmed(props.id),
     'vam-node--simplified': map.simplified.value,

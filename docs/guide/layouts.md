@@ -18,7 +18,9 @@ backend and the coordinates need to be preserved rather than recomputed.
 { engine: 'manual', options: { columns: 8, columnGap: 200, rowGap: 140, origin: { x: 0, y: 0 } } }
 ```
 
-`columnGap` and `rowGap` default to the largest node plus 48 px, so cards of mixed sizes cannot overlap.
+`columnGap` and `rowGap` default to the largest node plus 48 px, so cards of mixed sizes cannot overlap. Without
+`columns` the grid is roughly square — about √n columns, never fewer than eight — so ten thousand nodes do not become a
+strip 1 250 rows tall.
 
 ### radial
 
@@ -55,6 +57,11 @@ import { dagreLayout } from 'vue-asset-map/layout-dagre'
 ```
 
 Options pass straight through: `rankdir`, `align`, `nodesep`, `ranksep`, `edgesep`, `ranker`.
+
+Dagre's cost grows faster than the graph — about 0.5 s at 1 000 nodes, 2.7 s at 3 000, 15 s at 5 000 — and on the main
+thread the tab does not respond for all of it. Past `maxNodes` (2 000 by default) it refuses with a `LayoutLimitError`;
+the map reports it through `error` and lays the graph out as a grid instead. Raise the limit once dagre runs in a
+worker, see [Large maps](./large-maps#layout-off-the-main-thread).
 
 ## Position priority
 

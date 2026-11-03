@@ -1,5 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
-import { buildGraph, collapseGraph, groupIdFor, isAggregatedLink, projectGraph } from '../../src/core/index'
+import {
+  buildGraph,
+  collapseGraph,
+  groupIdFor,
+  isAggregatedLink,
+  isPageIdOf,
+  pageIdFor,
+  projectGraph,
+} from '../../src/core/index'
 import type { AggregatedLink } from '../../src/types/collapse'
 import type { AssetEntity } from '../../src/types/entity'
 import type { AssetLink } from '../../src/types/link'
@@ -398,5 +406,97 @@ describe('collapseGraph на фикстуре', () => {
   it('группа из одного узла не создаётся даже по требованию shouldCollapse', () => {
     const single = buildGraph([e('parent'), e('only', { parentId: 'parent' })], [])
     expect(collapseGraph(single, { rule: { shouldCollapse: () => true } }).groups).toEqual([])
+  })
+})
+
+describe('collapseGraph: раскрытие порциями', () => {
+  const PAGE = 200
+
+  it('раскрытая большая группа показывает первую порцию, остаток ждёт в узле «ещё»', () => {
+    // Замер: раскрытая группа на 12 500 участников монтировала их все разом.
+    const { entities: farmEntities, links: farmLinks } = farm(450)
+    const graph = buildGraph(farmEntities, farmLinks)
+
+    const result = collapseGraph(graph, { expandedIds: new Set([GROUP_ID]) })
+
+    const more = result.groups.find((group) => group.remainderOf === GROUP_ID)
+    expect(more?.id).toBe(pageIdFor(GROUP_ID, PAGE))
+    expect(more?.offset).toBe(PAGE)
+    expect(more?.memberIds).toHaveLength(250)
+    expect(more?.memberIds[0]).toBe('c201')
+    // parent, peer, 200 участников и один узел «ещё».
+    expect(result.nodeIds).toHaveLength(2 + PAGE + 1)
+    expect(result.nodeIds).toContain('c200')
+    expect(result.nodeIds).not.toContain('c201')
+  })
+
+  it('связи остатка уходят на узел «ещё», а не теряются', () => {
+    const { entities: farmEntities, links: farmLinks } = farm(450)
+    const result = collapseGraph(buildGraph(farmEntities, farmLinks), { expandedIds: new Set([GROUP_ID]) })
+    const moreId = pageIdFor(GROUP_ID, PAGE)
+
+    const toMore = result.links.find((link) => link.target === moreId || link.source === moreId)
+    expect(toMore && isAggregatedLink(toMore) ? toMore.count : 0).toBe(250)
+  })
+
+  it('раскрытие узла «ещё» добавляет следующую порцию, последняя — все оставшиеся', () => {
+    const { entities: farmEntities, links: farmLinks } = farm(450)
+    const graph = buildGraph(farmEntities, farmLinks)
+
+    const second = collapseGraph(graph, {
+      expandedIds: new Set([GROUP_ID, pageIdFor(GROUP_ID, PAGE)]),
+    })
+    expect(second.groups.map((group) => group.id)).toEqual([pageIdFor(GROUP_ID, PAGE * 2)])
+    expect(second.groups[0]?.memberIds).toHaveLength(50)
+
+    const third = collapseGraph(graph, {
+      expandedIds: new Set([GROUP_ID, pageIdFor(GROUP_ID, PAGE), pageIdFor(GROUP_ID, PAGE * 2)]),
+    })
+    expect(third.groups).toEqual([])
+    expect(third.nodeIds).toHaveLength(2 + 450)
+  })
+
+  it('pageSize: 0 показывает всех сразу, как раньше', () => {
+    const { entities: farmEntities, links: farmLinks } = farm(450)
+    const result = collapseGraph(buildGraph(farmEntities, farmLinks), {
+      rule: { pageSize: 0 },
+      expandedIds: new Set([GROUP_ID]),
+    })
+    expect(result.groups).toEqual([])
+    expect(result.nodeIds).toHaveLength(452)
+  })
+
+  it('группа не больше порции раскрывается целиком', () => {
+    const { entities: farmEntities, links: farmLinks } = farm(14)
+    const result = collapseGraph(buildGraph(farmEntities, farmLinks), {
+      rule: { pageSize: 20 },
+      expandedIds: new Set([GROUP_ID]),
+    })
+    expect(result.groups).toEqual([])
+  })
+
+  it('остаток из одного узла не прячется за узлом «ещё»', () => {
+    const { entities: farmEntities, links: farmLinks } = farm(21)
+    const result = collapseGraph(buildGraph(farmEntities, farmLinks), {
+      rule: { pageSize: 20 },
+      expandedIds: new Set([GROUP_ID]),
+    })
+    expect(result.groups).toEqual([])
+    expect(result.nodeIds).toContain('c21')
+  })
+
+  it('порции не касаются групп, которые правило и так не сворачивает', () => {
+    const { entities: farmEntities, links: farmLinks } = farm(30)
+    const result = collapseGraph(buildGraph(farmEntities, farmLinks), {
+      rule: { pageSize: 5, shouldCollapse: () => false },
+      expandedIds: new Set([GROUP_ID]),
+    })
+    expect(result.groups).toEqual([])
+  })
+
+  it('isPageIdOf узнаёт узлы «ещё» своей группы и только их', () => {
+    expect(isPageIdOf(pageIdFor(GROUP_ID, 200), GROUP_ID)).toBe(true)
+    expect(isPageIdOf(GROUP_ID, GROUP_ID)).toBe(false)
+    expect(isPageIdOf(pageIdFor(groupIdFor('other', 'container'), 200), GROUP_ID)).toBe(false)
   })
 })

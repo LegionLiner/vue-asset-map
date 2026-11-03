@@ -3,12 +3,14 @@ import { manualLayout } from './manual'
 import { radialLayout } from './radial'
 
 export type { LayoutEngine, LayoutGraph, LayoutNode } from './types'
-export { isLayoutAborted, LayoutAbortedError } from './types'
+export { isLayoutAborted, isLayoutLimit, LayoutAbortedError, LayoutLimitError } from './types'
 export { manualLayout } from './manual'
 export type { ManualLayoutOptions } from './manual'
 export { radialLayout } from './radial'
 export type { RadialLayoutOptions } from './radial'
 export { applyPinned, throwIfAborted } from './shared'
+export { createWorkerLayout, exposeLayoutEngine } from './worker'
+export type { LayoutWorker, LayoutWorkerScope } from './worker'
 
 /**
  * Engines addressable by name out of the box.

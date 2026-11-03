@@ -224,6 +224,26 @@ describe('обзорная карта', () => {
     wrapper.unmount()
   })
 
+  it('на тысячах узлов рисует по пути на вид узла, а не элемент на каждый', () => {
+    const many = Array.from({ length: 2000 }, (_, index) => ({
+      id: `n${index}`,
+      x: (index % 50) * 150,
+      y: Math.floor(index / 50) * 120,
+      width: 128,
+      height: 90,
+      matched: index === 7,
+      selected: index === 9,
+    }))
+    const wrapper = mount(MiniMap, { props: { nodes: many, viewport, canvas } })
+
+    expect(wrapper.findAll('rect.vam-minimap__node')).toHaveLength(0)
+    expect(wrapper.findAll('path.vam-minimap__node')).toHaveLength(3)
+    expect(wrapper.find('path.vam-minimap__node--matched').attributes('d')).toBe('M1050 0h128v90h-128z')
+    expect(wrapper.find('path.vam-minimap__node--selected').attributes('d')).toBe('M1350 0h128v90h-128z')
+
+    wrapper.unmount()
+  })
+
   it('подписана строкой из локали', () => {
     const wrapper = mount(MiniMap, { props: { nodes, viewport, canvas } })
     expect(wrapper.attributes('aria-label')).toBe('Обзорная карта')

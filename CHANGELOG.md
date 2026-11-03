@@ -3,6 +3,52 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.1.0
+
+Load testing at 10–100 thousand entities found the map doing work proportional to the whole dataset on every small
+change. This release removes those paths.
+
+### Added
+
+- `virtualize` prop (`boolean | number`, default `300`): past that many nodes the map culls to the viewport by a
+  spatial index of its own and hands Vue Flow only what is on screen plus a margin, and both ends of any edge crossing
+  it. Vue Flow's `onlyRenderVisibleElements` is switched off meanwhile — it took an unmeasured node for 0×0 and
+  therefore visible, so the first frame and every expanded group mounted everything. Maps below the threshold render
+  exactly as before.
+- `lodCanvas` prop (default `true`): below `lodThreshold`, a virtualized map draws nodes as dots and links as lines on
+  one `<canvas>`, coloured by the same rules and tokens as the DOM nodes. Clicking a dot selects the node; a group's dot
+  unfolds it.
+- `CollapseRule.pageSize` (default `200`): an expanded group shows its members a page at a time, the rest waiting in a
+  "more" node (`remainderOf`, `offset` on `CollapsedGroup`; id `<groupId>@more:<offset>`). Opening it reveals the next
+  page; paging state lives in `v-model:expanded`. `pageIdFor` and `isPageIdOf` are exported from the core.
+- `updateEntity(entity)` on the exposed API: replaces one record by id without a new `entities` array, with no relayout
+  and no remount.
+- `createWorkerLayout(name, createWorker)` and, on the new `vue-asset-map/layout-worker` subpath,
+  `exposeLayoutEngine(engines)`: run any layout engine in a Web Worker. Aborting a run terminates the worker.
+- `DagreLayoutOptions.maxNodes` (default `2000`): past it dagre throws `LayoutLimitError` instead of freezing the tab;
+  the map reports it through `error` and lays out as a grid. `LayoutLimitError` and `isLayoutLimit` are exported.
+- `SpatialIndex`, `intersects`, `unionRect` on the core subpath; `useVirtualization` among the composables.
+- A "Large maps" guide.
+
+### Changed
+
+- **Layout re-runs only when the structure changes**: the node set, the link ends or the hierarchy. A new `entities`
+  array with the same ids and parents in the same order reuses the graph's adjacency and hierarchy indexes, and the
+  layout is kept. Previously any new array — a renamed or moved asset — rebuilt and re-laid out the whole map.
+- `manual` lays out a roughly square grid (about √n columns, never fewer than 8) instead of a fixed 8 columns. Maps of
+  up to 64 unpinned nodes are unchanged; an explicit `columns` still wins.
+- Node and edge objects are built once per data or collapse change. Position and filter visibility are applied only to
+  what goes to Vue Flow, so a drag or a keystroke no longer rebuilds every node, and on a virtualized map a node hidden
+  by the filter is not sent at all rather than sent with `hidden`.
+- `fitView` and `autoFitView` on a virtualized map fit the index's bounds, not whatever happens to be mounted.
+- `MiniMap` draws one `<path>` per kind of node past 500 nodes instead of a `<rect>` each.
+
+### Fixed
+
+- Search parsed every address in every field on every keystroke: 160–260 ms per CIDR query on 100 000 entities. Fields
+  and addresses are now prepared once per entity and the query is compiled once, so a repeated query takes ~25 ms.
+- Arrow-key navigation to a node outside the mounted area did nothing; it now pans to it and focuses it.
+
 ## 1.0.8
 
 ### Added

@@ -101,6 +101,39 @@ const viewBox = computed(() => {
 // whatever the overview scale works out to be.
 const strokeWidth = computed(() => bounds.value.width / box.value.width)
 
+/**
+ * Past this many nodes the overview stops drawing an element per node.
+ *
+ * A `<rect>` each is fine for a few hundred; for a hundred thousand it is a
+ * hundred thousand DOM nodes for a picture 180 px wide. Above the limit every
+ * node of one kind goes into a single `<path>` — three elements in all.
+ */
+const MAX_ELEMENTS = 500
+
+const asPaths = computed(() => props.nodes.length > MAX_ELEMENTS)
+
+/**
+ * One path per kind of node: plain, matched and selected.
+ *
+ * Coordinates are rounded: at the scale of an overview a fraction of a canvas
+ * pixel is invisible, and whole numbers keep the path string short.
+ */
+const paths = computed(() => {
+  if (!asPaths.value) return undefined
+  const plain: string[] = []
+  const matched: string[] = []
+  const selected: string[] = []
+
+  for (const node of props.nodes) {
+    const segment = `M${Math.round(node.x)} ${Math.round(node.y)}h${Math.round(node.width)}v${Math.round(node.height)}h${-Math.round(node.width)}z`
+    if (node.selected === true) selected.push(segment)
+    else if (node.matched === true) matched.push(segment)
+    else plain.push(segment)
+  }
+
+  return { plain: plain.join(''), matched: matched.join(''), selected: selected.join('') }
+})
+
 function onClick(event: MouseEvent): void {
   const target = event.currentTarget
   if (!(target instanceof Element)) return
@@ -127,8 +160,14 @@ function onClick(event: MouseEvent): void {
     :aria-label="t('minimap.label')"
     @click="onClick"
   >
+    <template v-if="paths">
+      <path class="vam-minimap__node" :d="paths.plain" />
+      <path class="vam-minimap__node vam-minimap__node--matched" :d="paths.matched" />
+      <path class="vam-minimap__node vam-minimap__node--selected" :d="paths.selected" />
+    </template>
+
     <rect
-      v-for="node in nodes"
+      v-for="node in paths ? [] : nodes"
       :key="node.id"
       class="vam-minimap__node"
       :class="{

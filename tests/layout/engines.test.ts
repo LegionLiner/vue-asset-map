@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import {
   builtinLayoutEngines,
   isLayoutAborted,
+  isLayoutLimit,
   LayoutAbortedError,
+  LayoutLimitError,
   manualLayout,
   radialLayout,
   resolveLayoutEngine,
@@ -374,3 +376,67 @@ function distance(position: { x: number; y: number } | undefined): number {
   if (!position) return Number.NaN
   return Math.sqrt(position.x ** 2 + position.y ** 2)
 }
+
+describe('manual: форма сетки', () => {
+  const nodes = (count: number): LayoutGraph => ({
+    nodes: Array.from({ length: count }, (_, index) => ({ id: `n${index}`, width: 128, height: 90 })),
+    edges: [],
+  })
+
+  const extent = (positions: Map<string, { x: number; y: number }>) => {
+    const xs = [...positions.values()].map((p) => p.x)
+    const ys = [...positions.values()].map((p) => p.y)
+    return { width: Math.max(...xs) - Math.min(...xs), height: Math.max(...ys) - Math.min(...ys) }
+  }
+
+  it('маленький граф раскладывается в прежние 8 колонок', async () => {
+    const positions = await manualLayout.run(nodes(20))
+    expect(new Set([...positions.values()].map((p) => p.x)).size).toBe(8)
+  })
+
+  it('большой граф — примерно квадрат, а не лента в тысячу рядов', async () => {
+    const { width, height } = extent(await manualLayout.run(nodes(10_000)))
+    expect(width / height).toBeGreaterThan(0.8)
+    expect(width / height).toBeLessThan(1.25)
+  })
+
+  it('явные columns по-прежнему главнее', async () => {
+    const positions = await manualLayout.run(nodes(10_000), { columns: 8 })
+    expect(new Set([...positions.values()].map((p) => p.x)).size).toBe(8)
+  })
+})
+
+describe('dagre: предел размера', () => {
+  const chain = (count: number): LayoutGraph => ({
+    nodes: Array.from({ length: count }, (_, index) => ({ id: `n${index}`, width: 10, height: 10 })),
+    edges: Array.from({ length: count - 1 }, (_, index) => ({
+      id: `e${index}`,
+      source: `n${index}`,
+      target: `n${index + 1}`,
+    })),
+  })
+
+  it('выше maxNodes отказывается ошибкой LayoutLimitError, а не вешает вкладку', async () => {
+    const error = await dagreLayout.run(chain(30), { maxNodes: 20 }).catch((caught: unknown) => caught)
+    expect(isLayoutLimit(error)).toBe(true)
+    expect(error).toBeInstanceOf(LayoutLimitError)
+    expect((error as LayoutLimitError).nodeCount).toBe(30)
+    expect((error as LayoutLimitError).limit).toBe(20)
+  })
+
+  it('по умолчанию предел — 2000 узлов', async () => {
+    const error = await dagreLayout.run(chain(2001)).catch((caught: unknown) => caught)
+    expect(isLayoutLimit(error)).toBe(true)
+  })
+
+  it('в пределах лимита работает как раньше', async () => {
+    const positions = await dagreLayout.run(chain(30), { maxNodes: 30 })
+    expect(positions.size).toBe(30)
+  })
+
+  it('isLayoutLimit узнаёт ошибку по имени, как после пересылки из воркера', () => {
+    const rebuilt = Object.assign(new Error('refused'), { name: 'LayoutLimitError', limit: 5 })
+    expect(isLayoutLimit(rebuilt)).toBe(true)
+    expect(isLayoutLimit(new Error('other'))).toBe(false)
+  })
+})

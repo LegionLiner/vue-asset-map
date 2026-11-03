@@ -4,9 +4,32 @@ import type { AssetGraph } from '../types/graph'
 import type { CollapseResult } from '../types/collapse'
 import type { AssetView } from '../types/view'
 import type { AssetMapLayoutSpec } from '../types/props'
-import { isLayoutAborted, type LayoutEngine, type LayoutGraph, type LayoutNode } from '../layout/types'
+import {
+  isLayoutAborted,
+  isLayoutLimit,
+  type LayoutEngine,
+  type LayoutGraph,
+  type LayoutNode,
+} from '../layout/types'
 import { resolveLayoutEngine } from '../layout/index'
 import { manualLayout } from '../layout/manual'
+
+/** Same nodes in the same order, same links between the same ends. */
+function sameTopology(a: CollapseResult<unknown>, b: CollapseResult<unknown>): boolean {
+  if (a === b) return true
+  if (a.nodeIds.length !== b.nodeIds.length || a.links.length !== b.links.length) return false
+  for (let index = 0; index < a.nodeIds.length; index += 1) {
+    if (a.nodeIds[index] !== b.nodeIds[index]) return false
+  }
+  for (let index = 0; index < a.links.length; index += 1) {
+    const left = a.links[index]
+    const right = b.links[index]
+    if (left === right) continue
+    if (!left || !right) return false
+    if (left.id !== right.id || left.source !== right.source || left.target !== right.target) return false
+  }
+  return true
+}
 
 /** Rendered size of a node in canvas px, measured before layout runs. */
 export interface NodeSize {
@@ -42,6 +65,14 @@ export interface UseLayoutParams<E, L> {
 export interface UseLayoutReturn {
   /** Latest engine output. Replaced wholesale, never mutated in place. */
   positions: Ref<ReadonlyMap<EntityId, XY>>
+  /**
+   * The collapsed graph as of the last structural change.
+   *
+   * Changes only when nodes or links are added, removed or re-pointed — not
+   * when a record's label or status does — so anything indexed by geometry can
+   * key off it instead of off every recomputation upstream.
+   */
+  topology: ComputedRef<CollapseResult<unknown>>
   running: Ref<boolean>
   engineName: ComputedRef<string>
   relayout: () => Promise<void>
@@ -107,7 +138,13 @@ export function useLayout<E, L>(params: UseLayoutParams<E, L>): UseLayoutReturn 
     const nodes: LayoutNode[] = collapsed.value.nodeIds.map((id) => {
       const size = sizeOf(id)
       const pinned = pinnedOf(id)
-      return { id, width: size.width, height: size.height, ...(pinned ? { pinned } : {}) }
+      // Copied: `manual` is reactive, and a proxy cannot be cloned into a worker.
+      return {
+        id,
+        width: size.width,
+        height: size.height,
+        ...(pinned ? { pinned: { x: pinned.x, y: pinned.y } } : {}),
+      }
     })
 
     return {
@@ -125,12 +162,23 @@ export function useLayout<E, L>(params: UseLayoutParams<E, L>): UseLayoutReturn 
     const current = new AbortController()
     controller = current
 
-    const active = engine.value
+    let active = engine.value
     running.value = true
     onStart?.(active.name)
 
     try {
-      const result = await active.run(buildLayoutGraph(), activeSpec.value?.options, current.signal)
+      const input = buildLayoutGraph()
+      let result: Map<EntityId, XY>
+      try {
+        result = await active.run(input, activeSpec.value?.options, current.signal)
+      } catch (error) {
+        if (!isLayoutLimit(error) || active === manualLayout) throw error
+        // The engine refused a graph this size. Said out loud, then laid out as
+        // a grid: a map that opens as a grid beats a tab frozen for a minute.
+        onError?.(error)
+        active = manualLayout
+        result = await manualLayout.run(input, undefined, current.signal)
+      }
 
       // A newer run may have started while this one was computing. Checked here
       // as well as inside the engine, because a third-party engine may ignore
@@ -150,9 +198,30 @@ export function useLayout<E, L>(params: UseLayoutParams<E, L>): UseLayoutReturn 
     }
   }
 
-  // `collapsed` is a fresh object on every recomputation, which makes it a
-  // sufficient "the graph changed" signal on its own.
-  watch([collapsed, engine, activeSpec], () => void relayout(), { immediate: true })
+  /**
+   * What layout actually depends on: which nodes there are, how they connect,
+   * and the hierarchy that sizes them.
+   *
+   * `collapsed` is a fresh object whenever anything upstream recomputes — a
+   * renamed asset, a changed status, a moved one — and relaying out the whole
+   * map for those is what made every edit cost a full layout. This stays the
+   * same object until the structure really changes.
+   */
+  let lastTopology: { collapsed: CollapseResult<unknown>; parentOf: AssetGraph<E, L>['parentOf'] } | undefined
+  const topology = computed(() => {
+    const next = { collapsed: collapsed.value, parentOf: graph.value.parentOf }
+    if (
+      lastTopology &&
+      lastTopology.parentOf === next.parentOf &&
+      sameTopology(lastTopology.collapsed, next.collapsed)
+    ) {
+      return lastTopology
+    }
+    lastTopology = next
+    return next
+  })
+
+  watch([topology, engine, activeSpec], () => void relayout(), { immediate: true })
 
   // Always a new object: `manual` may be a `v-model` the consumer owns, where
   // editing in place would raise no update and would mutate their state.
@@ -184,6 +253,7 @@ export function useLayout<E, L>(params: UseLayoutParams<E, L>): UseLayoutReturn 
   onScopeDispose(() => controller?.abort())
 
   return {
+    topology: computed(() => topology.value.collapsed),
     positions,
     running,
     engineName,

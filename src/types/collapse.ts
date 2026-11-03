@@ -18,17 +18,34 @@ export interface CollapseRule {
   groupBy?: (entity: AssetEntity) => string | null
   /** Overrides the threshold decision entirely. */
   shouldCollapse?: (parentId: EntityId | null, children: readonly AssetEntity[]) => boolean
+  /**
+   * How many members an expanded group puts on the map at a time.
+   *
+   * The rest wait in a "more" node that reveals the next page each time it is
+   * opened, so unfolding a group of thousands does not mount thousands of nodes
+   * in one go. `0` reveals every member at once.
+   *
+   * @default 200
+   */
+  pageSize?: number
 }
 
 /** A group node standing in for several hidden siblings. */
 export interface CollapsedGroup {
-  /** Format: `group:<parentId>:<bucket>`. */
+  /** Format: `group:<parentId>:<bucket>`; a "more" node appends `@more:<offset>`. */
   id: string
   parentId: EntityId | null
   bucket: string
   memberIds: EntityId[]
   /** Links with both ends inside the group: not drawn, but counted here. */
   internalLinkCount: number
+  /**
+   * Set on a "more" node: the id of the expanded group whose remaining members
+   * it holds. Opening it reveals the next `CollapseRule.pageSize` of them.
+   */
+  remainderOf?: string
+  /** On a "more" node: how many members of `remainderOf` are already on the map. */
+  offset?: number
 }
 
 /** Several original links bundled into one edge between the same two nodes. */

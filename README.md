@@ -40,7 +40,10 @@ Interactive infrastructure asset map for Vue 3, built on Vue Flow.
   only the deliberate moves, so a stored arrangement survives the data changing under it. `getPositions()` snapshots
   every node when you want the whole picture.
 - **Pluggable layouts.** `manual` and `radial` are built in, `dagre` ships behind a subpath. Any object with
-  `run(graph, options, signal)` can be passed instead.
+  `run(graph, options, signal)` can be passed instead, and `createWorkerLayout` runs one in a Web Worker.
+- **Built for large maps.** Past a few hundred nodes the map culls to the viewport with a spatial index of its own,
+  draws dots on a canvas when zoomed out, opens big groups a page at a time and lays out again only when the structure
+  changes. `updateEntity` edits one record without a new array.
 - **Framework-free core.** `vue-asset-map/core` imports neither Vue nor Vue Flow, so projections, filtering and blast
   radius can be computed on the server.
 

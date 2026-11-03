@@ -12,6 +12,7 @@ const guide = (base: string) => [
   { text: 'Details panel', link: `${base}/guide/details-panel` },
   { text: 'Connections and editing', link: `${base}/guide/editing` },
   { text: 'Layouts', link: `${base}/guide/layouts` },
+  { text: 'Large maps', link: `${base}/guide/large-maps` },
   { text: 'Theming', link: `${base}/guide/theming` },
   { text: 'Traversal', link: `${base}/guide/traversal` },
 ]
@@ -27,6 +28,7 @@ const guideRu = [
   { text: 'Панель подробностей', link: '/ru/guide/details-panel' },
   { text: 'Соединения и правка', link: '/ru/guide/editing' },
   { text: 'Раскладки', link: '/ru/guide/layouts' },
+  { text: 'Большие карты', link: '/ru/guide/large-maps' },
   { text: 'Темизация', link: '/ru/guide/theming' },
   { text: 'Обходы графа', link: '/ru/guide/traversal' },
 ]

@@ -9,7 +9,7 @@
  */
 import dagre from '@dagrejs/dagre'
 import type { EntityId, XY } from '../types/entity'
-import type { LayoutEngine, LayoutGraph } from './types'
+import { LayoutLimitError, type LayoutEngine, type LayoutGraph } from './types'
 import { applyPinned, yieldAndCheck } from './shared'
 
 /** Options of {@link dagreLayout}; passed straight through to dagre. */
@@ -46,6 +46,17 @@ export interface DagreLayoutOptions {
    * @default 'network-simplex'
    */
   ranker?: 'network-simplex' | 'tight-tree' | 'longest-path'
+  /**
+   * Refuse graphs with more nodes than this, throwing `LayoutLimitError`; the
+   * map then reports it and lays the graph out as a grid instead.
+   *
+   * Dagre's cost grows faster than the graph: about 0.5 s at 1 000 nodes, 2.7 s
+   * at 3 000 and 15 s at 5 000, all of it on the main thread unless the engine
+   * runs in a worker (`createWorkerLayout`). Raise it there; `Infinity` lifts it.
+   *
+   * @default 2000
+   */
+  maxNodes?: number
 }
 
 const DEFAULTS = {
@@ -54,6 +65,7 @@ const DEFAULTS = {
   ranksep: 96,
   edgesep: 24,
   ranker: 'network-simplex',
+  maxNodes: 2000,
 } as const
 
 /**
@@ -74,6 +86,9 @@ export const dagreLayout: LayoutEngine<DagreLayoutOptions> = {
 
     const positions = new Map<EntityId, XY>()
     if (graph.nodes.length === 0) return positions
+
+    const limit = options?.maxNodes ?? DEFAULTS.maxNodes
+    if (graph.nodes.length > limit) throw new LayoutLimitError('dagre', graph.nodes.length, limit)
 
     const inner = new dagre.graphlib.Graph({ directed: true, multigraph: true, compound: false })
     inner.setGraph({

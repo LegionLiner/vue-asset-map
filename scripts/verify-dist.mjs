@@ -8,7 +8,7 @@
  * импортом dagre.
  *
  * Проверяется:
- *  - все три подпути из `exports` загружаются без бандлера (SSR-путь);
+ *  - все подпути из `exports` загружаются без бандлера (SSR-путь);
  *  - `dist/style.css` существует и содержит и токены, и правила компонентов;
  *  - движки раскладки действительно работают, а не просто импортируются;
  *  - в JS-энтрипоинтах нет импорта CSS (иначе Node упал бы на загрузке).
@@ -75,6 +75,23 @@ check(
   (dagrePositions.get('b')?.x ?? 0) > (dagrePositions.get('a')?.x ?? 0),
 )
 
+check(
+  'dagre отказывается выше maxNodes',
+  await dagreModule.dagreLayout.run(layoutGraph, { maxNodes: 1 }).then(
+    () => false,
+    (error) => main.isLayoutLimit(error),
+  ),
+)
+
+console.log('layout-worker subpath (vue-asset-map/layout-worker)')
+const workerModule = await import(new URL('layout/worker.js', dist).href)
+check('экспортирует createWorkerLayout', typeof workerModule.createWorkerLayout === 'function')
+check('экспортирует exposeLayoutEngine', typeof workerModule.exposeLayoutEngine === 'function')
+check(
+  'подпуть воркера не тянет Vue',
+  !readFileSync(fileURLToPath(new URL('layout/worker.js', dist))).includes('"vue"'),
+)
+
 console.log('стили')
 const css = readFileSync(fileURLToPath(new URL('style.css', dist)), 'utf8')
 check('style.css содержит токены', css.includes('--vam-status-online'))
@@ -82,7 +99,7 @@ check('style.css содержит тёмную тему', css.includes('.vam-the
 check('style.css содержит правила компонентов', css.includes('.vam-node'))
 
 console.log('энтрипоинты не импортируют CSS из JS')
-for (const entry of ['index.js', 'core/index.js', 'layout/dagre.js']) {
+for (const entry of ['index.js', 'core/index.js', 'layout/dagre.js', 'layout/worker.js']) {
   const code = readFileSync(fileURLToPath(new URL(entry, dist)), 'utf8')
   check(`${entry} без импорта .css`, !/from\s*['"][^'"]+\.css['"]/.test(code))
 }

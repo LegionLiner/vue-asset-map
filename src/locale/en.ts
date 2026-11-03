@@ -43,6 +43,7 @@ export const en: LocaleMessages = {
   'group.collapse': 'Collapse group',
   'group.members': 'Nodes in group: {count}',
   'group.internalLinks': 'Links inside group: {count}',
+  'group.more': '{bucket}: {count} more',
 
   'link.aggregated': 'Links: {count}',
   'link.direction': 'Direction: {source} → {target}',

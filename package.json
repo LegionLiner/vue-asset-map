@@ -1,6 +1,6 @@
 {
   "name": "vue-asset-map",
-  "version": "1.0.8",
+  "version": "1.1.0",
   "description": "Interactive infrastructure asset map for Vue 3, built on Vue Flow",
   "keywords": [
     "vue",
@@ -51,6 +51,10 @@
     "./layout-dagre": {
       "types": "./dist/layout/dagre.d.ts",
       "import": "./dist/layout/dagre.js"
+    },
+    "./layout-worker": {
+      "types": "./dist/layout/worker.d.ts",
+      "import": "./dist/layout/worker.js"
     },
     "./style.css": "./dist/style.css",
     "./package.json": "./package.json"

@@ -43,6 +43,7 @@ export const ru: LocaleMessages = {
   'group.collapse': 'Свернуть группу',
   'group.members': 'Узлов в группе: {count}',
   'group.internalLinks': 'Связей внутри группы: {count}',
+  'group.more': '{bucket}: ещё {count}',
 
   'link.aggregated': 'Связей: {count}',
   'link.direction': 'Направление: {source} → {target}',

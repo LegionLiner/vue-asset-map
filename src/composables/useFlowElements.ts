@@ -46,8 +46,29 @@ export interface UseFlowElementsParams<E, L> {
 
 /** Return value of {@link useFlowElements}: ready to feed to `<VueFlow>`. */
 export interface UseFlowElementsReturn {
+  /** Every node, positioned and with the filter applied. */
   nodes: ComputedRef<Node[]>
   edges: ComputedRef<Edge[]>
+  /**
+   * Every node by id, with neither position nor filter applied.
+   *
+   * Rebuilt only when the data or the collapse changes. A drag or a keystroke
+   * in the search used to rebuild every node object on the map for the sake of
+   * one position or one `hidden` flag; these stay put, and {@link materialize}
+   * finishes only the nodes actually being handed to VueFlow.
+   */
+  nodeTemplates: ComputedRef<ReadonlyMap<string, Node>>
+  /** Every edge by id, filter not applied. */
+  edgeTemplates: ComputedRef<ReadonlyMap<string, Edge>>
+  /** Whether a node survives the filter; a group does while any member does. */
+  isVisible: (id: string) => boolean
+  /**
+   * The given nodes and edges, positioned and filtered, ready for VueFlow.
+   *
+   * Nodes the filter hides are left out rather than sent with `hidden`, and so
+   * is any edge touching one: what is not shown need not be mounted.
+   */
+  materialize: (nodeIds: Iterable<string>, edgeIds: Iterable<string>) => { nodes: Node[]; edges: Edge[] }
 }
 
 const FALLBACK_POSITION: XY = { x: 0, y: 0 }
@@ -80,54 +101,45 @@ export function useFlowElements<E, L>(params: UseFlowElementsParams<E, L>): UseF
     return visible.has(id)
   }
 
-  const nodes = computed<Node[]>(() => {
+  const nodeTemplates = computed<ReadonlyMap<string, Node>>(() => {
     const types = nodeTypes.value
     const canDrag = draggable.value
     const canConnect = connectable.value
+    const templates = new Map<string, Node>()
 
-    return collapsed.value.nodeIds.map((id) => {
+    for (const id of collapsed.value.nodeIds) {
       const group = groupById.value.get(id)
-      const position = positionOf(id) ?? FALLBACK_POSITION
 
       if (group) {
         // A group is not a record, so nothing can be linked to or from it: a
         // link to a group would have no entity at one of its ends.
-        return buildNode(
-          id,
-          NODE_TYPE_GROUP,
-          position,
-          { variant: 'group', group },
-          canDrag,
-          false,
-          isVisible(id),
-        )
+        templates.set(id, buildNode(id, NODE_TYPE_GROUP, { variant: 'group', group }, canDrag, false))
+        continue
       }
 
       const entity = graph.value.entities.get(id)
       if (!entity) {
         // A node without an entity can only mean a bug in the core, but that is
         // no reason to blank the render — fall back to the base node type.
-        return buildNode(id, nodeTypeFor('', types), position, undefined, canDrag, false, isVisible(id))
+        templates.set(id, buildNode(id, nodeTypeFor('', types), undefined, canDrag, false))
+        continue
       }
 
-      return buildNode(
+      templates.set(
         id,
-        nodeTypeFor(entity.type, types),
-        position,
-        { variant: 'entity', entity },
-        canDrag,
-        canConnect,
-        isVisible(id),
+        buildNode(id, nodeTypeFor(entity.type, types), { variant: 'entity', entity }, canDrag, canConnect),
       )
-    })
+    }
+
+    return templates
   })
 
-  const edges = computed<Edge[]>(() => {
+  const edgeTemplates = computed<ReadonlyMap<string, Edge>>(() => {
     const types = edgeTypes.value
+    const templates = new Map<string, Edge>()
 
-    return collapsed.value.links.map((link) => {
+    for (const link of collapsed.value.links) {
       const aggregated = isAggregatedLink(link)
-      const hidden = !isVisible(link.source) || !isVisible(link.target)
 
       const edge: Edge = {
         id: link.id,
@@ -143,7 +155,6 @@ export function useFlowElements<E, L>(params: UseFlowElementsParams<E, L>): UseF
         selectable: false,
         focusable: false,
         updatable: false,
-        hidden,
       }
 
       if (link.label !== undefined) edge.label = link.label
@@ -156,26 +167,69 @@ export function useFlowElements<E, L>(params: UseFlowElementsParams<E, L>): UseF
       if (link.sourceHandle !== undefined) edge.sourceHandle = link.sourceHandle
       if (link.targetHandle !== undefined) edge.targetHandle = link.targetHandle
 
-      return edge
-    })
+      templates.set(link.id, edge)
+    }
+
+    return templates
   })
 
-  return { nodes, edges }
+  const nodes = computed<Node[]>(() => {
+    const out: Node[] = []
+    for (const template of nodeTemplates.value.values()) {
+      out.push({
+        ...template,
+        position: positionOf(template.id) ?? FALLBACK_POSITION,
+        hidden: !isVisible(template.id),
+      })
+    }
+    return out
+  })
+
+  const edges = computed<Edge[]>(() => {
+    const out: Edge[] = []
+    for (const template of edgeTemplates.value.values()) {
+      out.push({ ...template, hidden: !isVisible(template.source) || !isVisible(template.target) })
+    }
+    return out
+  })
+
+  const materialize = (
+    nodeIds: Iterable<string>,
+    edgeIds: Iterable<string>,
+  ): { nodes: Node[]; edges: Edge[] } => {
+    const templates = nodeTemplates.value
+    const outNodes: Node[] = []
+    for (const id of nodeIds) {
+      const template = templates.get(id)
+      if (!template || !isVisible(id)) continue
+      outNodes.push({ ...template, position: positionOf(id) ?? FALLBACK_POSITION })
+    }
+
+    const edgeById = edgeTemplates.value
+    const outEdges: Edge[] = []
+    for (const id of edgeIds) {
+      const template = edgeById.get(id)
+      if (!template || !isVisible(template.source) || !isVisible(template.target)) continue
+      outEdges.push(template)
+    }
+
+    return { nodes: outNodes, edges: outEdges }
+  }
+
+  return { nodes, edges, nodeTemplates, edgeTemplates, isVisible, materialize }
 }
 
 function buildNode(
   id: string,
   type: string,
-  position: XY,
   data: AssetNodeData | undefined,
   draggable: boolean,
   connectable: boolean,
-  visible: boolean,
 ): Node {
   return {
     id,
     type,
-    position,
+    position: FALLBACK_POSITION,
     ...(data ? { data } : {}),
     draggable,
     // Per-node, not just the graph-wide `nodesConnectable`: VueFlow reads this
@@ -185,6 +239,5 @@ function buildNode(
     // its own, and two sources of truth for one selection always drift apart.
     selectable: false,
     focusable: false,
-    hidden: !visible,
   }
 }
