@@ -1,5 +1,6 @@
-import { computed, type ComputedRef, type Ref } from 'vue'
-import { collapseGraph, isPageIdOf } from '../core/collapse'
+import { computed, nextTick, type ComputedRef, type Ref } from 'vue'
+import { collapseGraph, collapsePageSize, isPageIdOf, pageIdFor } from '../core/collapse'
+import { ancestorsOf } from '../core/graph'
 import type { EntityId } from '../types/entity'
 import type { CollapsedGroup, CollapseResult, CollapseRule } from '../types/collapse'
 import type { AssetGraph } from '../types/graph'
@@ -19,6 +20,7 @@ export interface UseCollapseReturn {
   isSubtreeCollapsed: (id: EntityId) => boolean
   /** Returns the new state: `true` when the subtree is now hidden. */
   toggleSubtree: (id: EntityId) => boolean
+  reveal: (id: EntityId, stillCurrent?: () => boolean) => Promise<boolean>
 }
 
 /**
@@ -83,6 +85,45 @@ export function useCollapse<E, L>(
 
   const isSubtreeCollapsed = (id: EntityId): boolean => collapsedParents?.value.has(id) === true
 
+  async function reveal(id: EntityId, stillCurrent = () => true): Promise<boolean> {
+    if (!visibleIds.value.has(id)) return false
+    const branch = new Set([id, ...ancestorsOf(graph.value, id)])
+    if (collapsedParents && [...branch].some((ancestor) => ancestor !== id && isSubtreeCollapsed(ancestor))) {
+      collapsedParents.value = new Set(
+        [...collapsedParents.value].filter((key) => key === id || !branch.has(key)),
+      )
+      await nextTick()
+    }
+    // A nested group becomes known only after its enclosing group opens. Jump to
+    // the page containing the target without mounting all preceding siblings.
+    const opened = new Set<string>()
+    while (stillCurrent() && visibleIds.value.has(id)) {
+      const owner = collapsed.value.groupOf.get(id)
+      if (owner === undefined) return true
+      const group = groupById.value.get(owner)
+      if (!group || opened.has(owner)) return false
+      opened.add(owner)
+      const member = group.memberIds.findIndex((key) => branch.has(key))
+      if (member < 0) return false
+      const next = new Set(expanded.value)
+      const groupId = group.remainderOf ?? owner
+      next.add(groupId)
+      const pageSize = collapsePageSize(rule.value || undefined)
+      if (pageSize > 0) {
+        let offset = group.offset ?? 0
+        let remainingIndex = member
+        while (remainingIndex >= pageSize || (group.remainderOf && next.has(pageIdFor(groupId, offset)))) {
+          if (!next.has(pageIdFor(groupId, offset))) remainingIndex -= pageSize
+          offset += pageSize
+        }
+        if (offset > 0) next.add(pageIdFor(groupId, offset))
+      }
+      expanded.value = next
+      await nextTick()
+    }
+    return false
+  }
+
   const toggleSubtree = (id: EntityId): boolean => {
     if (!collapsedParents) return false
 
@@ -105,5 +146,6 @@ export function useCollapse<E, L>(
     toggle,
     isSubtreeCollapsed,
     toggleSubtree,
+    reveal,
   }
 }

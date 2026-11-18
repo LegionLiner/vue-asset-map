@@ -50,6 +50,9 @@
 | `detailsTabs`               | `DetailsTabDef[] \| false`        | встроенные табы        | Табы окна подробностей; `false` убирает полосу.      |
 | `maxDetailsWindows`         | `number`                          | `2`                    | Лимит открытых окон; `0` выключает окна.             |
 | `neighborHighlightDepth`    | `number`                          | `1`                    | Шаги выделения, остающиеся яркими; `0` выключает.    |
+| `linkFilter`                | `(link) => boolean`               | —                      | Дополнительный отбор связей текущего вида.           |
+| `selectionLinkMode`         | `'all' \| 'neighborhood'`         | `'all'`                | Связи вокруг узла или между выбранными.              |
+| `previewNeighborsOnHover`   | `boolean`                         | `false`                | Предпросмотр связей при наведении на актив.          |
 | `infected`                  | `EntityId[]`                      | —                      | Источники заражения для `blastRadius`.               |
 | `infectionOptions`          | `InfectionOptions`                | —                      | `direction`, `maxDepth`, `layers` распространения.   |
 | `autoPath`                  | `boolean`                         | `false`                | Сам строит путь между двумя выделенными узлами.      |
@@ -89,12 +92,14 @@
 | Событие                                            | Данные события                                               |
 | -------------------------------------------------- | ------------------------------------------------------------ |
 | `node-click`, `node-dblclick`, `node-context-menu` | `NodeEventPayload`                                           |
-| `edge-click`                                       | `{ id: string; event: MouseEvent }`                          |
+| `edge-click`                                       | `{ id, event, sourceLinkIds: string[], count: number }`      |
 | `pane-click`                                       | `MouseEvent`                                                 |
 | `expand`, `collapse`                               | `{ groupId: string; group: CollapsedGroup \| undefined }`    |
 | `node-expand`, `node-collapse`                     | `{ id: EntityId; entity: AssetEntity<E> \| undefined }`      |
 | `selection-change`                                 | `EntityId[]`                                                 |
 | `path-change`                                      | `EntityId[]` — путь; пустой, когда подсветку сняли           |
+| `path-result`                                      | `ShortestPathResult \| null`                                 |
+| `projection-change`                                | `ProjectionResult`                                           |
 | `entity-update`                                    | `{ id: EntityId; entity: AssetEntity<E> }` — новый объект    |
 | `link-update`                                      | `{ id: string; link: AssetLink<L> }` — новый объект          |
 | `entity-delete`                                    | `{ id: EntityId; entity: AssetEntity<E> \| undefined }`      |
@@ -128,17 +133,21 @@
 
 #### Императивный API — `AssetMapExposed<E, L>`
 
-| Метод            | Сигнатура                                                 |
-| ---------------- | --------------------------------------------------------- |
-| `fitView`        | `() => Promise<void>`                                     |
-| `focus`          | `(id: EntityId, options?: FocusOptions) => Promise<void>` |
-| `relayout`       | `() => Promise<void>`                                     |
-| `highlightPath`  | `(from, to, options?: PathOptions) => EntityId[]`         |
-| `clearHighlight` | `() => void`                                              |
-| `getGraph`       | `() => AssetGraph<E, L>`                                  |
-| `getPositions`   | `() => Record<EntityId, XY>` — все видимые узлы           |
-| `resetPositions` | `() => void` — забыть расставленное руками                |
-| `updateEntity`   | `(entity) => boolean` — заменить одну запись              |
+| Метод                  | Сигнатура                                                 |
+| ---------------------- | --------------------------------------------------------- |
+| `fitView`              | `() => Promise<void>`                                     |
+| `focus`                | `(id: EntityId, options?: FocusOptions) => Promise<void>` |
+| `getVisibleProjection` | `() => ProjectionResult`                                  |
+| `relayout`             | `() => Promise<void>`                                     |
+| `highlightPath`        | `(from, to, options?: PathOptions) => EntityId[]`         |
+| `clearHighlight`       | `() => void`                                              |
+| `getGraph`             | `() => AssetGraph<E, L>`                                  |
+| `getPositions`         | `() => Record<EntityId, XY>` — все видимые узлы           |
+| `resetPositions`       | `() => void` — забыть расставленное руками                |
+| `updateEntity`         | `(entity) => boolean` — заменить одну запись              |
+
+`getVisibleProjection()` возвращает исходные идентификаторы узлов и связей после фильтрации и выбора окружения. Свёртка групп и положение видимой области на эти множества не влияют.
+Вызов `focus(id, { reveal: true })` раскрывает ветви и страницы с нужным узлом и дожидается раскладки перед центрированием. Активные фильтры продолжают действовать.
 
 ### Остальные компоненты
 
@@ -426,6 +435,9 @@ Flow, поэтому поведение одинаково независимо 
 ### Обходы
 
 `neighbors(graph, id, depth, layers?)`, `findPaths(graph, from, to, options?)`, `blastRadius(graph, id, options?)`.
+
+`neighborhood(graph, seeds, depth, scope?)` возвращает начальные узлы, достигнутые узлы и исходные связи обхода.
+`findShortestPath(graph, from, to, options?)` возвращает `{ status, nodeIds, linkIds }`. Обе функции принимают необязательные ограничения `entityIds`, `linkIds` и `layers`. Кратчайший путь также принимает `maxDepth`. При прямом вызове ядра глубина по умолчанию не ограничена.
 
 ### Маркеры
 

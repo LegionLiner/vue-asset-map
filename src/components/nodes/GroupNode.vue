@@ -54,6 +54,7 @@ const classes = computed(() => [
   {
     'vam-group--more': group.value?.remainderOf !== undefined,
     'vam-node--matched': map.isMatched(props.id),
+    'vam-node--highlighted': map.isHighlighted(props.id),
     'vam-node--dimmed': map.isDimmed(props.id),
     'vam-node--simplified': map.simplified.value,
     // A group counts as infected when any single member is captured, otherwise

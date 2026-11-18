@@ -234,7 +234,7 @@ export function applyFilters<E, L>(
   }
 
   for (const id of matchedIds) visibleIds.add(id)
-  expandByNeighbors(graph, visibleIds, matchedIds, neighborDepth, inScope, layers)
+  expandByNeighbors(graph, visibleIds, matchedIds, neighborDepth, inScope, layers, options.restrictToLinks)
 
   if (keepPathToRoot) {
     // Snapshot: ancestors must not be appended to the set being iterated.
@@ -255,6 +255,7 @@ function expandByNeighbors<E, L>(
   depth: number,
   inScope: (id: EntityId) => boolean,
   layers: readonly string[] | undefined,
+  allowedLinks: ReadonlySet<string> | undefined,
 ): void {
   if (depth <= 0) return
 
@@ -265,6 +266,7 @@ function expandByNeighbors<E, L>(
     const next: EntityId[] = []
     for (const current of frontier) {
       for (const linkId of graph.adjacency.get(current) ?? []) {
+        if (allowedLinks && !allowedLinks.has(linkId)) continue
         const link = graph.links.get(linkId)
         if (!link) continue
         if (layers && !matchesLayers(link, layers)) continue

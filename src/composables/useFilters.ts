@@ -73,6 +73,7 @@ export function useFilters<E, L>(
     applyFilters(graph.value, effectiveState.value, {
       ...options.value,
       restrictTo: projection.value.entityIds,
+      restrictToLinks: projection.value.linkIds,
     }),
   )
 

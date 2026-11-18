@@ -44,6 +44,8 @@ export interface UseVirtualizationReturn {
    * — what a canvas draw has to cover.
    */
   onScreen: () => VisibleSet
+  /** Candidate canvas edges whose bounding boxes intersect this map-space rectangle. */
+  edgesIn: (area: Rect) => readonly string[]
   /** Every node's extent, for a fit that does not depend on what is mounted. */
   bounds: () => Rect | undefined
   /** The node under a canvas point. */
@@ -270,6 +272,7 @@ export function useVirtualization<E, L>(params: UseVirtualizationParams<E, L>): 
   return {
     visible,
     onScreen,
+    edgesIn: (area) => edgeIndex.search(area),
     bounds: () => nodeIndex.bounds(),
     hitTest: (point, tolerance) => nodeIndex.hitTest(point, tolerance),
     version,

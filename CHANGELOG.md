@@ -3,6 +3,15 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.2.0
+
+- Added opt-in neighbourhood link visibility, hover previews and a link filter that combines with the active view.
+  `projection-change` and `getVisibleProjection()` provide the original ids for lists and counters.
+- `focus(id, { reveal: true })` opens the enclosing subtrees and the pages needed to show the entity before centering.
+- `edge-click` includes `sourceLinkIds` and `count` for the visible connections, including clicks on canvas lines.
+- `autoPath` and `highlightPath` now trace a shortest visible path and highlight the individual links used.
+  `path-result` reports node ids, link ids and the search outcome. The core exports `findShortestPath` and `neighborhood`.
+
 ## 1.1.0
 
 Load testing at 10–100 thousand entities found the map doing work proportional to the whole dataset on every small

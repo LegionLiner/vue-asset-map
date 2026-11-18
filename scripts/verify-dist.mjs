@@ -49,6 +49,8 @@ const core = await import(new URL('core/index.js', dist).href)
 check('projectGraph работает', core.projectGraph(graph, { id: 'physical', label: 'P' }).linkIds.size === 1)
 check('blastRadius работает', core.blastRadius(graph, 'a').size === 2)
 check('findPaths работает', core.findPaths(graph, 'a', 'b').length === 1)
+check('findShortestPath возвращает исходную связь', core.findShortestPath(graph, 'b', 'a').linkIds[0] === 'e')
+check('neighborhood возвращает окружение', core.neighborhood(graph, ['a'], 1).linkIds.has('e'))
 check('ядро не тянет Vue', !readFileSync(fileURLToPath(new URL('core/index.js', dist))).includes('"vue"'))
 
 console.log('layout engines')

@@ -1,5 +1,6 @@
 import type { EntityId } from '../types/entity'
 import type { AssetGraph } from '../types/graph'
+import type { ProjectionResult } from '../types/view'
 import { matchesLayers, otherEnd } from './graph'
 
 /** Options of {@link findPaths}. */
@@ -38,6 +39,98 @@ export interface BlastRadiusOptions {
 
 const DEFAULT_MAX_DEPTH = 6
 const DEFAULT_MAX_PATHS = 10
+
+export interface TraversalScope {
+  entityIds?: ReadonlySet<EntityId>
+  linkIds?: ReadonlySet<string>
+  layers?: readonly string[]
+}
+
+export interface ShortestPathResult {
+  status: 'found' | 'unreachable' | 'depth-limit'
+  nodeIds: EntityId[]
+  linkIds: string[]
+}
+
+/** Keep the ids of parallel links distinct while walking the allowed graph. */
+function* steps<E, L>(graph: AssetGraph<E, L>, id: EntityId, scope: TraversalScope) {
+  for (const linkId of graph.adjacency.get(id) ?? []) {
+    if (scope.linkIds && !scope.linkIds.has(linkId)) continue
+    const link = graph.links.get(linkId)
+    if (!link || (scope.layers && !matchesLayers(link, scope.layers))) continue
+    const next = otherEnd(link, id)
+    if (!scope.entityIds || scope.entityIds.has(next)) yield { next, linkId }
+  }
+}
+
+/** Original nodes and incident links reached before expanding the last frontier. */
+export function neighborhood<E, L>(
+  graph: AssetGraph<E, L>,
+  seeds: Iterable<EntityId>,
+  depth: number,
+  scope: TraversalScope = {},
+): ProjectionResult {
+  const entityIds = new Set<EntityId>()
+  const linkIds = new Set<string>()
+  for (const id of seeds) {
+    if (graph.entities.has(id) && (!scope.entityIds || scope.entityIds.has(id))) entityIds.add(id)
+  }
+  let frontier = [...entityIds]
+  for (let hop = 0; hop < depth && frontier.length; hop++) {
+    const following: EntityId[] = []
+    for (const id of frontier) {
+      for (const { next, linkId } of steps(graph, id, scope)) {
+        linkIds.add(linkId)
+        if (entityIds.has(next)) continue
+        entityIds.add(next)
+        following.push(next)
+      }
+    }
+    frontier = following
+  }
+  return { entityIds, linkIds }
+}
+
+/** Fewest hops within the supplied scope. Input order breaks ties between equal paths. */
+export function findShortestPath<E, L>(
+  graph: AssetGraph<E, L>,
+  from: EntityId,
+  to: EntityId,
+  options: TraversalScope & { maxDepth?: number } = {},
+): ShortestPathResult {
+  if ([from, to].some((id) => !graph.entities.has(id) || (options.entityIds && !options.entityIds.has(id)))) {
+    return { status: 'unreachable', nodeIds: [], linkIds: [] }
+  }
+  if (from === to) return { status: 'found', nodeIds: [from], linkIds: [] }
+
+  const previous = new Map<EntityId, { id: EntityId; linkId: string }>()
+  const maxDepth = options.maxDepth ?? Infinity
+  let frontier = [from]
+  for (let depth = 0; frontier.length; depth++) {
+    const following: EntityId[] = []
+    for (const id of frontier) {
+      for (const { next, linkId } of steps(graph, id, options)) {
+        if (next === from || previous.has(next)) continue
+        if (depth >= maxDepth) return { status: 'depth-limit', nodeIds: [], linkIds: [] }
+        previous.set(next, { id, linkId })
+        if (next === to) {
+          const nodeIds = [to]
+          const linkIds = []
+          let step = previous.get(to)
+          while (step) {
+            nodeIds.push(step.id)
+            linkIds.push(step.linkId)
+            step = previous.get(step.id)
+          }
+          return { status: 'found', nodeIds: nodeIds.reverse(), linkIds: linkIds.reverse() }
+        }
+        following.push(next)
+      }
+    }
+    frontier = following
+  }
+  return { status: 'unreachable', nodeIds: [], linkIds: [] }
+}
 
 /**
  * Nodes within `depth` edges of `id`.

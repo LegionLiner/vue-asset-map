@@ -85,14 +85,16 @@ function selectTab(id: string): void {
 const statusColor = computed(() => map.statusColorOf(props.entity.status))
 
 const neighbors = computed(() =>
-  incidentLinks(map.graph.value, props.entity.id).map((link) => {
-    const otherId = otherEnd(link, props.entity.id)
-    return {
-      id: link.id,
-      layers: link.layers.join(', '),
-      label: map.entityById(otherId)?.label ?? otherId,
-    }
-  }),
+  incidentLinks(map.graph.value, props.entity.id)
+    .filter((link) => map.projection?.value.linkIds.has(link.id) ?? true)
+    .map((link) => {
+      const otherId = otherEnd(link, props.entity.id)
+      return {
+        id: link.id,
+        layers: link.layers.join(', '),
+        label: map.entityById(otherId)?.label ?? otherId,
+      }
+    }),
 )
 
 /**

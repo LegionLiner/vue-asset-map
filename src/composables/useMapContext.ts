@@ -1,6 +1,7 @@
 import { inject, provide, type Component, type ComputedRef, type InjectionKey, type Slot } from 'vue'
 import type { EntityId, AssetEntity } from '../types/entity'
 import type { AssetGraph } from '../types/graph'
+import type { ProjectionResult } from '../types/view'
 import type { CollapsedGroup } from '../types/collapse'
 import type { Translate } from '../types/locale'
 import type { LinkTypeDef } from '../types/linkType'
@@ -20,6 +21,7 @@ export type ArrowDirection = 'up' | 'down' | 'left' | 'right'
 export interface MapContext {
   t: Translate
   graph: ComputedRef<AssetGraph<unknown, unknown>>
+  projection?: ComputedRef<ProjectionResult>
 
   /** Whether sublabels are shown under the label in the current view. */
   showSublabels: ComputedRef<boolean>

@@ -56,7 +56,9 @@ export function groupIdFor(parentId: EntityId | null, bucket: string): string {
 
 const defaultGroupBy = (entity: AssetEntity): string | null => entity.type
 
-const DEFAULT_PAGE_SIZE = 200
+export function collapsePageSize(rule?: CollapseRule): number {
+  return Math.max(0, Math.floor(rule?.pageSize ?? 200))
+}
 
 /** Separates a group id from the offset of one of its "more" nodes. */
 const PAGE_MARKER = '@more:'
@@ -76,18 +78,6 @@ export function pageIdFor(groupId: string, offset: number): string {
 /** Whether an expanded-set entry is a "more" node of `groupId`. */
 export function isPageIdOf(id: string, groupId: string): boolean {
   return id.startsWith(`${groupId}${PAGE_MARKER}`)
-}
-
-/** How many members of an expanded group are on the map, following opened "more" nodes. */
-function revealedCount(
-  groupId: string,
-  total: number,
-  pageSize: number,
-  expandedIds: ReadonlySet<string> | undefined,
-): number {
-  let shown = pageSize
-  while (shown < total && expandedIds?.has(pageIdFor(groupId, shown)) === true) shown += pageSize
-  return Math.min(shown, total)
 }
 
 /**
@@ -195,7 +185,7 @@ function decideGroups<E, L>(
 ): CollapsedGroup[] {
   const threshold = rule.threshold ?? DEFAULT_THRESHOLD
   const groupBy = rule.groupBy ?? defaultGroupBy
-  const pageSize = rule.pageSize ?? DEFAULT_PAGE_SIZE
+  const pageSize = collapsePageSize(rule)
 
   // Keyed by effective visible parent; the `null` key holds the top level.
   const childrenByParent = new Map<EntityId | null, AssetEntity<E>[]>()
@@ -259,22 +249,26 @@ function decideGroups<E, L>(
       // Expanded by hand: reveal it a page at a time. Unfolding a group of
       // 12 500 used to put all of them on the map at once; now the rest waits
       // behind a "more" node that takes the next page each time it is opened.
-      const shown =
-        expanded && foldable && pageSize > 0 && members.length > pageSize && ruleSaysCollapse()
-          ? revealedCount(groupId, members.length, pageSize, expandedIds)
-          : members.length
-
-      if (members.length - shown >= 2) {
-        groups.push({
-          id: pageIdFor(groupId, shown),
-          parentId,
-          bucket,
-          memberIds: members.slice(shown).map((member) => member.id),
-          internalLinkCount: 0,
-          remainderOf: groupId,
-          offset: shown,
-        })
-        for (const member of members.slice(0, shown)) queue.push(member.id)
+      if (expanded && foldable && pageSize > 0 && members.length > pageSize && ruleSaysCollapse()) {
+        const remaining: EntityId[] = []
+        let firstHidden = 0
+        for (let offset = 0; offset < members.length; offset += pageSize) {
+          const showPage = offset === 0 || expandedIds?.has(pageIdFor(groupId, offset))
+          if (!showPage && !remaining.length) firstHidden = offset
+          const target = showPage ? queue : remaining
+          for (const member of members.slice(offset, offset + pageSize)) target.push(member.id)
+        }
+        if (remaining.length >= 2) {
+          groups.push({
+            id: pageIdFor(groupId, firstHidden),
+            parentId,
+            bucket,
+            memberIds: remaining,
+            internalLinkCount: 0,
+            remainderOf: groupId,
+            offset: firstHidden,
+          })
+        } else if (remaining[0] !== undefined) queue.push(remaining[0])
         continue
       }
 
@@ -309,7 +303,6 @@ function hiddenBySubtree<E, L>(
     if (hidden.has(parentId)) continue
 
     for (const descendant of descendantsOf(graph, parentId)) {
-      if (hidden.has(descendant)) continue
       hidden.set(descendant, parentId)
     }
   }
@@ -331,7 +324,6 @@ function indexMembers<E, L>(
         hiddenIds.add(memberId)
       }
       for (const descendant of descendantsOf(graph, memberId)) {
-        if (groupOf.has(descendant)) continue
         groupOf.set(descendant, group.id)
         hiddenIds.add(descendant)
       }

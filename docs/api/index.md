@@ -50,6 +50,9 @@ The map. Generic over the payload types of `entity.meta` and `link.meta`: `Asset
 | `detailsTabs`               | `DetailsTabDef[] \| false`        | the built-in tabs      | Tabs of a details window; `false` removes the strip.  |
 | `maxDetailsWindows`         | `number`                          | `2`                    | Cap on open windows; `0` disables windows.            |
 | `neighborHighlightDepth`    | `number`                          | `1`                    | Steps of a selection that stay lit; `0` disables.     |
+| `linkFilter`                | `(link) => boolean`               | —                      | Further restrict the links allowed by the view.       |
+| `selectionLinkMode`         | `'all' \| 'neighborhood'`         | `'all'`                | Show links around one or between selected nodes.      |
+| `previewNeighborsOnHover`   | `boolean`                         | `false`                | Preview incident links when hovering an asset.        |
 | `infected`                  | `EntityId[]`                      | —                      | Infection sources for `blastRadius`.                  |
 | `infectionOptions`          | `InfectionOptions`                | —                      | `direction`, `maxDepth`, `layers` of the spread.      |
 | `autoPath`                  | `boolean`                         | `false`                | Trace the path between two selected nodes on its own. |
@@ -89,12 +92,14 @@ Each works without a `v-model`; the component then owns that state.
 | Event                                              | Payload                                                      |
 | -------------------------------------------------- | ------------------------------------------------------------ |
 | `node-click`, `node-dblclick`, `node-context-menu` | `NodeEventPayload`                                           |
-| `edge-click`                                       | `{ id: string; event: MouseEvent }`                          |
+| `edge-click`                                       | `{ id, event, sourceLinkIds: string[], count: number }`      |
 | `pane-click`                                       | `MouseEvent`                                                 |
 | `expand`, `collapse`                               | `{ groupId: string; group: CollapsedGroup \| undefined }`    |
 | `node-expand`, `node-collapse`                     | `{ id: EntityId; entity: AssetEntity<E> \| undefined }`      |
 | `selection-change`                                 | `EntityId[]`                                                 |
 | `path-change`                                      | `EntityId[]` — the traced path, empty when dropped           |
+| `path-result`                                      | `ShortestPathResult \| null`                                 |
+| `projection-change`                                | `ProjectionResult`                                           |
 | `entity-update`                                    | `{ id: EntityId; entity: AssetEntity<E> }` — a new object    |
 | `link-update`                                      | `{ id: string; link: AssetLink<L> }` — a new object          |
 | `entity-delete`                                    | `{ id: EntityId; entity: AssetEntity<E> \| undefined }`      |
@@ -128,17 +133,21 @@ needs it: `badge` for `node-badge`, `sublabels` for `node-label`, `status` and `
 
 #### Exposed methods — `AssetMapExposed<E, L>`
 
-| Method           | Signature                                                 |
-| ---------------- | --------------------------------------------------------- |
-| `fitView`        | `() => Promise<void>`                                     |
-| `focus`          | `(id: EntityId, options?: FocusOptions) => Promise<void>` |
-| `relayout`       | `() => Promise<void>`                                     |
-| `highlightPath`  | `(from, to, options?: PathOptions) => EntityId[]`         |
-| `clearHighlight` | `() => void`                                              |
-| `getGraph`       | `() => AssetGraph<E, L>`                                  |
-| `getPositions`   | `() => Record<EntityId, XY>` — every visible node         |
-| `resetPositions` | `() => void` — forget the hand-placed ones                |
-| `updateEntity`   | `(entity) => boolean` — replace one record in place       |
+| Method                 | Signature                                                 |
+| ---------------------- | --------------------------------------------------------- |
+| `fitView`              | `() => Promise<void>`                                     |
+| `focus`                | `(id: EntityId, options?: FocusOptions) => Promise<void>` |
+| `getVisibleProjection` | `() => ProjectionResult`                                  |
+| `relayout`             | `() => Promise<void>`                                     |
+| `highlightPath`        | `(from, to, options?: PathOptions) => EntityId[]`         |
+| `clearHighlight`       | `() => void`                                              |
+| `getGraph`             | `() => AssetGraph<E, L>`                                  |
+| `getPositions`         | `() => Record<EntityId, XY>` — every visible node         |
+| `resetPositions`       | `() => void` — forget the hand-placed ones                |
+| `updateEntity`         | `(entity) => boolean` — replace one record in place       |
+
+`getVisibleProjection()` returns original entity and link ids after filters and neighbourhood selection. Folding and viewport culling do not affect these sets.
+With `focus(id, { reveal: true })`, the map opens the subtrees and pages containing the target and waits for layout before centering. Active filters still apply.
 
 ### Other components
 
@@ -424,6 +433,9 @@ Available from both `vue-asset-map` and `vue-asset-map/core`.
 ### Traversal
 
 `neighbors(graph, id, depth, layers?)`, `findPaths(graph, from, to, options?)`, `blastRadius(graph, id, options?)`.
+
+`neighborhood(graph, seeds, depth, scope?)` includes seeds, reached nodes and the original links traversed.
+`findShortestPath(graph, from, to, options?)` returns `{ status, nodeIds, linkIds }`. Both functions accept optional `entityIds`, `linkIds` and `layers`. The shortest-path function also accepts `maxDepth`; the core defaults to unlimited depth.
 
 ### Markers
 

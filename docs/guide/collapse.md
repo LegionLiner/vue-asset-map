@@ -49,8 +49,8 @@ An expanded group puts its members on the map a page at a time — `pageSize`, 2
 "more" node labelled with how many are left; opening it reveals the next page. Unfolding a group of twelve thousand
 used to mount twelve thousand nodes in one go and freeze the tab for a minute.
 
-The "more" node is an ordinary group with `remainderOf` (the group it belongs to) and `offset` (how many members are
-already shown) set, and an id of `<groupId>@more:<offset>`. Opening it adds that id to `v-model:expanded`, so how far a
+The "more" node carries `remainderOf` (its group) and `offset` (the first member of the next folded page).
+Its id is `<groupId>@more:<offset>`. Opening it adds that id to `v-model:expanded`, so how far a
 group has been paged survives the same way the rest of the expansion state does. Folding the group again forgets its
 pages too. `pageSize: 0` reveals everything at once, as before.
 

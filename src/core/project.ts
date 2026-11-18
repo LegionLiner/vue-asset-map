@@ -23,18 +23,23 @@ export function defaultLinkFilter(view: AssetView): (link: AssetLink) => boolean
  *
  * With no view everything is visible.
  */
-export function projectGraph<E, L>(graph: AssetGraph<E, L>, view?: AssetView): ProjectionResult {
+export function projectGraph<E, L>(
+  graph: AssetGraph<E, L>,
+  view?: AssetView,
+  linkFilter?: (link: AssetLink<L>) => boolean,
+): ProjectionResult {
   const entityIds = new Set<EntityId>()
   for (const entity of graph.entities.values()) {
     if (view?.entityFilter && !view.entityFilter(entity)) continue
     entityIds.add(entity.id)
   }
 
-  const linkFilter = view ? (view.linkFilter ?? defaultLinkFilter(view)) : undefined
+  const viewFilter = view ? (view.linkFilter ?? defaultLinkFilter(view)) : undefined
   const linkIds = new Set<string>()
   const connected = new Set<EntityId>()
   for (const link of graph.links.values()) {
     if (!entityIds.has(link.source) || !entityIds.has(link.target)) continue
+    if (viewFilter && !viewFilter(link)) continue
     if (linkFilter && !linkFilter(link)) continue
     linkIds.add(link.id)
     connected.add(link.source)

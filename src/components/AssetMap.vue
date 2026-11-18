@@ -1,12 +1,24 @@
 <script setup lang="ts" generic="E = unknown, L = unknown">
-import { computed, nextTick, onMounted, ref, shallowRef, useSlots, watch, type Slot } from 'vue'
+import {
+  computed,
+  nextTick,
+  onMounted,
+  onScopeDispose,
+  ref,
+  shallowRef,
+  useSlots,
+  watch,
+  type Slot,
+} from 'vue'
 // `ConnectionMode.Loose` lets a drag end on any handle rather than only on one
 // typed `target`. The connectors are all sources — a side of a circle is not
 // inherently an inbound or an outbound side — so strict mode would let a link
 // start anywhere and land nowhere.
 import { ConnectionMode, VueFlow, useNodesInitialized, useVueFlow, type NodeDragEvent } from '@vue-flow/core'
 import type { EntityId, AssetEntity, XY } from '../types/entity'
-import type { CollapsedGroup } from '../types/collapse'
+import type { CollapsedGroup, CollapsedLink } from '../types/collapse'
+import type { ProjectionResult } from '../types/view'
+import { isAggregatedLink } from '../core/collapse'
 import type { FieldDef } from '../types/field'
 import type { FilterState } from '../types/filter'
 import type { AssetGraph } from '../types/graph'
@@ -42,7 +54,7 @@ import MiniMap, { type MiniMapNode } from './MiniMap.vue'
 import LodCanvas from './LodCanvas.vue'
 import { buildEdgeTypes, buildNodeTypes } from '../registry/nodeRegistry'
 import { createTranslator, resolveLocale } from '../locale/index'
-import { blastRadius, findPaths, neighbors } from '../core/traverse'
+import { blastRadius, findShortestPath, neighborhood, type ShortestPathResult } from '../core/traverse'
 import { resolveTheme } from '../composables/useTheme'
 
 const props = withDefaults(defineProps<AssetMapProps<E, L>>(), {
@@ -81,7 +93,7 @@ const emit = defineEmits<{
   'node-click': [payload: NodeEventPayload]
   'node-dblclick': [payload: NodeEventPayload]
   'node-context-menu': [payload: NodeEventPayload]
-  'edge-click': [payload: { id: string; event: MouseEvent }]
+  'edge-click': [payload: { id: string; event: MouseEvent; sourceLinkIds: string[]; count: number }]
   'pane-click': [event: MouseEvent]
   expand: [payload: { groupId: string; group: CollapsedGroup | undefined }]
   collapse: [payload: { groupId: string; group: CollapsedGroup | undefined }]
@@ -90,6 +102,8 @@ const emit = defineEmits<{
   'selection-change': [ids: EntityId[]]
   /** The traced path changed: entity ids in order, or empty when it was dropped. */
   'path-change': [ids: EntityId[]]
+  'path-result': [result: ShortestPathResult | null]
+  'projection-change': [projection: ProjectionResult]
 
   /**
    * An edit was saved. The payload is a **new** object — the map never writes to
@@ -178,6 +192,7 @@ const { view, projection, showSublabels } = useViewProjection(
   graph,
   computed(() => props.views),
   viewId,
+  computed(() => props.linkFilter),
 )
 
 const filterState = useFilters(
@@ -199,6 +214,115 @@ const collapseState = useCollapse(
   expanded,
   collapsedNodes,
 )
+
+const resolveVisual = (id: EntityId): string => collapseState.collapsed.value.groupOf.get(id) ?? id
+const filteredProjection = computed<ProjectionResult>(() => {
+  if (!filterState.active.value) return projection.value
+  const entityIds = filterState.visibleIds.value
+  const linkIds = new Set<string>()
+  for (const id of projection.value.linkIds) {
+    const link = graph.value.links.get(id)!
+    if (entityIds.has(link.source) && entityIds.has(link.target)) linkIds.add(id)
+  }
+  return { entityIds, linkIds }
+})
+
+const hoveredNode = ref<string>()
+const selectedNeighborhood = computed(() => {
+  const depth = props.neighborHighlightDepth ?? 1
+  if (depth <= 0) return undefined
+  const ids = selection.value.length
+    ? selection.value
+    : props.previewNeighborsOnHover && hoveredNode.value
+      ? [hoveredNode.value]
+      : []
+  if (!ids.length) return undefined
+  const found = neighborhood(graph.value, ids, depth, filteredProjection.value)
+  return found.entityIds.size ? found : undefined
+})
+
+const pathRequest = shallowRef<{ from: EntityId; to: EntityId; options?: PathOptions }>()
+const pathResult = computed(() => {
+  const request = pathRequest.value
+  if (!request) return null
+  const options = { ...props.pathOptions, ...request.options }
+  return findShortestPath(graph.value, request.from, request.to, {
+    ...filteredProjection.value,
+    ...options,
+    maxDepth: options.maxDepth ?? 12,
+  })
+})
+
+const displayProjection = computed<ProjectionResult>(() => {
+  const scope = filteredProjection.value
+  if (props.selectionLinkMode !== 'neighborhood') return scope
+  const local = selectedNeighborhood.value
+  if (!local) return scope
+  const linkIds = new Set(local.linkIds)
+  if (selection.value.length > 1) {
+    const selected = new Set(selection.value)
+    for (const id of linkIds) {
+      const link = graph.value.links.get(id)!
+      if (!selected.has(link.source) || !selected.has(link.target)) linkIds.delete(id)
+    }
+  }
+  for (const id of pathResult.value?.linkIds ?? []) linkIds.add(id)
+  return { entityIds: scope.entityIds, linkIds }
+})
+watch(displayProjection, (scope) => emit('projection-change', scope), { immediate: true })
+
+// Keep the layout and spatial index keyed by the original visual edge even
+// when a filter leaves just a subset of the links represented by an aggregate.
+const displayedLinks = computed(() => {
+  const links = collapseState.collapsed.value.links
+  if (displayProjection.value === projection.value) return links
+  const allowed = displayProjection.value.linkIds
+  const result: CollapsedLink[] = []
+  for (const link of links) {
+    if (isAggregatedLink(link)) {
+      const ids = link.sourceLinkIds.filter((id) => allowed.has(id))
+      if (ids.length) result.push({ ...link, sourceLinkIds: ids, count: ids.length })
+    } else if (allowed.has(link.id)) result.push(link)
+  }
+  return result
+})
+
+const visibleNodeIds = computed(() =>
+  filterState.active.value
+    ? new Set(Array.from(filteredProjection.value.entityIds, resolveVisual))
+    : undefined,
+)
+const matchedVisualIds = computed(() => new Set(Array.from(filterState.matchedIds.value, resolveVisual)))
+
+const displayedGroups = computed(() => {
+  const groups = collapseState.groups.value
+  const scope = displayProjection.value
+  if (!groups.length || scope === projection.value) return groups
+  const internal = new Map<string, number>()
+  for (const id of scope.linkIds) {
+    const link = graph.value.links.get(id)!
+    const owner = resolveVisual(link.source)
+    if (collapseState.groupById.value.has(owner) && owner === resolveVisual(link.target)) {
+      internal.set(owner, (internal.get(owner) ?? 0) + 1)
+    }
+  }
+  // A matching descendant keeps the direct member that represents its branch.
+  const members = new Set<EntityId>()
+  if (filterState.active.value) {
+    for (const id of scope.entityIds) {
+      let cursor: EntityId | null = id
+      while (cursor !== null && !members.has(cursor)) {
+        members.add(cursor)
+        cursor = graph.value.parentOf.get(cursor) ?? null
+      }
+    }
+  }
+  return groups.map((group) => ({
+    ...group,
+    memberIds: filterState.active.value ? group.memberIds.filter((id) => members.has(id)) : group.memberIds,
+    internalLinkCount: internal.get(group.id) ?? 0,
+  }))
+})
 
 /**
  * Node size for layout, in canvas px.
@@ -288,6 +412,9 @@ const { nodes, edges, nodeTemplates, edgeTemplates, isVisible, materialize } = u
   collapsed: collapseState.collapsed,
   positionOf: layoutState.positionOf,
   filterVisibleIds: computed(() => (filterState.active.value ? filterState.visibleIds.value : undefined)),
+  visibleNodeIds,
+  displayedLinks,
+  displayedGroups,
   nodeTypes,
   edgeTypes,
   draggable: ref(true),
@@ -414,7 +541,7 @@ const minimapNodes = computed<MiniMapNode[]>(() => {
       y: position.y,
       width: size.width,
       height: size.height,
-      matched: filterState.matchedIds.value.has(id),
+      matched: matchedVisualIds.value.has(id),
       selected: selectionState.isSelected(id),
     })
   }
@@ -447,81 +574,43 @@ watch(viewport, (next) => {
   })
 })
 
-const highlightedNodeIds = shallowRef<ReadonlySet<string>>(new Set())
-const highlightedEdgeIds = shallowRef<ReadonlySet<string>>(new Set())
-
-/**
- * Hop limit for a path search.
- *
- * Bounded because `findPaths` walks the graph depth-first: on a dense map an
- * unbounded search is what hangs the tab, and a route longer than this is not
- * something a reader can follow on screen anyway.
- */
-const DEFAULT_PATH_DEPTH = 12
-
-/** Last traced path, in original entity ids. Drives `path-change`. */
-const tracedPath = shallowRef<readonly EntityId[]>([])
-
-function setTracedPath(path: readonly EntityId[]): void {
-  // Guarded rather than emitted unconditionally: with `autoPath` on, the trace is
-  // recomputed whenever the graph or the view changes, and most of those runs
-  // find the same path as before.
-  if (path.length === tracedPath.value.length && path.every((id, index) => tracedPath.value[index] === id)) {
-    return
-  }
-  tracedPath.value = path
-  emit('path-change', [...path])
-}
-
-function clearHighlight(): void {
-  setTracedPath([])
-  if (highlightedNodeIds.value.size === 0 && highlightedEdgeIds.value.size === 0) return
-  highlightedNodeIds.value = new Set()
-  highlightedEdgeIds.value = new Set()
-}
-
-/**
- * Highlights a path between two nodes.
- *
- * Searched on the original graph, restricted to the current view's layers, but
- * drawn on the collapsed one: where a stretch of the path is hidden inside a
- * group, the group node and the edges leading to it light up instead — the path
- * would otherwise appear to break off.
- */
-function highlightPath(from: EntityId, to: EntityId, options?: PathOptions): EntityId[] {
-  const resolved = { ...props.pathOptions, ...options }
-  const layers = resolved.layers ?? (view.value ? [view.value.id] : undefined)
-  const paths = findPaths(graph.value, from, to, {
-    maxPaths: 1,
-    maxDepth: resolved.maxDepth ?? DEFAULT_PATH_DEPTH,
-    ...(layers ? { layers } : {}),
-  })
-
-  const path = paths[0]
-  if (!path) {
-    clearHighlight()
-    return []
-  }
-
-  const groupOf = collapseState.collapsed.value.groupOf
-  const visualPath = path.map((id) => groupOf.get(id) ?? id)
-  const nodeIds = new Set(visualPath)
-
-  const edgeIds = new Set<string>()
-  for (const link of collapseState.collapsed.value.links) {
-    for (let index = 0; index < visualPath.length - 1; index += 1) {
-      const a = visualPath[index]
-      const b = visualPath[index + 1]
-      if (a === undefined || b === undefined || a === b) continue
-      const matches = (link.source === a && link.target === b) || (link.source === b && link.target === a)
-      if (matches) edgeIds.add(link.id)
+const highlightedNodeIds = computed(() => new Set((pathResult.value?.nodeIds ?? []).map(resolveVisual)))
+const highlightedEdgeIds = computed(() => {
+  const originals = new Set(pathResult.value?.linkIds)
+  const visual = new Set<string>()
+  if (originals.size) {
+    for (const link of displayedLinks.value) {
+      if (
+        isAggregatedLink(link) ? link.sourceLinkIds.some((id) => originals.has(id)) : originals.has(link.id)
+      ) {
+        visual.add(link.id)
+      }
     }
   }
+  return visual
+})
 
-  highlightedNodeIds.value = nodeIds
-  highlightedEdgeIds.value = edgeIds
-  setTracedPath(path)
-  return path
+let lastPath: EntityId[] = []
+watch(
+  pathResult,
+  (result) => {
+    emit('path-result', result)
+    const ids = result?.nodeIds ?? []
+    if (ids.length !== lastPath.length || ids.some((id, index) => id !== lastPath[index])) {
+      lastPath = [...ids]
+      emit('path-change', [...ids])
+    }
+  },
+  { flush: 'sync' },
+)
+
+function clearHighlight(): void {
+  pathRequest.value = undefined
+}
+
+function highlightPath(from: EntityId, to: EntityId, options?: PathOptions): EntityId[] {
+  pathRequest.value = { from, to, ...(options ? { options } : {}) }
+  return [...(pathResult.value?.nodeIds ?? [])]
 }
 
 const nodeElements = new Map<string, HTMLElement>()
@@ -578,8 +667,11 @@ function onGroupToggle(groupId: string): void {
 function onEdgeClick(id: string, event: MouseEvent): void {
   // An aggregated edge stands for several links at once and has no single
   // record to describe, so it opens no window — the click still reports.
-  if (linkById.value.has(id)) openLink(id)
-  emit('edge-click', { id, event })
+  const link = (edgeTemplates.value.get(id)?.data as AssetEdgeData | undefined)?.link
+  if (!link) return
+  const sourceLinkIds = isAggregatedLink(link) ? [...link.sourceLinkIds] : [link.id]
+  if (!isAggregatedLink(link)) openLink(id)
+  emit('edge-click', { id, event, sourceLinkIds, count: sourceLinkIds.length })
 }
 
 /** The button on a node itself: folds its subtree away and back. */
@@ -600,6 +692,11 @@ function onPaneClick(event: MouseEvent): void {
     else onNodeClick(hit, event)
     return
   }
+  const edge = canvasLod.value ? lodEdgeAt(event) : undefined
+  if (edge !== undefined) {
+    onEdgeClick(edge, event)
+    return
+  }
 
   selectionState.clear()
   clearHighlight()
@@ -609,17 +706,49 @@ function onPaneClick(event: MouseEvent): void {
 /** Screen px of slack around a dot, so a node a few pixels across can be hit. */
 const LOD_HIT_TOLERANCE_PX = 6
 
-function lodHitTest(event: MouseEvent): string | undefined {
+function canvasPoint(event: MouseEvent): XY | undefined {
   const bounds = canvasElement.value?.getBoundingClientRect()
   if (!bounds) return undefined
   const { x, y, zoom } = flowViewport.value
   const scale = zoom > 0 ? zoom : 1
-  const point = {
+  return {
     x: (event.clientX - bounds.left - x) / scale,
     y: (event.clientY - bounds.top - y) / scale,
   }
-  const hit = virtualization.hitTest(point, LOD_HIT_TOLERANCE_PX / scale)
+}
+
+function lodHitTest(event: MouseEvent): string | undefined {
+  const point = canvasPoint(event)
+  if (!point) return undefined
+  const hit = virtualization.hitTest(point, LOD_HIT_TOLERANCE_PX / flowViewport.value.zoom)
   return hit !== undefined && isVisible(hit) ? hit : undefined
+}
+
+function lodEdgeAt(event: MouseEvent): string | undefined {
+  const point = canvasPoint(event)
+  if (!point) return undefined
+  const radius = LOD_HIT_TOLERANCE_PX / flowViewport.value.zoom
+  const area = { x: point.x - radius, y: point.y - radius, width: 2 * radius, height: 2 * radius }
+  let nearest: string | undefined
+  let distance = radius ** 2
+  for (const id of virtualization.edgesIn(area)) {
+    const edge = edgeTemplates.value.get(id)
+    if (!edge) continue
+    const a = lodCentre(edge.source)
+    const b = lodCentre(edge.target)
+    if (!a || !b) continue
+    const dx = b.x - a.x
+    const dy = b.y - a.y
+    const lengthSquared = dx * dx + dy * dy
+    const fraction = lengthSquared ? ((point.x - a.x) * dx + (point.y - a.y) * dy) / lengthSquared : 0
+    const t = Math.min(1, Math.max(0, fraction))
+    const squared = (point.x - a.x - t * dx) ** 2 + (point.y - a.y - t * dy) ** 2
+    if (squared <= distance) {
+      nearest = id
+      distance = squared
+    }
+  }
+  return nearest
 }
 
 /** A dragged position outranks everything; a relayout will not reset it. */
@@ -656,7 +785,7 @@ function onArrowNavigate(id: string, direction: ArrowDirection): void {
   let best: string | undefined
   let bestScore = 0
 
-  for (const link of collapseState.collapsed.value.links) {
+  for (const link of displayedLinks.value) {
     const neighborId = link.source === id ? link.target : link.target === id ? link.source : undefined
     if (neighborId === undefined) continue
 
@@ -811,9 +940,6 @@ function closeDetail(id: EntityId): void {
   if (!openDetails.value.includes(id)) return
   openDetails.value = openDetails.value.filter((candidate) => candidate !== id)
 }
-
-/** Links by id, for the windows and the menus. Aggregated edges are absent. */
-const linkById = computed(() => graph.value.links)
 
 /**
  * Opens a connection window.
@@ -1104,54 +1230,25 @@ function onConnect(connection: {
   openLink(id, { newWindow: true })
 }
 
-/** A hidden node resolves to whatever hides it: a group or a collapsed parent. */
-const resolveVisual = (id: EntityId): string => collapseState.collapsed.value.groupOf.get(id) ?? id
-
-/** Layers of the current view: traversals must follow the links on screen. */
 const activeLayers = computed(() => (view.value ? [view.value.id] : undefined))
 
-/**
- * Traces the path between two selected nodes on its own, while `autoPath` is on.
- *
- * Re-runs on a layer or collapse change as well as on the selection: the route
- * depends on which links the current view keeps, and the highlight is drawn on
- * the collapsed graph, so a group folding shut moves it. Anything other than
- * exactly two selected nodes means there is no pair to connect and the highlight
- * goes away — the moment a third node joins the selection included.
- */
 watch(
-  [selection, () => props.autoPath, activeLayers, () => collapseState.collapsed.value],
-  ([ids, enabled]) => {
-    if (!enabled) return
+  [selection, () => props.autoPath],
+  ([ids, enabled], previous) => {
+    if (!enabled && !previous?.[1]) return
     const [from, to] = ids
-    if (ids.length !== 2 || from === undefined || to === undefined) {
+    if (enabled && ids.length === 2 && from !== undefined && to !== undefined) {
+      highlightPath(from, to)
+    } else {
       clearHighlight()
-      return
     }
-    highlightPath(from, to)
   },
   { immediate: true },
 )
 
-/**
- * Nodes that stay lit while something is selected: the selection and its links.
- *
- * With nothing selected the set is empty and nothing is dimmed — the mode is
- * switched on by the act of selecting.
- */
-const selectionFocusIds = computed<ReadonlySet<string>>(() => {
-  const depth = props.neighborHighlightDepth ?? 1
-  if (depth <= 0 || selection.value.length === 0) return new Set()
-
-  const focus = new Set<string>()
-  for (const id of selection.value) {
-    focus.add(resolveVisual(id))
-    for (const neighbor of neighbors(graph.value, id, depth, activeLayers.value)) {
-      focus.add(resolveVisual(neighbor))
-    }
-  }
-  return focus
-})
+const selectionFocusIds = computed(
+  () => new Set(Array.from(selectedNeighborhood.value?.entityIds ?? [], resolveVisual)),
+)
 
 const selectionFocusActive = computed(() => selectionFocusIds.value.size > 0)
 
@@ -1222,15 +1319,16 @@ const dimmedNode = (id: string): boolean => {
   // so while the pointer rests on one, membership is what gets shown. Then
   // search: while a filter is active it decides what is visible. Selection comes
   // last, since it outlives both.
+  if (highlightedNodeIds.value.has(id)) return false
   if (markerFocusActive.value) return !markerFocusIds.value.has(id)
-  if (filterState.active.value) return !filterState.matchedIds.value.has(id)
+  if (filterState.active.value) return !matchedVisualIds.value.has(id)
   if (selectionFocusActive.value) return !selectionFocusIds.value.has(id)
   return false
 }
 
 const dimmedEdgeIds = computed<ReadonlySet<string>>(() => {
   const edges = new Set<string>()
-  const links = collapseState.collapsed.value.links
+  const links = displayedLinks.value
 
   if (markerFocusActive.value) {
     for (const link of links) {
@@ -1241,7 +1339,7 @@ const dimmedEdgeIds = computed<ReadonlySet<string>>(() => {
   }
 
   if (filterState.active.value) {
-    const matched = filterState.matchedIds.value
+    const matched = matchedVisualIds.value
     for (const link of links) {
       // A link dims only when both ends do: one matching end keeps it visible.
       if (!matched.has(link.source) && !matched.has(link.target)) edges.add(link.id)
@@ -1290,32 +1388,26 @@ const lodRevision = computed(() => {
   ]
 })
 
-/**
- * Paints the on-screen part of the map as dots and lines.
- *
- * The same decisions the DOM nodes make — selected, matched, highlighted,
- * infected, dimmed, hidden by the filter — read from the same sources, so the
- * picture does not change meaning when the zoom crosses the threshold. Strokes
- * and fills are grouped by colour: a canvas draws one path of ten thousand
- * segments far faster than ten thousand paths.
- */
+function circleOf(id: string): number {
+  return graph.value.parentOf.get(id) === null ? NODE_CIRCLE_ROOT : NODE_CIRCLE
+}
+
+function lodCentre(id: string): XY | undefined {
+  const rect = virtualization.rectOf(id)
+  return rect ? { x: rect.x + rect.width / 2, y: rect.y + circleOf(id) / 2 } : undefined
+}
+
+/** Draw visible templates with the same state as SVG. Batch strokes and fills by colour. */
 function paintLod(context: CanvasRenderingContext2D, token: (name: string) => string): void {
   const { nodeIds, edgeIds } = virtualization.onScreen()
   const zoom = flowViewport.value.zoom > 0 ? flowViewport.value.zoom : 1
 
-  const circleOf = (id: string): number =>
-    graph.value.parentOf.get(id) === null ? NODE_CIRCLE_ROOT : NODE_CIRCLE
-  const centreOf = (id: string): XY | undefined => {
-    const rect = virtualization.rectOf(id)
-    return rect ? { x: rect.x + rect.width / 2, y: rect.y + circleOf(id) / 2 } : undefined
-  }
-
   const strokes = new Map<string, number[]>()
   for (const edgeId of edgeIds) {
     const ends = virtualization.endsOf(edgeId)
-    if (!ends || !isVisible(ends[0]) || !isVisible(ends[1])) continue
-    const from = centreOf(ends[0])
-    const to = centreOf(ends[1])
+    if (!ends || !edgeTemplates.value.has(edgeId)) continue
+    const from = lodCentre(ends[0])
+    const to = lodCentre(ends[1])
     if (!from || !to) continue
 
     const link = (edgeTemplates.value.get(edgeId)?.data as AssetEdgeData | undefined)?.link
@@ -1349,7 +1441,7 @@ function paintLod(context: CanvasRenderingContext2D, token: (name: string) => st
   const fills = new Map<string, number[]>()
   for (const id of nodeIds) {
     if (!isVisible(id)) continue
-    const centre = centreOf(id)
+    const centre = lodCentre(id)
     if (!centre) continue
 
     const data = nodeTemplates.value.get(id)?.data as AssetNodeData | undefined
@@ -1360,7 +1452,7 @@ function paintLod(context: CanvasRenderingContext2D, token: (name: string) => st
         ? token('--vam-edge-active')
         : infectedVisualIds.value.has(id)
           ? token('--vam-infected-border')
-          : filterState.matchedIds.value.has(id)
+          : matchedVisualIds.value.has(id)
             ? token('--vam-highlight')
             : data?.variant === 'group'
               ? token('--vam-fg-subtle')
@@ -1396,6 +1488,7 @@ function paintLod(context: CanvasRenderingContext2D, token: (name: string) => st
 const context: MapContext = {
   t: (key, params) => t.value(key, params),
   graph,
+  projection: displayProjection,
   showSublabels,
   simplified,
   showNodeStatus: computed(() => props.showNodeStatus),
@@ -1424,11 +1517,11 @@ const context: MapContext = {
   isSubtreeCollapsed: (id) => collapseState.isSubtreeCollapsed(id),
   onToggleSubtree,
   isSelected: (id) => selectionState.isSelected(id),
-  isMatched: (id) => filterState.matchedIds.value.has(id),
+  isMatched: (id) => matchedVisualIds.value.has(id),
   isDimmed: dimmedNode,
   isHighlighted: (id) => highlightedNodeIds.value.has(id),
   isEdgeHighlighted: (edgeId) => highlightedEdgeIds.value.has(edgeId),
-  isEdgeDimmed: (edgeId) => dimmedEdgeIds.value.has(edgeId),
+  isEdgeDimmed: (edgeId) => !highlightedEdgeIds.value.has(edgeId) && dimmedEdgeIds.value.has(edgeId),
   isInfected: (id) => infectedVisualIds.value.has(id),
   isInfectionSource: (id) => infectionSourceIds.value.has(id),
   isEdgeInfected: (edgeId) => infectedEdgeIds.value.has(edgeId),
@@ -1467,7 +1560,26 @@ async function fitView(): Promise<void> {
   if (bounds) await fitBounds(bounds, { padding: 0.2 })
 }
 
+let focusSequence = 0
+onScopeDispose(() => {
+  focusSequence++
+})
+
 async function focus(id: EntityId, options?: FocusOptions): Promise<void> {
+  const sequence = ++focusSequence
+  if (options?.reveal) {
+    if (!filteredProjection.value.entityIds.has(id)) return
+    fitRequested.value = false
+    if (!(await collapseState.reveal(id, () => sequence === focusSequence))) return
+    await nextTick()
+    await layoutState.whenReady()
+    if (
+      sequence !== focusSequence ||
+      !filteredProjection.value.entityIds.has(id) ||
+      !nodeTemplates.value.has(id)
+    )
+      return
+  }
   const position = layoutState.positionOf(id)
   if (!position) return
 
@@ -1500,6 +1612,7 @@ function resetPositions(): void {
 }
 
 defineExpose({
+  getVisibleProjection: () => displayProjection.value,
   fitView,
   focus,
   relayout: (): Promise<void> => layoutState.relayout(),
@@ -1573,6 +1686,18 @@ defineExpose({
           :max-zoom="2.5"
           :default-viewport="viewport"
           @node-drag-stop="onNodeDragStop"
+          @node-mouse-enter="
+            ({ node }) => {
+              if (previewNeighborsOnHover) hoveredNode = node.id
+            }
+          "
+          @node-mouse-leave="hoveredNode = undefined"
+          @mousemove="
+            (event: MouseEvent) => {
+              if (previewNeighborsOnHover && canvasLod) hoveredNode = lodHitTest(event)
+            }
+          "
+          @mouseleave="hoveredNode = undefined"
           @pane-click="onPaneClick"
           @connect="onConnect"
         />

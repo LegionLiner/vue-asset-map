@@ -85,6 +85,8 @@ export interface FilterOptions {
    * @default the whole graph
    */
   restrictTo?: ReadonlySet<EntityId>
+  /** Links that may extend a match to its neighbours. */
+  restrictToLinks?: ReadonlySet<string>
   /**
    * Expand to neighbours only across links on these layers.
    *

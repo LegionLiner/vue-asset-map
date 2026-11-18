@@ -1,7 +1,7 @@
 import type { Component } from 'vue'
 import type { Badge, EntityId, AssetEntity, XY } from './entity'
 import type { AssetLink } from './link'
-import type { AssetView } from './view'
+import type { AssetView, ProjectionResult } from './view'
 import type { CollapsedGroup, CollapseRule } from './collapse'
 import type { AssetGraph } from './graph'
 import type { NodeMarkerDef } from './marker'
@@ -85,6 +85,8 @@ export interface AssetMapProps<E = unknown, L = unknown> {
   links: AssetLink<L>[]
   /** Available projections. With none, every entity and link is drawn. */
   views?: AssetView[]
+  /** Additional link predicate, intersected with the active view before traversal and aggregation. */
+  linkFilter?: (link: AssetLink<L>) => boolean
 
   /** Node component registry: `type` → component. Merged over the built-in one. */
   nodeTypes?: Record<string, Component>
@@ -258,6 +260,10 @@ export interface AssetMapProps<E = unknown, L = unknown> {
    * @default 1
    */
   neighborHighlightDepth?: number
+  /** With a selection, show just its incident links up to neighborHighlightDepth. */
+  selectionLinkMode?: 'all' | 'neighborhood'
+  /** Preview an unselected entity's neighbourhood while the pointer is over it. */
+  previewNeighborsOnHover?: boolean
 
   /**
    * Entities marked as infection sources.
@@ -431,6 +437,8 @@ export interface NodeEventPayload {
 
 /** Options of the imperative `focus`. */
 export interface FocusOptions {
+  /** Open only the groups, pages and subtrees hiding this entity before centering. */
+  reveal?: boolean
   /**
    * Zoom to settle on.
    *
@@ -560,6 +568,8 @@ export type AssetMapSlots<E = unknown, L = unknown> = {
  * `InstanceType<typeof AssetMap>` is not usable on a generic component.
  */
 export interface AssetMapExposed<E = unknown, L = unknown> {
+  /** Original ids after view, filters and the current link visibility mode, before folding. */
+  getVisibleProjection: () => ProjectionResult
   fitView: () => Promise<void>
   focus: (id: EntityId, options?: FocusOptions) => Promise<void>
   relayout: () => Promise<void>

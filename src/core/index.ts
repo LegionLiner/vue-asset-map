@@ -30,14 +30,14 @@ export type { CollapseOptions } from './collapse'
 export { intersects, SpatialIndex, unionRect } from './spatial'
 export type { Rect, SpatialIndexOptions } from './spatial'
 
-export { blastRadius, findPaths, neighbors } from './traverse'
+export { blastRadius, findPaths, findShortestPath, neighborhood, neighbors } from './traverse'
 
 export { connectionMarkers, topAnchors } from './markers'
 
 // Field reading and writing: pure, and the only part of editing that has any
 // logic worth testing without a DOM.
 export { applyFields, fieldFromInput, fieldLabel, fieldToInput, readField, writeField } from './field'
-export type { BlastRadiusOptions, FindPathsOptions } from './traverse'
+export type { BlastRadiusOptions, FindPathsOptions, ShortestPathResult, TraversalScope } from './traverse'
 
 export {
   cidrContains,

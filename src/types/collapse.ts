@@ -44,7 +44,7 @@ export interface CollapsedGroup {
    * it holds. Opening it reveals the next `CollapseRule.pageSize` of them.
    */
   remainderOf?: string
-  /** On a "more" node: how many members of `remainderOf` are already on the map. */
+  /** On a "more" node: original offset of the first page still folded. */
   offset?: number
 }
 

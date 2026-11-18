@@ -37,6 +37,10 @@ export interface UseFlowElementsParams<E, L> {
   positionOf: (id: string) => XY | undefined
   /** Survivors of the filter; `undefined` means no filter is active. */
   filterVisibleIds: ComputedRef<ReadonlySet<EntityId> | undefined>
+  /** Visual representatives of filter survivors, including ancestors folded into another group. */
+  visibleNodeIds?: ComputedRef<ReadonlySet<EntityId> | undefined>
+  displayedLinks?: ComputedRef<readonly CollapsedLink<unknown>[]>
+  displayedGroups?: ComputedRef<readonly CollapsedGroup[]>
   nodeTypes: ComputedRef<Readonly<Record<string, Component>>>
   edgeTypes: ComputedRef<Readonly<Record<string, Component>>>
   draggable: Ref<boolean>
@@ -89,10 +93,14 @@ export function useFlowElements<E, L>(params: UseFlowElementsParams<E, L>): UseF
   const { graph, collapsed, positionOf, filterVisibleIds, nodeTypes, edgeTypes, draggable, connectable } =
     params
 
-  const groupById = computed(() => new Map(collapsed.value.groups.map((group) => [group.id, group])))
+  const groupById = computed(
+    () =>
+      new Map((params.displayedGroups?.value ?? collapsed.value.groups).map((group) => [group.id, group])),
+  )
 
   // A group counts as visible while any single member survives the filter.
   const isVisible = (id: string): boolean => {
+    if (params.visibleNodeIds) return params.visibleNodeIds.value?.has(id) ?? true
     const visible = filterVisibleIds.value
     if (!visible) return true
 
@@ -138,7 +146,7 @@ export function useFlowElements<E, L>(params: UseFlowElementsParams<E, L>): UseF
     const types = edgeTypes.value
     const templates = new Map<string, Edge>()
 
-    for (const link of collapsed.value.links) {
+    for (const link of params.displayedLinks?.value ?? collapsed.value.links) {
       const aggregated = isAggregatedLink(link)
 
       const edge: Edge = {

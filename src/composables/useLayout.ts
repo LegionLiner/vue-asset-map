@@ -74,6 +74,7 @@ export interface UseLayoutReturn {
    */
   topology: ComputedRef<CollapseResult<unknown>>
   running: Ref<boolean>
+  whenReady: () => Promise<void>
   engineName: ComputedRef<string>
   relayout: () => Promise<void>
   /** Records a position produced by dragging a node. */
@@ -157,7 +158,15 @@ export function useLayout<E, L>(params: UseLayoutParams<E, L>): UseLayoutReturn 
     }
   }
 
+  let ready = Promise.resolve()
+  let finish: (() => void) | undefined
   async function relayout(): Promise<void> {
+    // A superseding layout owns the same waiters even if the cancelled engine
+    // never settles. Revealing a node must wait only for the current layout.
+    if (!running.value)
+      ready = new Promise<void>((resolve) => {
+        finish = resolve
+      })
     controller?.abort()
     const current = new AbortController()
     controller = current
@@ -194,6 +203,7 @@ export function useLayout<E, L>(params: UseLayoutParams<E, L>): UseLayoutReturn 
       if (controller === current) {
         running.value = false
         controller = undefined
+        finish?.()
       }
     }
   }
@@ -250,12 +260,16 @@ export function useLayout<E, L>(params: UseLayoutParams<E, L>): UseLayoutReturn 
     return result
   }
 
-  onScopeDispose(() => controller?.abort())
+  onScopeDispose(() => {
+    controller?.abort()
+    finish?.()
+  })
 
   return {
     topology: computed(() => topology.value.collapsed),
     positions,
     running,
+    whenReady: () => ready,
     engineName,
     relayout,
     setManualPosition,

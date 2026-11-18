@@ -99,15 +99,9 @@ map.value?.clearHighlight()
 
 It emits `path-change` too, so both routes into the feature report through one channel.
 
-`pathOptions` bounds the search for both — `{ maxDepth, layers }`, defaulting to 12 hops and the current view's
-layers. A third argument to `highlightPath` overrides it for that one call. The depth is bounded because the search
-walks the graph depth-first: on a dense map an unbounded one is what hangs the tab, and a route longer than that is not
-something a reader can follow on screen anyway.
+`maxDepth` defaults to 12 hops. A breadth-first search chooses the shortest chain within the current view and filters. Optional `layers` narrows it further. With equal-length chains the input link order breaks ties.
 
-The search runs on the original graph, restricted to the current view's layers, but the highlight is drawn on the
-collapsed one: where a stretch of the path is hidden inside a group, the group node and the edges leading to it light
-up instead. Otherwise the path would appear to break off. That is also why the trace is recomputed when a group folds
-shut or the view changes — the route depends on which links are on screen.
+`path-result` provides `nodeIds`, `linkIds` and `status`. A `depth-limit` result means another step remained unexplored. `unreachable` means the allowed component was exhausted or an endpoint was excluded. Clearing the trace emits `null`.
 
 <LiveDemo :source="pathSource">
   <PathTraceMap />

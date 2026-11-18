@@ -117,6 +117,12 @@ A link belongs to a view when its `layers` contain the view id, so `l4` shows up
 
 ## Props
 
+Use `selectionLinkMode="neighborhood"` to show connections incident to the selected asset.
+`neighborHighlightDepth` controls the radius. With multiple assets selected, the map shows the links between them
+and any traced path. `linkFilter` narrows the active view for search, traversal and aggregate counts.
+`edge-click` includes `sourceLinkIds` and `count`. To take a search result into view, call
+`await map.focus(id, { reveal: true })`. This opens the target page even inside a large folded group.
+
 The ones reached for most often; the full list is in the
 [API reference](https://LegionLiner.github.io/vue-asset-map/api/).
 

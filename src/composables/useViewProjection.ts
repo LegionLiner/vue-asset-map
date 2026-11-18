@@ -1,6 +1,7 @@
 import { computed, type ComputedRef, type Ref } from 'vue'
 import { projectGraph, resolveView } from '../core/project'
 import type { AssetGraph } from '../types/graph'
+import type { AssetLink } from '../types/link'
 import type { AssetView, ProjectionResult } from '../types/view'
 
 /** Return value of {@link useViewProjection}. */
@@ -21,9 +22,10 @@ export function useViewProjection<E, L>(
   graph: Ref<AssetGraph<E, L>> | ComputedRef<AssetGraph<E, L>>,
   views: Ref<AssetView[] | undefined>,
   viewId: Ref<string | undefined>,
+  linkFilter?: Ref<((link: AssetLink<L>) => boolean) | undefined>,
 ): UseViewProjectionReturn {
   const view = computed(() => resolveView(views.value, viewId.value))
-  const projection = computed(() => projectGraph(graph.value, view.value))
+  const projection = computed(() => projectGraph(graph.value, view.value, linkFilter?.value))
 
   // Sublabels show by default: hiding them is a deliberate choice of a view.
   const showSublabels = computed(() => view.value?.showSublabels ?? true)
